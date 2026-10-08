@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS `applications` (
   `id` int NOT NULL AUTO_INCREMENT,
   `job_id` int NOT NULL,
   `provider_id` int NOT NULL,
-  `status` enum('applied','accepted','completed') COLLATE utf8mb4_unicode_ci DEFAULT 'applied',
+  `status` enum('applied','accepted','completed','pending','approved','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'applied',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `job_id` (`job_id`),
@@ -235,6 +235,35 @@ INSERT INTO `jobs` (`id`, `client_id`, `title`, `description`, `location_lat`, `
 -- --------------------------------------------------------
 
 --
+-- Tables used by the admin analytics pages
+--
+
+-- Notification log read by admin analytics / history / CSV export.
+CREATE TABLE IF NOT EXISTS `notifications_log` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `subject` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci,
+  `recipient_group` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'all',
+  `override` tinyint(1) NOT NULL DEFAULT '0',
+  `sent_by` int DEFAULT NULL,
+  `sent_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `recipient_group` (`recipient_group`),
+  KEY `sent_at` (`sent_at`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Per-user activity trail used by the admin dashboard, analytics and staff actions.
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `action` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `created_at` (`created_at`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
 -- Table structure for table `plans`
 --
 
@@ -377,10 +406,10 @@ CREATE TABLE IF NOT EXISTS `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`, `firstname`, `lastname`, `address`, `contact_info`, `photo`, `created_at`, `theme_preference`) VALUES
-(1, 'Alice Johnson', 'alice@example.com', '$2y$10$umgbWUH9iHNf9v27Q7jdkeSed08uTVE3LvYaRHj/K0D.5RP8en9Cm', 'client', 'active', 'Alice', 'Johnson', '123 Market St', '555-1234', 'alice.jpg', '2026-02-28 21:41:36', 'light'),
-(2, 'Bob Smith', 'bob@example.com', '$2y$10$umgbWUH9iHNf9v27Q7jdkeSed08uTVE3LvYaRHj/K0D.5RP8en9Cm', 'provider', 'active', 'Bob', 'Smith', '456 Service Rd', '555-5678', 'bob.jpg', '2026-02-28 21:41:36', 'light'),
-(3, 'Carol Admin', 'carol@example.com', '$2y$10$umgbWUH9iHNf9v27Q7jdkeSed08uTVE3LvYaRHj/K0D.5RP8en9Cm', 'superadmin', 'active', 'Carol', 'Admin', '789 Admin Ave', '555-9999', 'carol.jpg', '2026-02-28 21:41:36', 'light'),
-(4, 'David Manager', 'david@example.com', '$2y$10$umgbWUH9iHNf9v27Q7jdkeSed08uTVE3LvYaRHj/K0D.5RP8en9Cm', 'manager', 'active', 'David', 'Manager', '321 Manage Blvd', '555-4321', 'david.jpg', '2026-02-28 21:41:36', 'light'),
+(1, 'Alice Johnson', 'alice@example.com', '$2y$10$1Wwonh1E3PH11uue4xeUc.taAv7WghV7XeB0lVFKOkGvzfABskYW6', 'client', 'active', 'Alice', 'Johnson', '123 Market St', '555-1234', 'alice.jpg', '2026-02-28 21:41:36', 'light'),
+(2, 'Bob Smith', 'bob@example.com', '$2y$10$1Wwonh1E3PH11uue4xeUc.taAv7WghV7XeB0lVFKOkGvzfABskYW6', 'provider', 'active', 'Bob', 'Smith', '456 Service Rd', '555-5678', 'bob.jpg', '2026-02-28 21:41:36', 'light'),
+(3, 'Carol Admin', 'carol@example.com', '$2y$10$1Wwonh1E3PH11uue4xeUc.taAv7WghV7XeB0lVFKOkGvzfABskYW6', 'superadmin', 'active', 'Carol', 'Admin', '789 Admin Ave', '555-9999', 'carol.jpg', '2026-02-28 21:41:36', 'light'),
+(4, 'David Manager', 'david@example.com', '$2y$10$1Wwonh1E3PH11uue4xeUc.taAv7WghV7XeB0lVFKOkGvzfABskYW6', 'manager', 'active', 'David', 'Manager', '321 Manage Blvd', '555-4321', 'david.jpg', '2026-02-28 21:41:36', 'light'),
 (5, 'Paul Tetteh Nerquaye-Tetteh', 'atuleptnt@gmail.com', '$2y$10$umgbWUH9iHNf9v27Q7jdkeSed08uTVE3LvYaRHj/K0D.5RP8en9Cm', 'client', 'active', NULL, NULL, NULL, NULL, NULL, '2026-04-01 09:54:52', 'light'),
 (6, 'Kweku Mensah', 'km@gmail.com', '$2y$10$xgY9uRUa8npg0udR7P4OwO/goY3K14UL5g/qTLxhF9dyUkMuMHr9C', 'client', 'active', NULL, NULL, NULL, NULL, NULL, '2026-05-25 08:22:23', 'light'),
 (7, 'Chris Tambo', 'ct@gmail.com', '$2y$10$R2FKjrkvp.v/4U7IRekKEeDDJGMS4xBYyoTsYI5p7Ri.B3WafuxQi', 'provider', 'active', NULL, NULL, NULL, NULL, NULL, '2026-05-25 08:29:40', 'light');

@@ -58,6 +58,16 @@ else
     echo "Database ${DB_NAME} already initialized with ${TABLE_COUNT} tables."
 fi
 
+# Apply idempotent schema updates + demo-account passwords on every boot, so both
+# fresh and existing databases (each Fly machine has its own) end up consistent.
+if [ -f "/var/www/html/database/migrations.sql" ]; then
+    if mysql "${DB_NAME}" < /var/www/html/database/migrations.sql; then
+        echo "✅ Database migrations applied"
+    else
+        echo "⚠️  Database migrations failed (continuing)"
+    fi
+fi
+
 # Generate config/db.php pointing to local MariaDB instance with dedicated user
 cat > /var/www/html/config/db.php <<EOF
 <?php

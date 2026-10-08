@@ -87,7 +87,13 @@ nuahn/
 
 The schema is in [`database/nuahseasonalapp_db.sql`](database/nuahseasonalapp_db.sql).
 
-**Tables:** `users`, `jobs`, `applications`, `saved_jobs`, `audit_logs`, `subscriptions`, `plans`, `activities`, `products`, `categories`, `cart`, `sales`, `sale_details`
+**Tables:** `users`, `jobs`, `applications`, `saved_jobs`, `audit_logs`, `subscriptions`, `plans`, `activities`, `activity_logs`, `notifications_log`, `products`, `categories`, `cart`, `sales`, `sale_details`
+
+Idempotent schema updates live in [`database/migrations.sql`](database/migrations.sql). The Docker entrypoint applies it on every start (it also resets the demo accounts above to `password123`); on an existing local database run:
+
+```bash
+mysql -u root -p nuahseasonalapp_db < database/migrations.sql
+```
 
 ---
 
