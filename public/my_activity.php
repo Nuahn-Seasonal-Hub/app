@@ -32,94 +32,47 @@ $savedStmt->execute([$provider_id]);
 $savedJobs = $savedStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<main class="container py-5">
-    <h2 class="text-center mb-4">My Activity</h2>
+<section class="band">
+  <div class="wrap band__row">
+    <div>
+      <span class="eyebrow"><?= nu_icon('collection') ?> Provider</span>
+      <h1>My Activity</h1>
+      <p>Your applications and saved jobs in one place.</p>
+    </div>
+  </div>
+</section>
 
+<main class="wrap page-body">
     <!-- Applications Section -->
-    <h3 class="mb-3">My Applications</h3>
+    <div class="section-title" style="margin-top:0"><h2>My Applications</h2><span class="chip chip--blue chip--plain"><?= count($applications) ?></span></div>
     <?php if (empty($applications)): ?>
-        <div class="alert alert-info">You have not applied to any jobs yet.</div>
+        <?php nu_empty('clipboard-check', 'You have not applied to any jobs yet.', 'Browse open seasonal jobs and apply in a tap.', '<a class="btn btn-primary" href="jobs.php">Find jobs</a>'); ?>
     <?php else: ?>
-        <div class="row">
-            <?php foreach ($applications as $app): ?>
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($app['title']) ?></h5>
-                        <p class="card-text"><?= htmlspecialchars($app['description']) ?></p>
-                        <p><strong>Client:</strong> <?= htmlspecialchars($app['client_name']) ?></p>
-                        <p><strong>Status:</strong> <?= htmlspecialchars($app['status']) ?></p>
-                        <p><strong>Applied on:</strong> <?= htmlspecialchars($app['created_at']) ?></p>
-						<?php if (!empty($app['image'])): ?>
-  <img src="../uploads/jobs/<?= htmlspecialchars($app['image']) ?>" 
-       class="card-img-top mb-2" alt="Job Image"
-       style="max-height:150px;object-fit:cover;">
-<?php endif; ?>
-
-<p><strong>Payment:</strong> $<?= number_format($app['payment_amount'], 2) ?></p>
-
-<div id="map<?= $app['id'] ?>" style="height:140px;" class="mb-2"></div>
-<script>
-  const map<?= $app['id'] ?> = initMap('map<?= $app['id'] ?>', {
-      lat: <?= $app['location_lat'] ?>,
-      lng: <?= $app['location_lng'] ?>,
-      zoom: 13
-  });
-  addMarker(map<?= $app['id'] ?>, <?= $app['location_lat'] ?>, <?= $app['location_lng'] ?>, "<?= htmlspecialchars($app['title']) ?>");
-</script>
-
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
+        <div class="grid grid-2 grid-jobs">
+            <?php foreach ($applications as $n => $app):
+                $card = $app;
+                $meta = '<span>' . nu_icon('calendar3') . 'Applied ' . nu_e(nu_date($app['created_at'])) . '</span>' . nu_status_chip($app['status']);
+                nu_job_card($card, ['map' => true, 'meta' => $meta, 'i' => $n, 'uid' => 'a' . $app['id']]);
+            endforeach; ?>
         </div>
     <?php endif; ?>
 
     <!-- Saved Jobs Section -->
-    <h3 class="mt-5 mb-3">My Saved Jobs</h3>
+    <div class="section-title"><h2>My Saved Jobs</h2><span class="chip chip--blue chip--plain"><?= count($savedJobs) ?></span></div>
     <?php if (empty($savedJobs)): ?>
-        <div class="alert alert-info">You have not saved any jobs yet.</div>
+        <?php nu_empty('bookmark', 'You have not saved any jobs yet.', 'Tap Save on any job to keep it here for later.'); ?>
     <?php else: ?>
-        <div class="row">
-            <?php foreach ($savedJobs as $job): ?>
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($job['title']) ?></h5>
-                        <p class="card-text"><?= htmlspecialchars($job['description']) ?></p>
-                        <p><strong>Client:</strong> <?= htmlspecialchars($job['client_name']) ?></p>
-                        <p><strong>Status:</strong> <?= htmlspecialchars($job['status']) ?></p>
-                        <p><strong>Saved on:</strong> <?= htmlspecialchars($job['saved_at']) ?></p>
-						<?php if (!empty($job['image'])): ?>
-  <img src="../uploads/jobs/<?= htmlspecialchars($job['image']) ?>" 
-       class="card-img-top mb-2" alt="Job Image"
-       style="max-height:150px;object-fit:cover;">
-<?php endif; ?>
-
-<p><strong>Payment:</strong> $<?= number_format($job['payment_amount'], 2) ?></p>
-
-<div id="map<?= $job['id'] ?>" style="height:140px;" class="mb-2"></div>
-<script>
-  const map<?= $job['id'] ?> = initMap('map<?= $job['id'] ?>', {
-      lat: <?= $job['location_lat'] ?>,
-      lng: <?= $job['location_lng'] ?>,
-      zoom: 13
-  });
-  addMarker(map<?= $job['id'] ?>, <?= $job['location_lat'] ?>, <?= $job['location_lng'] ?>, "<?= htmlspecialchars($job['title']) ?>");
-</script>
-
-                        <form method="POST" action="../actions/remove_saved_job.php" class="d-inline">
-                            <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                        </form>
-                        <form method="POST" action="../actions/accept_job.php" class="d-inline">
-                            <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-                            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
+        <div class="grid grid-2 grid-jobs">
+            <?php foreach ($savedJobs as $n => $job):
+                $foot = '<form method="POST" action="../actions/remove_saved_job.php" class="inline-form">'
+                      . '<input type="hidden" name="job_id" value="' . htmlspecialchars($job['id']) . '">'
+                      . '<button type="submit" class="btn btn-danger-soft btn-sm">' . nu_icon('trash3') . ' Remove</button></form>'
+                      . '<form method="POST" action="../actions/accept_job.php" class="inline-form">'
+                      . '<input type="hidden" name="job_id" value="' . htmlspecialchars($job['id']) . '">'
+                      . '<button type="submit" class="btn btn-primary btn-sm">Apply ' . nu_icon('arrow-right') . '</button></form>';
+                $job['created_at'] = $job['saved_at'] ?? ($job['created_at'] ?? null);
+                nu_job_card($job, ['map' => true, 'footer' => $foot, 'showStatus' => true, 'i' => $n, 'uid' => 's' . $job['id']]);
+            endforeach; ?>
         </div>
     <?php endif; ?>
 </main>

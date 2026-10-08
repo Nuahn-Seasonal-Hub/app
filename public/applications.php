@@ -21,26 +21,32 @@ $stmt->execute([$provider_id]);
 $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<main class="container py-5">
-    <h2 class="text-center mb-4">My Applications</h2>
+<section class="band">
+  <div class="wrap band__row">
+    <div>
+      <span class="eyebrow"><?= nu_icon('clipboard-check-fill') ?> Provider</span>
+      <h1>My Applications</h1>
+      <p>Every job you’ve applied for, and where it stands.</p>
+    </div>
+    <a class="btn btn-glass" href="my_activity.php"><?= nu_icon('collection') ?> Activity</a>
+  </div>
+</section>
 
+<main class="wrap page-body">
     <?php include_once("../includes/flash.php"); ?>
 
     <?php if (empty($applications)): ?>
-        <div class="alert alert-info">You have not applied to any jobs yet.</div>
+        <?php nu_empty('clipboard-check', 'You have not applied to any jobs yet.', 'Browse open seasonal jobs and apply in a tap.', '<a class="btn btn-primary" href="jobs.php">Find jobs</a>'); ?>
     <?php else: ?>
-        <div class="row">
-            <?php foreach ($applications as $app): ?>
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><?= htmlspecialchars($app['title']) ?></h5>
-                        <p class="card-text"><?= htmlspecialchars($app['description']) ?></p>
-                        <p><strong>Client:</strong> <?= htmlspecialchars($app['client_name']) ?></p>
-                        <p><strong>Status:</strong> <?= htmlspecialchars($app['status']) ?></p>
-                        <p><strong>Applied on:</strong> <?= htmlspecialchars($app['created_at']) ?></p>
-                    </div>
+        <div class="list">
+            <?php foreach ($applications as $n => $app): ?>
+            <div class="list-row" data-reveal style="--i:<?= $n % 6 ?>">
+                <span class="list-row__icon"><?= nu_icon('briefcase-fill') ?></span>
+                <div class="list-row__main">
+                    <p class="list-row__title"><?= htmlspecialchars($app['title']) ?></p>
+                    <p class="list-row__sub"><?= htmlspecialchars($app['client_name']) ?> · Applied <?= nu_e(nu_date($app['created_at'])) ?></p>
                 </div>
+                <div class="list-row__side"><?= nu_status_chip($app['status']) ?></div>
             </div>
             <?php endforeach; ?>
         </div>

@@ -46,87 +46,64 @@ foreach ($jobs as $job) {
     if ($job['status'] === 'closed') $closedJobs++;
 }
 ?>
-<main class="container py-5">
-    <h2 class="text-center mb-4">My Posted Jobs</h2>
+<section class="band">
+  <div class="wrap band__row">
+    <div>
+      <span class="eyebrow"><?= nu_icon('briefcase-fill') ?> Client</span>
+      <h1>My Posted Jobs</h1>
+      <p>Edit listings, update their status and see who applied.</p>
+    </div>
+    <a class="btn btn-light" href="jobs.php#post"><?= nu_icon('plus-lg') ?> Post a job</a>
+  </div>
+</section>
+
+<main class="wrap page-body">
+    <?php if (isset($_GET['success'])): ?>
+        <div class="alert alert-success"><?= nu_icon('check-circle-fill') ?> <?= $_GET['success'] === 'job_deleted' ? 'Job deleted.' : ($_GET['success'] === 'status_updated' ? 'Job status updated.' : 'Saved.') ?></div>
+    <?php endif; ?>
+    <?php if (isset($_GET['error'])): ?>
+        <div class="alert alert-danger"><?= nu_icon('x-circle') ?> Something went wrong (<?= nu_e($_GET['error']) ?>).</div>
+    <?php endif; ?>
+
+    <div class="grid grid-stats mb-6">
+        <div class="stat" data-reveal style="--i:0"><span class="stat__icon stat__icon--navy"><?= nu_icon('collection') ?></span><div><div class="stat__label">Total</div><div class="stat__value"><?= $totalJobs ?></div></div></div>
+        <div class="stat" data-reveal style="--i:1"><span class="stat__icon stat__icon--success"><?= nu_icon('lightning-charge-fill') ?></span><div><div class="stat__label">Posted</div><div class="stat__value"><?= $postedJobs ?></div></div></div>
+        <div class="stat" data-reveal style="--i:2"><span class="stat__icon"><?= nu_icon('people-fill') ?></span><div><div class="stat__label">Filled</div><div class="stat__value"><?= $filledJobs ?></div></div></div>
+        <div class="stat" data-reveal style="--i:3"><span class="stat__icon stat__icon--warning"><?= nu_icon('check2') ?></span><div><div class="stat__label">Closed</div><div class="stat__value"><?= $closedJobs ?></div></div></div>
+    </div>
 
     <?php if (empty($jobs)): ?>
-        <div class="alert alert-info">You have not posted any jobs yet.</div>
+        <?php nu_empty('briefcase', 'You have not posted any jobs yet.', 'Post your first seasonal job and start receiving applications from nearby providers.', '<a class="btn btn-primary" href="jobs.php#post">Post a job</a>'); ?>
     <?php else: ?>
-        <div class="row">
-            <?php foreach ($jobs as $job): ?>
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-                    <?php if (!empty($job['image'])): ?>
-                        <img src="../uploads/jobs/<?= htmlspecialchars($job['image']) ?>" 
-                             class="card-img-top" alt="Job Image" 
-                             style="max-height:200px;object-fit:cover;">
-                    <?php endif; ?>
+        <div class="grid grid-2 grid-jobs">
+            <?php foreach ($jobs as $n => $job):
+                ob_start(); ?>
+                <a href="edit_job.php?id=<?= htmlspecialchars($job['id']) ?>" class="btn btn-soft btn-sm"><?= nu_icon('pencil-square') ?> Edit</a>
 
-                    <div class="card-body">
-                        <h5 class="card-title d-flex justify-content-between align-items-center">
-                            <?= htmlspecialchars($job['title']) ?>
-                            <!-- Status Badge -->
-                            <?php if ($job['status'] === 'posted'): ?>
-                                <span class="badge bg-success">Posted</span>
-                            <?php elseif ($job['status'] === 'filled'): ?>
-                                <span class="badge bg-warning text-dark">Filled</span>
-                            <?php elseif ($job['status'] === 'closed'): ?>
-                                <span class="badge bg-secondary">Closed</span>
-                            <?php endif; ?>
-                        </h5>
+                <form method="POST" action="my_jobs.php" class="inline-form">
+                    <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
+                    <button type="submit" name="delete_job" class="btn btn-danger-soft btn-sm" onclick="return confirm('Delete this job?');"><?= nu_icon('trash3') ?> Delete</button>
+                </form>
 
-                        <p class="card-text"><?= htmlspecialchars($job['description']) ?></p>
+                <form method="POST" action="update_job_status.php" class="inline-form" style="gap:6px">
+                    <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
+                    <select name="status" class="input input-sm" style="width:auto" aria-label="Job status">
+                        <option value="posted" <?= $job['status'] === 'posted' ? 'selected' : '' ?>>Posted</option>
+                        <option value="filled" <?= $job['status'] === 'filled' ? 'selected' : '' ?>>Filled</option>
+                        <option value="closed" <?= $job['status'] === 'closed' ? 'selected' : '' ?>>Closed</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline btn-sm">Update</button>
+                </form>
 
-                        <ul class="list-unstyled small mb-3">
-                            <li><strong>Posted on:</strong> <?= htmlspecialchars($job['created_at']) ?></li>
-							<li><strong>Payment:</strong> $<?= number_format($job['payment_amount'], 2) ?></li>
-
-                            <li><strong>Applications:</strong> <?= htmlspecialchars($job['application_count']) ?></li>
-                            <li><strong>Location:</strong> 
-                                <a href="https://www.google.com/maps?q=<?= htmlspecialchars($job['location_lat']) ?>,<?= htmlspecialchars($job['location_lng']) ?>" target="_blank">
-                                    View on Google Maps
-                                </a>
-                            </li>
-                        </ul>
-
-                        <!-- Inline Map -->
-                        <div id="map<?= $job['id'] ?>" style="height:180px;" class="mb-3"></div>
-                        <script>
-                          const map<?= $job['id'] ?> = initMap('map<?= $job['id'] ?>', {
-                              lat: <?= $job['location_lat'] ?>,
-                              lng: <?= $job['location_lng'] ?>,
-                              zoom: 13
-                          });
-                          addMarker(map<?= $job['id'] ?>, <?= $job['location_lat'] ?>, <?= $job['location_lng'] ?>, "<?= htmlspecialchars($job['title']) ?>");
-                        </script>
-
-                        <!-- Actions -->
-                        <div class="d-flex flex-wrap gap-2">
-                            <a href="edit_job.php?id=<?= htmlspecialchars($job['id']) ?>" class="btn btn-warning btn-sm">Edit</a>
-
-                            <form method="POST" action="my_jobs.php" class="d-inline">
-                                <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-                                <button type="submit" name="delete_job" class="btn btn-danger btn-sm" onclick="return confirm('Delete this job?');">Delete</button>
-                            </form>
-
-                            <form method="POST" action="update_job_status.php" class="d-inline">
-                                <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-                                <select name="status" class="form-select form-select-sm d-inline w-auto">
-                                    <option value="posted" <?= $job['status'] === 'posted' ? 'selected' : '' ?>>Posted</option>
-                                    <option value="filled" <?= $job['status'] === 'filled' ? 'selected' : '' ?>>Filled</option>
-                                    <option value="closed" <?= $job['status'] === 'closed' ? 'selected' : '' ?>>Closed</option>
-                                </select>
-                                <button type="submit" class="btn btn-info btn-sm">Update</button>
-                            </form>
-
-                            <?php if ($job['application_count'] > 0): ?>
-                              <a href="../public/manage_applications.php?job_id=<?= htmlspecialchars($job['id']) ?>" class="btn btn-primary btn-sm">View Applications</a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
+                <?php if ($job['application_count'] > 0): ?>
+                  <a href="../public/manage_applications.php?job_id=<?= htmlspecialchars($job['id']) ?>" class="btn btn-primary btn-sm"><?= nu_icon('people') ?> Applications</a>
+                <?php endif; ?>
+            <?php
+                $foot = ob_get_clean();
+                $meta = '<span>' . nu_icon('people') . (int) $job['application_count'] . ' applications</span>'
+                      . '<span>' . nu_icon('calendar3') . nu_e(nu_date($job['created_at'])) . '</span>';
+                nu_job_card($job, ['map' => true, 'footer' => $foot, 'showStatus' => true, 'meta' => $meta, 'i' => $n]);
+            endforeach; ?>
         </div>
     <?php endif; ?>
 </main>

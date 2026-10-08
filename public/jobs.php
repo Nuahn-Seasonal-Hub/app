@@ -86,128 +86,9 @@ $stmt->execute([$client_id, $title, $description, $lat, $lng, $address, $imagePa
     exit;
 }
 
-?>
 
-<main class="container py-5">
-    <h2 class="text-center mb-4">Seasonal Jobs</h2>
-<?php if (isset($_GET['error'])): ?>
-  <div class="alert alert-danger text-center">
-    <?php if ($_GET['error'] === 'invalid_location'): ?>
-      Please select a valid location on the map.
-    <?php elseif ($_GET['error'] === 'invalid_coordinates'): ?>
-      Invalid latitude/longitude values.
-    <?php elseif ($_GET['error'] === 'invalid_image'): ?>
-      Only JPG and PNG images are allowed.
-    <?php elseif ($_GET['error'] === 'image_too_large'): ?>
-      Image must be smaller than 2MB.
-    <?php elseif ($_GET['error'] === 'upload_failed'): ?>
-      Failed to upload image.
-    <?php endif; ?>
-  </div>
-<?php endif; ?>
-
-    <!-- Filter/Search Bar (Providers only) -->
-    <?php if ($isProvider): ?>
-    <form method="GET" action="jobs.php" class="row mb-4">
-        <div class="col-md-4">
-            <input type="text" name="keyword" class="form-control" placeholder="Search by title or description" value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
-        </div>
-        <div class="col-md-3">
-            <input type="text" name="location" class="form-control" placeholder="Filter by location (city)" value="<?= htmlspecialchars($_GET['location'] ?? '') ?>">
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Filter</button>
-        </div>
-        <div class="col-md-2">
-            <a href="jobs.php" class="btn btn-secondary w-100">Reset</a>
-        </div>
-    </form>
-    <?php endif; ?>
-
-    <!-- Job Posting Form (Clients only) -->
-    <?php if ($isClient): ?>
-    <div class="card mb-5 shadow">
-        <div class="card-header bg-primary text-white">Post a Seasonal Job</div>
-        <div class="card-body">
-<form method="POST" action="jobs.php" enctype="multipart/form-data">
-    <div class="mb-3">
-        <label class="form-label">Job Title</label>
-        <input type="text" name="title" class="form-control" required>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea name="description" class="form-control" rows="3" required></textarea>
-    </div>
-
-    <!-- Map for selecting location -->
-    <div class="mb-3">
-        <label class="form-label">Select Location</label>
-        <div id="jobMap" style="height: 400px;"></div>
-
-        <!-- Hidden fields populated by JS -->
-        <input type="hidden" name="location_lat" id="location_lat" required>
-        <input type="hidden" name="location_lng" id="location_lng" required>
-        <input type="text" name="location_address" id="location_address" 
-               class="form-control mt-2" placeholder="Nearest address" readonly>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Job Image</label>
-        <input type="file" name="job_image" id="job_image" class="form-control" accept="image/*">
-        <div class="mt-3">
-            <img id="preview" src="#" alt="Image Preview" class="img-fluid d-none" style="max-height: 200px;">
-        </div>
-    </div>
-<div class="mb-3">
-    <label class="form-label">Payment Amount (CND)</label>
-    <input type="number" step="0.01" name="payment_amount" class="form-control" required>
-</div>
-
-    <button type="submit" name="post_job" class="btn btn-success">Post Job</button>
-</form>
-
-
-        </div>
-    </div>
-<script>
-  initMap('jobMap', {
-      selectable: true,
-      onSelect: function(lat, lng) {
-          document.getElementById('location_lat').value = lat;
-          document.getElementById('location_lng').value = lng;
-
-          reverseGeocode(lat, lng, function(address) {
-              document.getElementById('location_address').value = address;
-          });
-      }
-  });
-
-  // Image preview
-  document.getElementById('job_image').addEventListener('change', function(event) {
-      const preview = document.getElementById('preview');
-      const file = event.target.files[0];
-
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-              preview.src = e.target.result;
-              preview.classList.remove('d-none');
-          };
-          reader.readAsDataURL(file);
-      } else {
-          preview.src = "#";
-          preview.classList.add('d-none');
-      }
-  });
-</script>
-
-    <?php endif; ?>
-
-    <!-- Available Jobs List -->
-    <h3 class="mb-3">Available Seasonal Jobs</h3>
-    <div class="row">
-        <?php
-        $query = "
+// Available jobs (same query as before, executed before rendering)
+$query = "
     SELECT jobs.*, users.name AS client_name,
            (SELECT COUNT(*) FROM applications 
             WHERE applications.job_id = jobs.id 
@@ -219,76 +100,209 @@ $stmt->execute([$client_id, $title, $description, $lat, $lng, $address, $imagePa
 
 $params = [$provider_id]; // add provider_id to params
 
+if (!empty($_GET['keyword'])) {
+    $query .= " AND (jobs.title LIKE ? OR jobs.description LIKE ?)";
+    $keyword = "%" . $_GET['keyword'] . "%";
+    $params[] = $keyword;
+    $params[] = $keyword;
+}
 
-        if (!empty($_GET['keyword'])) {
-            $query .= " AND (jobs.title LIKE ? OR jobs.description LIKE ?)";
-            $keyword = "%" . $_GET['keyword'] . "%";
-            $params[] = $keyword;
-            $params[] = $keyword;
-        }
+if (!empty($_GET['location'])) {
+    $query .= " AND users.city LIKE ?";
+    $params[] = "%" . $_GET['location'] . "%";
+}
 
-        if (!empty($_GET['location'])) {
-            $query .= " AND users.city LIKE ?";
-            $params[] = "%" . $_GET['location'] . "%";
-        }
+$query .= " ORDER BY jobs.created_at DESC";
 
-        $query .= " ORDER BY jobs.created_at DESC";
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
+$jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$filtered = !empty($_GET['keyword']) || !empty($_GET['location']);
+?>
 
-        $stmt = $pdo->prepare($query);
-        $stmt->execute($params);
-
-        while ($job = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        ?>
-            <div class="col-md-6 mb-4">
-                <div class="card shadow h-100">
-				<div class="card-body">
-    <h5 class="card-title"><?= htmlspecialchars($job['title']) ?></h5>
-    <p class="card-text"><?= htmlspecialchars($job['description']) ?></p>
-
-    <?php if (!empty($job['image'])): ?>
-       <img src="../uploads/jobs/<?= htmlspecialchars($job['image']) ?>" 
-     class="card-img-top" alt="Job Image"
-     style="max-height:150px;object-fit:cover;">
-
+<section class="band">
+  <div class="wrap band__row">
+    <div>
+      <span class="eyebrow"><?= nu_icon('briefcase-fill') ?> Marketplace</span>
+      <h1>Seasonal jobs</h1>
+      <p><?= $isClient ? 'Post a new job or see what else is open right now.' : 'Short-term work near you. Save the ones you like and apply in a tap.' ?></p>
+    </div>
+    <?php if ($isProvider): ?>
+      <a class="btn btn-glass" href="discover_Jobs.php"><?= nu_icon('map') ?> Map view</a>
+    <?php elseif (!isset($_SESSION['user_id'])): ?>
+      <a class="btn btn-light" href="register.php"><?= nu_icon('stars') ?> Join to apply</a>
     <?php endif; ?>
+  </div>
+</section>
 
-    <p><strong>Posted by:</strong> <?= htmlspecialchars($job['client_name']) ?></p>
-    <p><strong>Status:</strong> <?= htmlspecialchars($job['status']) ?></p>
-	<p><strong>Payment:</strong> $<?= number_format($job['payment_amount'], 2) ?></p>
-
-    <!-- Map rendering remains unchanged -->
-    <div id="map<?= $job['id'] ?>" style="height:140px;" class="mb-2"></div>
-
-
-                        <script>
-                          const map<?= $job['id'] ?> = initMap('map<?= $job['id'] ?>', {
-                              lat: <?= $job['location_lat'] ?>,
-                              lng: <?= $job['location_lng'] ?>,
-                              zoom: 13
-                          });
-                          addMarker(map<?= $job['id'] ?>, <?= $job['location_lat'] ?>, <?= $job['location_lng'] ?>, "<?= htmlspecialchars($job['title']) ?>");
-                        </script>
-
-                  <?php if ($isProvider): ?>
-    <?php if ($job['applied_count'] > 0): ?>
-        <span class="badge bg-success">Applied</span>
+<main class="wrap page-body">
+<?php if (isset($_GET['error'])): ?>
+  <div class="alert alert-danger">
+    <?= nu_icon('x-circle') ?>
+    <span>
+    <?php if ($_GET['error'] === 'invalid_location'): ?>
+      Please select a valid location on the map.
+    <?php elseif ($_GET['error'] === 'invalid_coordinates'): ?>
+      Invalid latitude/longitude values.
+    <?php elseif ($_GET['error'] === 'invalid_image'): ?>
+      Only JPG and PNG images are allowed.
+    <?php elseif ($_GET['error'] === 'image_too_large'): ?>
+      Image must be smaller than 2MB.
+    <?php elseif ($_GET['error'] === 'upload_failed'): ?>
+      Failed to upload image.
+    <?php elseif ($_GET['error'] === 'job_not_found'): ?>
+      That job is no longer available.
     <?php else: ?>
-        <form method="POST" action="../actions/save_job.php" class="d-inline">
-            <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-            <button type="submit" class="btn btn-outline-secondary btn-sm">Save Job</button>
-        </form>
-        <form method="POST" action="../actions/accept_job.php" class="d-inline">
-            <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
-        </form>
+      Something went wrong. Please try again.
     <?php endif; ?>
+    </span>
+  </div>
+<?php endif; ?>
+<?php if (isset($_GET['success'])): ?>
+  <div class="alert alert-success"><?= nu_icon('check-circle-fill') ?>
+    <?= $_GET['success'] === 'job_posted' ? 'Your job was submitted. It will appear here once approved.' : ($_GET['success'] === 'applied' ? 'Application sent! Track it under Applied.' : 'Done.') ?>
+  </div>
 <?php endif; ?>
 
-                    </div>
-                </div>
-            </div>
-        <?php } ?>
+    <!-- Filter/Search Bar (Providers only) -->
+    <?php if ($isProvider): ?>
+    <form method="GET" action="jobs.php" class="searchbar" role="search" data-reveal>
+        <label class="input-icon"><?= nu_icon('search') ?><span class="sr-only">Keyword</span>
+            <input type="text" name="keyword" class="input" placeholder="Search by title or description" value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
+        </label>
+        <label class="input-icon"><?= nu_icon('geo-alt') ?><span class="sr-only">Location</span>
+            <input type="text" name="location" class="input" placeholder="City" value="<?= htmlspecialchars($_GET['location'] ?? '') ?>">
+        </label>
+        <button type="submit" class="btn btn-primary btn-lg"><?= nu_icon('funnel') ?> Filter</button>
+        <?php if ($filtered): ?><a href="jobs.php" class="btn btn-ghost btn-lg">Reset</a><?php endif; ?>
+    </form>
+    <?php endif; ?>
+
+    <!-- Job Posting Form (Clients only) -->
+    <?php if ($isClient): ?>
+    <details class="card panel" id="post" data-reveal>
+        <summary>
+            <span class="tile__icon"><?= nu_icon('plus-lg') ?></span>
+            <span><span class="tile__title" style="display:block">Post a seasonal job</span><span class="tile__text">Title, location pin, photo and pay. Takes about a minute.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </summary>
+        <div class="panel__body">
+<form method="POST" action="jobs.php" enctype="multipart/form-data" id="postJobForm">
+  <div class="form-grid">
+    <label class="field span-2"><span class="label">Job title</span>
+        <input type="text" name="title" class="input" placeholder="e.g. Harvest helpers for the weekend" required>
+    </label>
+    <label class="field span-2"><span class="label">Description</span>
+        <textarea name="description" class="input" rows="3" placeholder="What needs doing, when, and anything to bring" required></textarea>
+    </label>
+
+    <!-- Map for selecting location -->
+    <div class="field span-2">
+        <span class="label">Location <span class="muted" style="font-weight:500">— tap the map to drop a pin</span></span>
+        <div id="jobMap" class="picker-map"></div>
+
+        <!-- Hidden fields populated by JS -->
+        <input type="hidden" name="location_lat" id="location_lat" required>
+        <input type="hidden" name="location_lng" id="location_lng" required>
+        <span class="input-icon mt-2" style="display:block"><?= nu_icon('geo-alt') ?>
+        <input type="text" name="location_address" id="location_address" 
+               class="input" placeholder="Nearest address appears here" readonly></span>
+        <p class="hint is-hidden" id="locHint" style="color:var(--danger)">Please tap the map to choose the job location.</p>
     </div>
+
+    <label class="field"><span class="label">Job image</span>
+        <input type="file" name="job_image" id="job_image" class="input" accept="image/*">
+        <img id="preview" src="data:," alt="Image preview" class="preview-img d-none">
+    </label>
+    <label class="field"><span class="label">Payment amount (CND)</span>
+        <span class="input-icon"><?= nu_icon('cash-coin') ?><input type="number" step="0.01" name="payment_amount" class="input" placeholder="0.00" required></span>
+    </label>
+  </div>
+    <button type="submit" name="post_job" class="btn btn-primary btn-lg"><?= nu_icon('send') ?> Post job</button>
+</form>
+        </div>
+    </details>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var panel = document.getElementById('post');
+    var jobMap = null;
+    function ensureMap() {
+      if (jobMap || typeof initMap !== 'function') { if (jobMap) jobMap.invalidateSize(); return; }
+      jobMap = initMap('jobMap', {
+          selectable: true,
+          onSelect: function(lat, lng) {
+              document.getElementById('location_lat').value = lat;
+              document.getElementById('location_lng').value = lng;
+              document.getElementById('locHint').classList.add('is-hidden');
+
+              reverseGeocode(lat, lng, function(address) {
+                  document.getElementById('location_address').value = address;
+              });
+          }
+      });
+      setTimeout(function () { jobMap.invalidateSize(); }, 300);
+    }
+    if (location.hash === '#post') panel.open = true;
+    window.addEventListener('hashchange', function () { if (location.hash === '#post') { panel.open = true; ensureMap(); } });
+    if (panel.open) ensureMap();
+    panel.addEventListener('toggle', function () { if (panel.open) ensureMap(); });
+
+    // Require a map pin before submitting (hidden inputs are not validated by the browser)
+    document.getElementById('postJobForm').addEventListener('submit', function (e) {
+      if (!document.getElementById('location_lat').value) {
+        e.preventDefault();
+        document.getElementById('locHint').classList.remove('is-hidden');
+        document.getElementById('jobMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+
+    // Image preview
+    document.getElementById('job_image').addEventListener('change', function(event) {
+        var preview = document.getElementById('preview');
+        var file = event.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) { preview.src = e.target.result; preview.classList.remove('d-none'); };
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "data:,";
+            preview.classList.add('d-none');
+        }
+    });
+  });
+</script>
+    <?php endif; ?>
+
+    <!-- Available Jobs List -->
+    <div class="result-meta">
+        <h2><?= count($jobs) ?> open <?= count($jobs) === 1 ? 'job' : 'jobs' ?><?= $filtered ? ' found' : '' ?></h2>
+        <span class="chip chip--blue chip--plain"><?= nu_icon('lightning-charge-fill') ?> Newest first</span>
+    </div>
+
+    <?php if (empty($jobs)): ?>
+        <?php nu_empty('inbox', $filtered ? 'No jobs match your search' : 'No open jobs right now', $filtered ? 'Try a different keyword or clear the filters.' : 'New seasonal jobs are posted all the time. Check back soon.', $filtered ? '<a class="btn btn-soft" href="jobs.php">Clear filters</a>' : ''); ?>
+    <?php else: ?>
+    <div class="grid grid-2 grid-jobs">
+        <?php foreach ($jobs as $n => $job):
+            $foot = '';
+            if ($isProvider) {
+                if ($job['applied_count'] > 0) {
+                    $foot = '<span class="chip chip--success chip--plain">' . nu_icon('check2') . ' Applied</span>';
+                } else {
+                    $foot = '<form method="POST" action="../actions/save_job.php" class="inline-form">'
+                          . '<input type="hidden" name="job_id" value="' . htmlspecialchars($job['id']) . '">'
+                          . '<button type="submit" class="btn btn-outline btn-sm">' . nu_icon('bookmark') . ' Save</button></form>'
+                          . '<form method="POST" action="../actions/accept_job.php" class="inline-form">'
+                          . '<input type="hidden" name="job_id" value="' . htmlspecialchars($job['id']) . '">'
+                          . '<button type="submit" class="btn btn-primary btn-sm">Apply ' . nu_icon('arrow-right') . '</button></form>';
+                }
+            } elseif (!isset($_SESSION['user_id'])) {
+                $foot = '<a class="btn btn-primary btn-sm" href="login.php">Sign in to apply</a>';
+            }
+            nu_job_card($job, ['map' => true, 'footer' => $foot, 'i' => $n]);
+        endforeach; ?>
+    </div>
+    <?php endif; ?>
 </main>
 
 <?php include_once("../includes/footer.php"); ?>

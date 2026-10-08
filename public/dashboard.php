@@ -2,7 +2,6 @@
 // public/dashboard.php - Manager/Admin Dashboard Summary
 require_once("../config/init.php"); // handles session, db, auth, flash helpers
 include_once("../includes/header.php");
-include_once("../includes/flash.php");
 
 
 // Only managers, admins, or superadmins can view this page
@@ -37,186 +36,7 @@ $totalProviders = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'provider
 $totalApps      = $pdo->query("SELECT COUNT(*) FROM applications")->fetchColumn();
 $jobsPerClient  = $pdo->query("SELECT client_id, COUNT(*) AS job_count FROM jobs GROUP BY client_id")->fetchAll(PDO::FETCH_ASSOC);
 
-?>
 
-<main class="container py-5">
-    <h2 class="text-center mb-4">Dashboard Summary</h2>
-
-    <?php include_once("../includes/flash.php"); ?>
-
-    <div class="row">
-        <div class="col-md-3 mb-4">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Total Jobs</h5>
-                    <p class="display-6"><?= htmlspecialchars($totalJobs) ?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-4">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Posted Jobs</h5>
-                    <p class="display-6"><?= htmlspecialchars($postedJobs) ?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 mb-4">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Pending Apps</h5>
-                    <p class="display-6"><?= htmlspecialchars($pendingApps) ?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 mb-4">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Approved Apps</h5>
-                    <p class="display-6 text-success"><?= htmlspecialchars($approvedApps) ?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 mb-4">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Rejected Apps</h5>
-                    <p class="display-6 text-danger"><?= htmlspecialchars($rejectedApps) ?></p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Extra metrics -->
-    <div class="row">
-        <div class="col-md-3 mb-4">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Total Providers</h5>
-                    <p class="display-6"><?= htmlspecialchars($totalProviders) ?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-4">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Total Clients</h5>
-                    <p class="display-6"><?= htmlspecialchars($totalClients) ?></p>
-                </div>
-            </div>
-        </div>
-    </div>
-	
-	<div class="row mt-5">
-	<h3 class="mb-3">Pending Job Approvals</h3>
-<?php if (empty($pendingJobs)): ?>
-  <div class="alert alert-info">No jobs awaiting approval.</div>
-<?php else: ?>
-  <div class="row">
-    <?php foreach ($pendingJobs as $job): ?>
-      <div class="col-md-6 mb-4">
-        <div class="card shadow h-100">
-          <?php if (!empty($job['image'])): ?>
-            <img src="../uploads/jobs/<?= htmlspecialchars($job['image']) ?>" 
-                 class="card-img-top" alt="Job Image"
-                 style="max-height:150px;object-fit:cover;">
-          <?php endif; ?>
-          <div class="card-body">
-            <h5 class="card-title"><?= htmlspecialchars($job['title']) ?></h5>
-            <p class="card-text"><?= htmlspecialchars($job['description']) ?></p>
-            <p><strong>Client:</strong> <?= htmlspecialchars($job['client_name']) ?></p>
-            <p><strong>Payment:</strong> $<?= number_format($job['payment_amount'], 2) ?></p>
-            <div id="map<?= $job['id'] ?>" style="height:140px;" class="mb-2"></div>
-            <script>
-              const map<?= $job['id'] ?> = initMap('map<?= $job['id'] ?>', {
-                  lat: <?= $job['location_lat'] ?>,
-                  lng: <?= $job['location_lng'] ?>,
-                  zoom: 13
-              });
-              addMarker(map<?= $job['id'] ?>, <?= $job['location_lat'] ?>, <?= $job['location_lng'] ?>, "<?= htmlspecialchars($job['title']) ?>");
-            </script>
-
-            <!-- Approve / Reject -->
-            <form method="POST" action="../actions/approve_job.php" class="d-inline">
-              <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-              <button type="submit" class="btn btn-success btn-sm">Approve</button>
-            </form>
-            <form method="POST" action="../actions/reject_job.php" class="d-inline">
-              <input type="hidden" name="job_id" value="<?= htmlspecialchars($job['id']) ?>">
-              <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    <?php endforeach; ?>
-  </div>
-<?php endif; ?>
-
-	</div>
-	<div class="row mt-5">
-    <div class="col-md-6">
-        <div class="card shadow h-100">
-            <div class="card-body">
-                <h5 class="card-title text-center">Jobs Posted Per Month</h5>
-                <canvas id="jobsChart"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card shadow h-100">
-            <div class="card-body">
-                <h5 class="card-title text-center">Applications by Status</h5>
-                <canvas id="appsChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row mt-5">
-    <div class="col-md-12">
-        <div class="card shadow h-100">
-            <div class="card-body">
-                <h5 class="card-title text-center">User Growth (Clients vs Providers)</h5>
-                <canvas id="userGrowthChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row mt-4">
-    <div class="col-md-3 mb-4">
-        <div class="card shadow h-100 text-center">
-            <div class="card-body">
-                <h5 class="card-title">Total Users</h5>
-                <p class="display-6"><?= htmlspecialchars($totalUsers) ?></p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card shadow h-100 text-center">
-            <div class="card-body">
-                <h5 class="card-title">Clients</h5>
-                <p class="display-6"><?= htmlspecialchars($totalClients) ?></p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card shadow h-100 text-center">
-            <div class="card-body">
-                <h5 class="card-title">Providers</h5>
-                <p class="display-6"><?= htmlspecialchars($totalProviders) ?></p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-4">
-        <div class="card shadow h-100 text-center">
-            <div class="card-body">
-                <h5 class="card-title">Total Applications</h5>
-                <p class="display-6"><?= htmlspecialchars($totalApps) ?></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php
 // User growth per month (last 6 months)
 $userGrowthStmt = $pdo->query("
     SELECT DATE_FORMAT(created_at, '%Y-%m') AS month,
@@ -246,117 +66,141 @@ $appStatusStmt = $pdo->query("
     GROUP BY status
 ");
 $appStatus = $appStatusStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$approvalRate = $totalApps > 0 ? round(($approvedApps / $totalApps) * 100) : 0;
 ?>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  // Jobs per month data
-  const jobsData = {
-    labels: <?= json_encode(array_column($jobsPerMonth, 'month')) ?>,
-    datasets: [{
-      label: 'Jobs Posted',
-      data: <?= json_encode(array_column($jobsPerMonth, 'count')) ?>,
-      backgroundColor: 'rgba(54, 162, 235, 0.6)'
-    }]
-  };
 
-  new Chart(document.getElementById('jobsChart'), {
-    type: 'bar',
-    data: jobsData,
-    options: { responsive: true, plugins: { legend: { display: false } } }
-  });
+<section class="band">
+  <div class="wrap band__row">
+    <div>
+      <span class="eyebrow"><?= nu_icon('speedometer2') ?> <?= nu_e(ucfirst($_SESSION['role'] ?? 'Admin')) ?> console</span>
+      <h1>Dashboard Summary</h1>
+      <p>Marketplace health at a glance: jobs, applications and people.</p>
+    </div>
+    <div class="row-flex">
+      <a class="btn btn-glass" href="manage_applications.php"><?= nu_icon('clipboard-check') ?> Applications</a>
+      <a class="btn btn-light" href="jobs.php"><?= nu_icon('briefcase') ?> Jobs</a>
+    </div>
+  </div>
+</section>
 
-  // Applications by status data
-  const appsData = {
-    labels: <?= json_encode(array_column($appStatus, 'status')) ?>,
-    datasets: [{
-      label: 'Applications',
-      data: <?= json_encode(array_column($appStatus, 'count')) ?>,
-      backgroundColor: [
-        'rgba(255, 206, 86, 0.6)', // pending
-        'rgba(75, 192, 192, 0.6)', // approved
-        'rgba(255, 99, 132, 0.6)'  // rejected
-      ]
-    }]
-  };
+<main class="wrap page-body">
+    <?php include_once("../includes/flash.php"); ?>
 
-  new Chart(document.getElementById('appsChart'), {
-    type: 'pie',
-    data: appsData,
-    options: { responsive: true }
-  });
-</script>
+    <div class="grid grid-stats">
+        <div class="stat" data-reveal style="--i:0"><span class="stat__icon stat__icon--navy"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Total Jobs</div><div class="stat__value" data-count="<?= (int) $totalJobs ?>"><?= htmlspecialchars($totalJobs) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:1"><span class="stat__icon"><?= nu_icon('lightning-charge-fill') ?></span><div><div class="stat__label">Posted Jobs</div><div class="stat__value" data-count="<?= (int) $postedJobs ?>"><?= htmlspecialchars($postedJobs) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:2"><span class="stat__icon stat__icon--warning"><?= nu_icon('hourglass-split') ?></span><div><div class="stat__label">Pending Apps</div><div class="stat__value" data-count="<?= (int) $pendingApps ?>"><?= htmlspecialchars($pendingApps) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:3"><span class="stat__icon stat__icon--success"><?= nu_icon('check-circle-fill') ?></span><div><div class="stat__label">Approved Apps</div><div class="stat__value" data-count="<?= (int) $approvedApps ?>"><?= htmlspecialchars($approvedApps) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:4"><span class="stat__icon stat__icon--danger"><?= nu_icon('x-circle') ?></span><div><div class="stat__label">Rejected Apps</div><div class="stat__value" data-count="<?= (int) $rejectedApps ?>"><?= htmlspecialchars($rejectedApps) ?></div></div></div>
+    </div>
 
-<script>
-  const userGrowthLabels = <?= json_encode(array_column($userGrowth, 'month')) ?>;
-  const clientData = <?= json_encode(array_column($userGrowth, 'clients')) ?>;
-  const providerData = <?= json_encode(array_column($userGrowth, 'providers')) ?>;
+    <div class="grid grid-stats mt-4">
+        <div class="stat" data-reveal style="--i:0"><span class="stat__icon stat__icon--navy"><?= nu_icon('people-fill') ?></span><div><div class="stat__label">Total Users</div><div class="stat__value" data-count="<?= (int) $totalUsers ?>"><?= htmlspecialchars($totalUsers) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:1"><span class="stat__icon"><?= nu_icon('briefcase') ?></span><div><div class="stat__label">Clients</div><div class="stat__value" data-count="<?= (int) $totalClients ?>"><?= htmlspecialchars($totalClients) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:2"><span class="stat__icon"><?= nu_icon('person-badge') ?></span><div><div class="stat__label">Providers</div><div class="stat__value" data-count="<?= (int) $totalProviders ?>"><?= htmlspecialchars($totalProviders) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:3"><span class="stat__icon stat__icon--success"><?= nu_icon('clipboard-check-fill') ?></span><div><div class="stat__label">Total Applications</div><div class="stat__value" data-count="<?= (int) $totalApps ?>"><?= htmlspecialchars($totalApps) ?></div></div></div>
+        <div class="stat" data-reveal style="--i:4"><span class="stat__icon stat__icon--navy"><?= nu_icon('graph-up-arrow') ?></span><div><div class="stat__label">Approval rate</div><div class="stat__value"><?= $approvalRate ?>%</div></div></div>
+    </div>
 
-  new Chart(document.getElementById('userGrowthChart'), {
-    type: 'line',
-    data: {
-      labels: userGrowthLabels,
-      datasets: [
-        {
-          label: 'Clients',
-          data: clientData,
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          fill: true,
-          tension: 0.3
-        },
-        {
-          label: 'Providers',
-          data: providerData,
-          borderColor: 'rgba(255, 99, 132, 1)',
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          fill: true,
-          tension: 0.3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
-  });
-</script>
-<div class="row mt-5">
-    <div class="col-md-12">
-        <div class="card shadow h-100">
-            <div class="card-body">
-                <h5 class="card-title text-center">Jobs Per Client</h5>
-                <canvas id="jobsPerClientChart"></canvas>
-            </div>
+    <div class="grid grid-2 mt-6">
+        <div class="card chart-card" data-reveal style="--i:0">
+            <h3><?= nu_icon('bar-chart-line') ?> Jobs Posted Per Month</h3>
+            <div class="chart-box"><canvas id="jobsChart" aria-label="Jobs posted per month"></canvas></div>
+        </div>
+        <div class="card chart-card" data-reveal style="--i:1">
+            <h3><?= nu_icon('clipboard-check') ?> Applications by Status</h3>
+            <div class="chart-box"><canvas id="appsChart" aria-label="Applications by status"></canvas></div>
         </div>
     </div>
-</div>
+    <div class="grid grid-2 mt-6">
+        <div class="card chart-card" data-reveal style="--i:0">
+            <h3><?= nu_icon('graph-up-arrow') ?> User Growth (Clients vs Providers)</h3>
+            <div class="chart-box"><canvas id="userGrowthChart" aria-label="User growth"></canvas></div>
+        </div>
+        <div class="card chart-card" data-reveal style="--i:1">
+            <h3><?= nu_icon('people') ?> Jobs Per Client</h3>
+            <div class="chart-box"><canvas id="jobsPerClientChart" aria-label="Jobs per client"></canvas></div>
+        </div>
+    </div>
+
+    <div class="section-title"><h2>Pending Job Approvals</h2></div>
+<?php if (empty($pendingJobs)): ?>
+    <?php nu_empty('check-circle-fill', 'No jobs awaiting approval.', 'You are all caught up. New job submissions will appear here.'); ?>
+<?php else: ?>
+    <div class="grid grid-2">
+    <?php foreach ($pendingJobs as $n => $job):
+        $foot = '<form method="POST" action="../actions/approve_job.php" class="inline-form"><input type="hidden" name="job_id" value="' . htmlspecialchars($job['id']) . '"><button type="submit" class="btn btn-success-soft btn-sm">Approve</button></form>'
+              . '<form method="POST" action="../actions/reject_job.php" class="inline-form"><input type="hidden" name="job_id" value="' . htmlspecialchars($job['id']) . '"><button type="submit" class="btn btn-danger-soft btn-sm">Reject</button></form>';
+        nu_job_card($job, ['footer' => $foot, 'i' => $n]);
+    endforeach; ?>
+    </div>
+<?php endif; ?>
+</main>
 
 <script>
-  const jobsPerClientLabels = <?= json_encode(array_column($jobsPerClient, 'client_id')) ?>;
-  const jobsPerClientData   = <?= json_encode(array_column($jobsPerClient, 'job_count')) ?>;
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof Chart === 'undefined') return;
+  var css = getComputedStyle(document.documentElement);
+  function tone() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    Chart.defaults.color = dark ? '#8E9DC0' : '#64738F';
+    Chart.defaults.borderColor = dark ? 'rgba(255,255,255,.08)' : 'rgba(10,26,63,.07)';
+  }
+  tone();
+  Chart.defaults.font.family = css.getPropertyValue('--font');
+  Chart.defaults.font.weight = 600;
+  Chart.defaults.maintainAspectRatio = false;
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.tooltip.backgroundColor = '#0A1A3F';
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius = 10;
+  var blue = '#1B5BEA', sky = '#5C92FF', navy = '#0A1A3F';
+  var charts = [];
 
-  new Chart(document.getElementById('jobsPerClientChart'), {
+  // Jobs per month data
+  charts.push(new Chart(document.getElementById('jobsChart'), {
     type: 'bar',
     data: {
-      labels: jobsPerClientLabels,
-      datasets: [{
-        label: 'Jobs Posted',
-        data: jobsPerClientData,
-        backgroundColor: 'rgba(153, 102, 255, 0.6)'
-      }]
+      labels: <?= json_encode(array_reverse(array_column($jobsPerMonth, 'month'))) ?>,
+      datasets: [{ label: 'Jobs Posted', data: <?= json_encode(array_map('intval', array_reverse(array_column($jobsPerMonth, 'count')))) ?>, backgroundColor: blue, borderRadius: 8, maxBarThickness: 36 }]
     },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+  }));
+
+  // Applications by status data
+  charts.push(new Chart(document.getElementById('appsChart'), {
+    type: 'doughnut',
+    data: {
+      labels: <?= json_encode(array_map(function ($s) { return $s === '' || $s === null ? 'pending' : $s; }, array_column($appStatus, 'status'))) ?>,
+      datasets: [{ label: 'Applications', data: <?= json_encode(array_map('intval', array_column($appStatus, 'count'))) ?>, backgroundColor: [blue, navy, sky, '#0E9F6E', '#DC3248'], borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: { cutout: '68%', plugins: { legend: { position: 'bottom' } } }
+  }));
+
+  charts.push(new Chart(document.getElementById('userGrowthChart'), {
+    type: 'line',
+    data: {
+      labels: <?= json_encode(array_reverse(array_column($userGrowth, 'month'))) ?>,
+      datasets: [
+        { label: 'Clients', data: <?= json_encode(array_map('intval', array_reverse(array_column($userGrowth, 'clients')))) ?>, borderColor: blue, backgroundColor: 'rgba(27,91,234,.12)', fill: true, tension: 0.35, pointRadius: 3 },
+        { label: 'Providers', data: <?= json_encode(array_map('intval', array_reverse(array_column($userGrowth, 'providers')))) ?>, borderColor: navy, backgroundColor: 'rgba(10,26,63,.06)', fill: true, tension: 0.35, pointRadius: 3 }
+      ]
+    },
+    options: { plugins: { legend: { position: 'top', align: 'end' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }
+  }));
+
+  charts.push(new Chart(document.getElementById('jobsPerClientChart'), {
+    type: 'bar',
+    data: {
+      labels: <?= json_encode(array_map(function ($id) { return 'Client #' . $id; }, array_column($jobsPerClient, 'client_id'))) ?>,
+      datasets: [{ label: 'Jobs Posted', data: <?= json_encode(array_map('intval', array_column($jobsPerClient, 'job_count'))) ?>, backgroundColor: sky, borderRadius: 8, maxBarThickness: 36 }]
+    },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { grid: { display: false } } } }
+  }));
+
+  document.addEventListener('nuahn:theme', function () { tone(); charts.forEach(function (c) { c.update('none'); }); });
+});
 </script>
 
 <?php include_once("../includes/footer.php"); ?>
