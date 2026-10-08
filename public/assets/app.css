@@ -594,7 +594,9 @@ details.more[open] > .roles { margin-top: var(--s3); animation: fade-up var(--d3
 .stat__value { font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
 @media (max-width: 575.98px) {
   .grid-stats { grid-template-columns: 1fr 1fr; gap: var(--s3); }
+  .grid-stats > :last-child:nth-child(odd) { grid-column: 1 / -1; flex-direction: row; align-items: center; }
   .grid-stats:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, 1fr); }
+  .grid-stats:has(> :nth-child(3):last-child) > :last-child { grid-column: auto; flex-direction: column; align-items: flex-start; }
   .grid-stats:has(> :nth-child(3):last-child) .stat__label { font-size: 10px; letter-spacing: .04em; }
   .stat { flex-direction: column; align-items: flex-start; gap: var(--s3); padding: var(--s4); }
   .stat__icon { width: 40px; height: 40px; border-radius: 13px; }
