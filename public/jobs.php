@@ -227,7 +227,11 @@ $filtered = !empty($_GET['keyword']) || !empty($_GET['location']);
     var panel = document.getElementById('post');
     var jobMap = null;
     function ensureMap() {
-      if (jobMap || typeof initMap !== 'function') { if (jobMap) jobMap.invalidateSize(); return; }
+      if (jobMap) { jobMap.invalidateSize(); return; }
+      window.nuWithMap(buildMap);
+    }
+    function buildMap() {
+      if (jobMap) return;
       jobMap = initMap('jobMap', {
           selectable: true,
           onSelect: function(lat, lng) {

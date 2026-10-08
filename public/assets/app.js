@@ -53,9 +53,25 @@
       var open = !frame.classList.contains('is-open');
       frame.classList.toggle('is-open', open);
       mt.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open && window.lazyMap) window.lazyMap('map' + id);
+      if (open) window.nuWithMap(function () { window.lazyMap('map' + id); });
     }
   });
+
+  /* Load Leaflet only when a map is first needed */
+  var mapQueue = null;
+  function loadScript(src, cb) { var s = d.createElement('script'); s.src = src; s.onload = cb; d.head.appendChild(s); }
+  window.nuWithMap = function (cb) {
+    if (window.L && window.lazyMap) { cb(); return; }
+    if (!mapQueue) {
+      mapQueue = [];
+      var a = {};
+      try { a = JSON.parse(d.body.getAttribute('data-map-assets') || '{}'); } catch (_) {}
+      if (!a.js) return;
+      var css = d.createElement('link'); css.rel = 'stylesheet'; css.href = a.css; d.head.appendChild(css);
+      loadScript(a.js, function () { loadScript(a.helper, function () { var q = mapQueue; mapQueue = null; q.forEach(function (f) { f(); }); }); });
+    }
+    mapQueue.push(cb);
+  };
 
   /* Elevate the top bar once the page scrolls */
   var nav = d.getElementById('topnav');

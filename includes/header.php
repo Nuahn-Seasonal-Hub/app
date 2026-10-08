@@ -56,7 +56,7 @@ $bodyClass = [
 <?php if ($nuPage['icons']): ?>
   <link rel="stylesheet" href="<?= nu_asset('public/assets/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
 <?php endif; ?>
-<?php if ($nuPage['map']): ?>
+<?php if ($nuPage['map'] && $nuPage['map'] !== 'lazy'): ?>
   <link rel="stylesheet" href="<?= nu_asset('public/assets/vendor/leaflet/leaflet.css') ?>">
 <?php if ($nuPage['cluster']): ?>
   <link rel="stylesheet" href="<?= nu_asset('public/assets/vendor/leaflet/MarkerCluster.css') ?>">
@@ -77,7 +77,7 @@ $bodyClass = [
   {"prefetch":[{"where":{"and":[{"href_matches":"<?= nu_base() ?>/*"},{"not":{"href_matches":"*logout*"}},{"not":{"href_matches":"<?= nu_base() ?>/actions/*"}},{"not":{"selector_matches":"[data-no-prefetch]"}}]},"eagerness":"moderate"}]}
   </script>
 </head>
-<body class="<?= nu_e(trim(implode(' ', array_filter($bodyClass)))) ?>"<?= $nuLogged ? ' data-theme-endpoint="' . nu_e(nu_url('actions/update_theme.php')) . '"' : '' ?>>
+<body class="<?= nu_e(trim(implode(' ', array_filter($bodyClass)))) ?>"<?= $nuLogged ? ' data-theme-endpoint="' . nu_e(nu_url('actions/update_theme.php')) . '"' : '' ?><?php if ($nuPage['map'] === 'lazy'): ?> data-map-assets="<?= nu_e(json_encode(['css' => nu_asset('public/assets/vendor/leaflet/leaflet.css'), 'js' => nu_asset('public/assets/vendor/leaflet/leaflet.js'), 'helper' => nu_asset('assets/js/map.js')], JSON_UNESCAPED_SLASHES)) ?>"<?php endif; ?>>
 <a class="skip-link" href="#main">Skip to content</a>
 
 <header class="topnav" id="topnav">
