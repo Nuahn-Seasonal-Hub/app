@@ -27,7 +27,7 @@ COPY . .
 # Remove local db.php — generated at runtime
 RUN rm -f config/db.php
 
-# Ensure uploads dir is writable
+# Ensure uploads dir is writable (on Fly the entrypoint moves it onto the /data volume)
 RUN mkdir -p uploads/jobs && chown -R www-data:www-data /var/www/html
 
 # Copy entrypoint
@@ -35,5 +35,9 @@ COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
+
+# The entrypoint traps SIGTERM/SIGINT to stop Apache and shut MariaDB down cleanly
+# (the php:apache base image defaults to SIGWINCH, which would skip that).
+STOPSIGNAL SIGTERM
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

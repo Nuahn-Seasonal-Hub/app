@@ -1,8 +1,17 @@
 app = "nuahn-seasonal-hub"
 primary_region = "iad"
 
+# Give the entrypoint time to stop Apache and shut MariaDB down cleanly
+kill_signal = "SIGTERM"
+kill_timeout = 30
+
 [build]
   dockerfile = "Dockerfile"
+
+# One persistent volume: MariaDB datadir (/data/mysql) and uploads (/data/uploads)
+[mounts]
+  source = "nuahn_data"
+  destination = "/data"
 
 [http_service]
   internal_port = 80
