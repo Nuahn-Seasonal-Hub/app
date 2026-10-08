@@ -1,7 +1,8 @@
 <?php
-require_once "../config/db.php";
+require_once "../config/init.php";
 require_once "../includes/flash_helper.php";
-session_start();
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $id = intval($_POST['id']);

@@ -1,20 +1,18 @@
 <?php
-require_once "../config/db.php";
-require_once "../includes/flash_helper.php";
-session_start();
+require_once "../config/init.php";
+// Superadmins only. Demote another superadmin to manager (never yourself).
+requireLogin('superadmin');
 
-if (!isset($_SESSION['is_superadmin']) || $_SESSION['is_superadmin'] !== true) {
-    header("Location: ../public/admin/dashboard.php?error=unauthorized");
-    exit;
+$id = intval($_GET['id'] ?? 0);
+$stmt = $pdo->prepare("UPDATE users SET role='manager' WHERE id=? AND role='superadmin' AND id<>?");
+$stmt->execute([$id, $_SESSION['user_id']]);
+
+if ($stmt->rowCount() > 0) {
+    $log = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (?, ?)");
+    $log->execute([$id, "Demoted from super-admin"]);
+    flashSuccess("Super-admin privileges removed.", "toast");
+} else {
+    flashError("That account can't be demoted.", "toast");
 }
-
-$id = intval($_GET['id']);
-$stmt = $pdo->prepare("UPDATE users SET is_superadmin=0 WHERE id=? AND role='admin'");
-$stmt->execute([$id]);
-
-$log = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (?, ?)");
-$log->execute([$id, "Demoted from super-admin"]);
-
-setFlash("warning", "Super-admin privileges removed.", "alert");
 header("Location: ../public/admin/manage_admins.php");
-?>
+exit;

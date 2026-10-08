@@ -1,10 +1,7 @@
 <?php
-require_once "../config/db.php";
-session_start();
-
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    die("Unauthorized");
-}
+require_once "../config/init.php";
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
 // Collect filters
 $group = $_GET['group'] ?? '';
@@ -40,7 +37,7 @@ header('Content-Disposition: attachment; filename=notifications_export.csv');
 $output = fopen('php://output', 'w');
 
 // Write header row
-fputcsv($output, ['Subject', 'Recipients', 'Override', 'Sent At']);
+fputcsv($output, ['Subject', 'Recipients', 'Override', 'Sent At'], ',', '"', '\\');
 
 // Write data rows
 foreach ($logs as $row) {
@@ -49,7 +46,7 @@ foreach ($logs as $row) {
         $row['recipient_group'],
         $row['override'] ? 'Yes' : 'No',
         $row['sent_at']
-    ]);
+    ], ',', '"', '\\');
 }
 
 fclose($output);

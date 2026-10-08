@@ -153,6 +153,17 @@ function nu_page_config() {
         'public/manage_applications.php' => ['title' => 'Applications', 'tab' => 'apps', 'lean' => true],
         'public/dashboard.php'         => ['title' => 'Dashboard', 'tab' => 'dash', 'lean' => true, 'chart' => true],
         'public/profile.php'           => ['title' => 'Profile', 'tab' => 'profile', 'lean' => true],
+        'public/admin/dashboard.php'   => ['title' => 'Admin overview', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/manage_users.php' => ['title' => 'Manage users', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/manage_admins.php' => ['title' => 'Manage staff', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/subscriptions.php' => ['title' => 'Subscriptions', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/create_plan.php' => ['title' => 'New plan', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/edit_plan.php'   => ['title' => 'Edit plan', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/assign_subscription.php' => ['title' => 'Assign plan', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/notifications.php' => ['title' => 'Notifications', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/notifications_history.php' => ['title' => 'Notification history', 'tab' => 'dash', 'lean' => true, 'sub' => true],
+        'public/admin/notifications_analytics.php' => ['title' => 'Notification analytics', 'tab' => 'dash', 'lean' => true, 'sub' => true, 'chart' => true],
+        'public/admin/analytics_dashboard.php' => ['title' => 'Analytics', 'tab' => 'dash', 'lean' => true, 'sub' => true, 'chart' => true],
     ];
 
     $cfg = $pages[$rel] ?? null;
@@ -307,6 +318,22 @@ function nu_job_card($job, $opts = []) {
 function nu_empty($icon, $title, $text, $actionHtml = '') {
     echo '<div class="empty" data-reveal><div class="empty__icon">' . nu_icon($icon) . '</div>';
     echo '<h3>' . nu_e($title) . '</h3><p>' . nu_e($text) . '</p>' . $actionHtml . '</div>';
+}
+
+/** Navy page header band used by dashboard-style pages. $actions is trusted HTML. */
+function nu_band($icon, $eyebrow, $title, $lead = '', $actions = '') {
+    echo '<section class="band"><div class="wrap band__row"><div>';
+    echo '<span class="eyebrow">' . nu_icon($icon) . ' ' . nu_e($eyebrow) . '</span>';
+    echo '<h1>' . nu_e($title) . '</h1>';
+    if ($lead !== '') echo '<p>' . nu_e($lead) . '</p>';
+    echo '</div>';
+    if ($actions !== '') echo '<div class="row-flex">' . $actions . '</div>';
+    echo '</div></section>';
+}
+
+/** Shared Chart.js look for the light/navy themes. Call inside DOMContentLoaded. */
+function nu_chart_defaults_js() {
+    return "var css=getComputedStyle(document.documentElement);function tone(){var d=document.documentElement.getAttribute('data-theme')==='dark';Chart.defaults.color=d?'#8E9DC0':'#64738F';Chart.defaults.borderColor=d?'rgba(255,255,255,.08)':'rgba(10,26,63,.07)';}tone();Chart.defaults.font.family=css.getPropertyValue('--font');Chart.defaults.font.weight=600;Chart.defaults.maintainAspectRatio=false;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.tooltip.backgroundColor='#0A1A3F';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=10;var PALETTE=['#1B5BEA','#0A1A3F','#5C92FF','#0E9F6E','#C77700','#DC3248','#93B6FF'];";
 }
 
 /** Run a read-only COUNT query for display; returns 0 on any error. */

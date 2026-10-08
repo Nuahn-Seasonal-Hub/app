@@ -1,50 +1,25 @@
 <?php
 // public/manage_applications.php
 require_once("../config/init.php");
+// Staff only: superadmin, manager (and legacy admin). Others are sent to their own home.
+requireLogin(STAFF_ROLES);
 include_once("../includes/header.php");
-requireLogin();
-
-$allowedRoles = ['manager','admin','superadmin'];
-if (!in_array($_SESSION['role'], $allowedRoles)) {
-    flashError("Unauthorized access.");
-    header("Location: dashboard.php");
-    exit;
-}
 
 $role = $_SESSION['role'];
 $user_id = $_SESSION['user_id'];
 
-// Build query depending on role
-if ($role === 'superadmin') {
-    // Superadmin sees all applications
-    $stmt = $pdo->query("
-        SELECT applications.*, jobs.title AS job_title, jobs.payment_amount, jobs.image,
-               jobs.location_lat, jobs.location_lng,
-               providers.name AS provider_name, clients.name AS client_name, clients.department_id
-        FROM applications
-        JOIN jobs ON applications.job_id = jobs.id
-        JOIN users AS providers ON applications.provider_id = providers.id
-        JOIN users AS clients ON jobs.client_id = clients.id
-        ORDER BY applications.created_at DESC
-    ");
-} else {
-    // Manager/Admin: only see applications for jobs in their department
-    // Assumes your users table has department_id
-    $stmt = $pdo->prepare("
-        SELECT applications.*, jobs.title AS job_title, jobs.payment_amount, jobs.image,
-               jobs.location_lat, jobs.location_lng,
-               providers.name AS provider_name, clients.name AS client_name, clients.department_id
-        FROM applications
-        JOIN jobs ON applications.job_id = jobs.id
-        JOIN users AS providers ON applications.provider_id = providers.id
-        JOIN users AS clients ON jobs.client_id = clients.id
-        WHERE clients.department_id = (
-            SELECT department_id FROM users WHERE id = ?
-        )
-        ORDER BY applications.created_at DESC
-    ");
-    $stmt->execute([$user_id]);
-}
+// The schema has no departments (users.department_id does not exist), so every staff
+// role sees all applications.
+$stmt = $pdo->query("
+    SELECT applications.*, jobs.title AS job_title, jobs.payment_amount, jobs.image,
+           jobs.location_lat, jobs.location_lng,
+           providers.name AS provider_name, clients.name AS client_name
+    FROM applications
+    JOIN jobs ON applications.job_id = jobs.id
+    JOIN users AS providers ON applications.provider_id = providers.id
+    JOIN users AS clients ON jobs.client_id = clients.id
+    ORDER BY applications.created_at DESC
+");
 $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 

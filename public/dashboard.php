@@ -1,23 +1,10 @@
 <?php
 // public/dashboard.php - Manager/Admin Dashboard Summary
 require_once("../config/init.php"); // handles session, db, auth, flash helpers
+
+// Only managers and superadmins (and legacy admins) can view this page
+requireLogin(STAFF_ROLES);
 include_once("../includes/header.php");
-
-
-// Only managers, admins, or superadmins can view this page
-/*
-if (!isRole('manager') && !in_array($_SESSION['role'], ['admin','superadmin'])) {
-    addFlash('danger', 'Unauthorized access attempt');
-    header("Location: /Nuahn/public/login.php?error=unauthorized");
-    exit;
-}
-*/
-requireLogin();
-if ($_SESSION['role'] !== 'superadmin') {
-    flashError("Unauthorized access.");
-    header("Location: /Nuahn/public/login.php?error=unauthorized");
-    exit;
-}
 
 
 // Fetch summary counts
@@ -66,6 +53,16 @@ $appStatusStmt = $pdo->query("
     GROUP BY status
 ");
 $appStatus = $appStatusStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Jobs waiting for staff approval (new jobs are inserted with status 'pending' and only
+// 'posted' jobs are listed publicly). Approve -> 'posted', reject -> 'closed'.
+$pendingJobs = $pdo->query("
+    SELECT jobs.*, users.name AS client_name
+    FROM jobs
+    JOIN users ON jobs.client_id = users.id
+    WHERE jobs.status = 'pending'
+    ORDER BY jobs.created_at DESC
+")->fetchAll(PDO::FETCH_ASSOC);
 
 $approvalRate = $totalApps > 0 ? round(($approvedApps / $totalApps) * 100) : 0;
 ?>
@@ -122,6 +119,42 @@ $approvalRate = $totalApps > 0 ? round(($approvedApps / $totalApps) * 100) : 0;
             <h3><?= nu_icon('people') ?> Jobs Per Client</h3>
             <div class="chart-box"><canvas id="jobsPerClientChart" aria-label="Jobs per client"></canvas></div>
         </div>
+    </div>
+
+    <div class="section-title"><h2>Admin tools</h2></div>
+    <div class="grid grid-3">
+        <a class="tile" href="admin/manage_users.php" data-reveal style="--i:0">
+            <span class="tile__icon tile__icon--navy"><?= nu_icon('people') ?></span>
+            <span><span class="tile__title" style="display:block">Manage users</span><span class="tile__text">Everyone on the platform, by role and status.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+        <a class="tile" href="admin/analytics_dashboard.php" data-reveal style="--i:1">
+            <span class="tile__icon"><?= nu_icon('graph-up-arrow') ?></span>
+            <span><span class="tile__title" style="display:block">Analytics</span><span class="tile__text">Notifications, subscriptions and activity trends.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+        <a class="tile" href="admin/subscriptions.php" data-reveal style="--i:2">
+            <span class="tile__icon tile__icon--soft"><?= nu_icon('award') ?></span>
+            <span><span class="tile__title" style="display:block">Subscriptions</span><span class="tile__text">Plans and client subscriptions.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+        <a class="tile" href="admin/notifications.php" data-reveal style="--i:3">
+            <span class="tile__icon tile__icon--soft"><?= nu_icon('bell') ?></span>
+            <span><span class="tile__title" style="display:block">Notifications</span><span class="tile__text">Send notices and review the history.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+        <a class="tile" href="admin/dashboard.php" data-reveal style="--i:4">
+            <span class="tile__icon tile__icon--navy"><?= nu_icon('speedometer2') ?></span>
+            <span><span class="tile__title" style="display:block">Admin overview</span><span class="tile__text">Account totals and recent activity.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+<?php if (isRole('superadmin')): ?>
+        <a class="tile" href="admin/manage_admins.php" data-reveal style="--i:5">
+            <span class="tile__icon"><?= nu_icon('shield-check') ?></span>
+            <span><span class="tile__title" style="display:block">Manage staff</span><span class="tile__text">Promote managers or add team accounts.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+<?php endif; ?>
     </div>
 
     <div class="section-title"><h2>Pending Job Approvals</h2></div>

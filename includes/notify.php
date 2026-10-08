@@ -2,9 +2,16 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require '../vendor/autoload.php'; // assuming PHPMailer installed via Composer
+// PHPMailer via Composer is optional: without vendor/ the app still works and just logs.
+if (is_file(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
 
 function sendNotification($to, $subject, $body) {
+    if (!class_exists(PHPMailer::class)) {
+        error_log("Notification not emailed (PHPMailer not installed): $subject -> $to");
+        return false;
+    }
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();

@@ -1,13 +1,7 @@
 <?php
-require_once "../../config/db.php";
-session_start();
-
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php?error=unauthorized");
-    exit;
-}
-
-include "../../includes/header.php";
+require_once "../../config/init.php";
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
 // Handle filters
 $group = $_GET['group'] ?? '';
@@ -37,56 +31,53 @@ $query .= " ORDER BY sent_at DESC LIMIT 50";
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $logs = $stmt->fetchAll();
+
+include "../../includes/header.php";
+$export = "../../actions/export_notifications.php?group=" . urlencode($group) . "&keyword=" . urlencode($keyword) . "&start=" . urlencode($start) . "&end=" . urlencode($end);
+nu_band('clock', 'Messaging', 'Notification History', 'The last 50 notices sent, newest first.',
+    '<a class="btn btn-light" href="' . nu_e($export) . '">' . nu_icon('file-earmark-text') . ' Export to CSV</a>');
 ?>
 
-<div class="container mt-4">
-  <h2 class="mb-4">Notification History</h2>
-
-  <form method="GET" class="row g-3 mb-3">
-    <div class="col-md-3">
-      <select class="form-select" name="group">
-        <option value="">All Groups</option>
-        <option value="admin" <?php if($group=="admin") echo "selected"; ?>>Admins</option>
-        <option value="provider" <?php if($group=="provider") echo "selected"; ?>>Providers</option>
-        <option value="client" <?php if($group=="client") echo "selected"; ?>>Clients</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <input type="text" class="form-control" name="keyword" placeholder="Search subject..." value="<?php echo htmlspecialchars($keyword); ?>">
-    </div>
-    <div class="col-md-2">
-      <input type="date" class="form-control" name="start" value="<?php echo $start; ?>">
-    </div>
-    <div class="col-md-2">
-      <input type="date" class="form-control" name="end" value="<?php echo $end; ?>">
-    </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-primary w-100">Filter</button>
+<main class="wrap page-body">
+  <form method="GET" class="card card-pad" data-reveal>
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end">
+      <label class="field"><span class="label">Group</span>
+        <select class="input" name="group">
+          <option value="">All Groups</option>
+          <option value="all" <?php if($group=="all") echo "selected"; ?>>Everyone</option>
+          <option value="manager" <?php if($group=="manager") echo "selected"; ?>>Managers</option>
+          <option value="provider" <?php if($group=="provider") echo "selected"; ?>>Providers</option>
+          <option value="client" <?php if($group=="client") echo "selected"; ?>>Clients</option>
+        </select></label>
+      <label class="field"><span class="label">Subject</span>
+        <input type="text" class="input" name="keyword" placeholder="Search subject..." value="<?= htmlspecialchars($keyword) ?>"></label>
+      <label class="field"><span class="label">From</span>
+        <input type="date" class="input" name="start" value="<?= htmlspecialchars($start) ?>"></label>
+      <label class="field"><span class="label">To</span>
+        <input type="date" class="input" name="end" value="<?= htmlspecialchars($end) ?>"></label>
+      <button type="submit" class="btn btn-primary"><?= nu_icon('funnel') ?> Filter</button>
     </div>
   </form>
-<a href="../../actions/export_notifications.php?group=<?php echo urlencode($group); ?>&keyword=<?php echo urlencode($keyword); ?>&start=<?php echo urlencode($start); ?>&end=<?php echo urlencode($end); ?>" 
-   class="btn btn-secondary mb-3">Export to CSV</a>
 
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Subject</th>
-        <th>Recipients</th>
-        <th>Override</th>
-        <th>Sent At</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($logs as $row): ?>
-        <tr>
-          <td><?php echo htmlspecialchars($row['subject']); ?></td>
-          <td><?php echo $row['recipient_group']; ?></td>
-          <td><?php echo $row['override'] ? "Yes" : "No"; ?></td>
-          <td><?php echo $row['sent_at']; ?></td>
-        </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
-</div>
+<?php if (empty($logs)): ?>
+  <div class="mt-6"><?php nu_empty('bell', 'No notifications found.', 'Notices you send from the control panel are listed here.', '<a class="btn btn-primary" href="notifications.php">' . nu_icon('send') . ' Send a notification</a>'); ?></div>
+<?php else: ?>
+  <div class="table-wrap mt-6" data-reveal>
+    <table class="table table--stack">
+      <thead><tr><th>Subject</th><th>Recipients</th><th>Override</th><th>Sent At</th></tr></thead>
+      <tbody>
+        <?php foreach ($logs as $row): ?>
+          <tr>
+            <td data-label="Subject"><strong><?= htmlspecialchars($row['subject']) ?></strong></td>
+            <td data-label="Recipients"><span class="chip chip--blue"><?= htmlspecialchars($row['recipient_group']) ?></span></td>
+            <td data-label="Override"><?= $row['override'] ? '<span class="chip chip--danger">Yes</span>' : 'No' ?></td>
+            <td class="muted" data-label="Sent"><?= nu_e(nu_date($row['sent_at'], 'M j, Y · H:i')) ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+<?php endif; ?>
+</main>
 
 <?php include "../../includes/footer.php"; ?>

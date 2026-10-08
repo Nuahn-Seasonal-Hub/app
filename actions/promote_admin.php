@@ -1,20 +1,18 @@
 <?php
-require_once "../config/db.php";
-require_once "../includes/flash_helper.php";
-session_start();
+require_once "../config/init.php";
+// Superadmins only. Promote a manager to superadmin (the schema has no is_superadmin column).
+requireLogin('superadmin');
 
-if (!isset($_SESSION['is_superadmin']) || $_SESSION['is_superadmin'] !== true) {
-    header("Location: ../public/admin/dashboard.php?error=unauthorized");
-    exit;
-}
-
-$id = intval($_GET['id']);
-$stmt = $pdo->prepare("UPDATE users SET is_superadmin=1 WHERE id=? AND role='admin'");
+$id = intval($_GET['id'] ?? 0);
+$stmt = $pdo->prepare("UPDATE users SET role='superadmin' WHERE id=? AND role='manager'");
 $stmt->execute([$id]);
 
-$log = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (?, ?)");
-$log->execute([$id, "Promoted to super-admin"]);
-
-setFlash("success", "Admin promoted to super-admin!", "alert");
+if ($stmt->rowCount() > 0) {
+    $log = $pdo->prepare("INSERT INTO activity_logs (user_id, action) VALUES (?, ?)");
+    $log->execute([$id, "Promoted to super-admin"]);
+    flashSuccess("Manager promoted to super-admin!", "toast");
+} else {
+    flashError("Only managers can be promoted.", "toast");
+}
 header("Location: ../public/admin/manage_admins.php");
-?>
+exit;

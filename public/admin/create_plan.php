@@ -1,32 +1,29 @@
 <?php
-require_once "../../config/db.php";
-session_start();
-
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php?error=unauthorized");
-    exit;
-}
+require_once "../../config/init.php";
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
 include "../../includes/header.php";
+nu_band('award', 'Billing', 'Create Subscription Plan', 'Name the plan, set a price and how long it lasts.');
 ?>
 
-<div class="container mt-4">
-  <h2 class="mb-4">Create Subscription Plan</h2>
-  <form action="../../actions/create_plan.php" method="POST">
-    <div class="mb-3">
-      <label for="name" class="form-label">Plan Name</label>
-      <input type="text" class="form-control" id="name" name="name" required>
-    </div>
-    <div class="mb-3">
-      <label for="price" class="form-label">Price (USD)</label>
-      <input type="number" step="0.01" class="form-control" id="price" name="price" required>
-    </div>
-    <div class="mb-3">
-      <label for="duration" class="form-label">Duration (days)</label>
-      <input type="number" class="form-control" id="duration" name="duration" required>
-    </div>
-    <button type="submit" class="btn btn-success">Create Plan</button>
-  </form>
-</div>
+<main class="wrap-sm page-body">
+  <div class="card card-pad" data-reveal>
+    <form action="../../actions/create_plan.php" method="POST">
+      <div class="form-grid">
+        <label class="field span-2" for="name"><span class="label">Plan Name</span>
+          <input type="text" class="input" id="name" name="name" placeholder="e.g. Seasonal Pro" required></label>
+        <label class="field" for="price"><span class="label">Price (USD)</span>
+          <input type="number" step="0.01" class="input" id="price" name="price" required></label>
+        <label class="field" for="duration"><span class="label">Duration (days)</span>
+          <input type="number" class="input" id="duration" name="duration" required></label>
+      </div>
+      <div class="row-flex mt-6">
+        <button type="submit" class="btn btn-primary"><?= nu_icon('plus-lg') ?> Create Plan</button>
+        <a class="btn btn-ghost" href="subscriptions.php">Cancel</a>
+      </div>
+    </form>
+  </div>
+</main>
 
 <?php include "../../includes/footer.php"; ?>

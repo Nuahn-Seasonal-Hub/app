@@ -955,3 +955,11 @@ details.more[open] > .roles { margin-top: var(--s3); animation: fade-up var(--d3
 @media print { .topnav, .tabbar, .site-footer, .toasts { display: none !important; } }
 [data-theme="dark"] .job-card__logo { background: var(--navy-600); }
 [data-theme="dark"] .band { background: radial-gradient(1200px 400px at 85% -10%, rgba(51,116,255,.35), transparent 60%), linear-gradient(160deg, #0A1A3F 0%, #081536 100%); }
+
+/* Native dialogs (admin drill-down) */
+dialog { color: var(--ink); background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-lg, 0 30px 80px rgba(4,13,38,.35)); padding: 0; }
+dialog.card-pad { padding: 24px; }
+dialog::backdrop { background: rgba(4, 13, 38, .55); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+dialog[open] { animation: nu-pop .24s var(--ease-out, ease-out); }
+@keyframes nu-pop { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { dialog[open] { animation: none; } }

@@ -1,38 +1,41 @@
 <?php
-require_once "../../config/db.php";
-session_start();
-
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php?error=unauthorized");
-    exit;
-}
+require_once "../../config/init.php";
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
 $id = $_GET['id'] ?? null;
 $stmt = $pdo->prepare("SELECT * FROM plans WHERE id = ?");
 $stmt->execute([$id]);
 $plan = $stmt->fetch();
 
+if (!$plan) {
+    flashError("That plan doesn't exist.", 'toast');
+    header("Location: subscriptions.php");
+    exit;
+}
+
 include "../../includes/header.php";
+nu_band('award', 'Billing', 'Edit Subscription Plan', 'Changes apply to new subscriptions.');
 ?>
 
-<div class="container mt-4">
-  <h2 class="mb-4">Edit Subscription Plan</h2>
-  <form action="../../actions/edit_plan.php" method="POST">
-    <input type="hidden" name="id" value="<?php echo $plan['id']; ?>">
-    <div class="mb-3">
-      <label for="name" class="form-label">Plan Name</label>
-      <input type="text" class="form-control" id="name" name="name" value="<?php echo $plan['name']; ?>" required>
-    </div>
-    <div class="mb-3">
-      <label for="price" class="form-label">Price (USD)</label>
-      <input type="number" step="0.01" class="form-control" id="price" name="price" value="<?php echo $plan['price']; ?>" required>
-    </div>
-    <div class="mb-3">
-      <label for="duration" class="form-label">Duration (days)</label>
-      <input type="number" class="form-control" id="duration" name="duration" value="<?php echo $plan['duration']; ?>" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Update Plan</button>
-  </form>
-</div>
+<main class="wrap-sm page-body">
+  <div class="card card-pad" data-reveal>
+    <form action="../../actions/edit_plan.php" method="POST">
+      <input type="hidden" name="id" value="<?= (int) $plan['id'] ?>">
+      <div class="form-grid">
+        <label class="field span-2" for="name"><span class="label">Plan Name</span>
+          <input type="text" class="input" id="name" name="name" value="<?= htmlspecialchars($plan['name']) ?>" required></label>
+        <label class="field" for="price"><span class="label">Price (USD)</span>
+          <input type="number" step="0.01" class="input" id="price" name="price" value="<?= htmlspecialchars($plan['price']) ?>" required></label>
+        <label class="field" for="duration"><span class="label">Duration (days)</span>
+          <input type="number" class="input" id="duration" name="duration" value="<?= (int) $plan['duration'] ?>" required></label>
+      </div>
+      <div class="row-flex mt-6">
+        <button type="submit" class="btn btn-primary"><?= nu_icon('check2') ?> Update Plan</button>
+        <a class="btn btn-ghost" href="subscriptions.php">Cancel</a>
+      </div>
+    </form>
+  </div>
+</main>
 
 <?php include "../../includes/footer.php"; ?>

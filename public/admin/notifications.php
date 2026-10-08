@@ -1,41 +1,36 @@
 <?php
-require_once "../../config/db.php";
-session_start();
-
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php?error=unauthorized");
-    exit;
-}
+require_once "../../config/init.php";
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
 include "../../includes/header.php";
+nu_band('bell', 'Messaging', 'Admin Notification Control Panel', 'Send a notice to everyone or to one group of users.',
+    '<a class="btn btn-glass" href="notifications_history.php">' . nu_icon('clock') . ' History</a><a class="btn btn-light" href="notifications_analytics.php">' . nu_icon('bar-chart-line') . ' Analytics</a>');
 ?>
 
-<div class="container mt-4">
-  <h2 class="mb-4">Admin Notification Control Panel</h2>
-  <form action="../../actions/send_notification.php" method="POST">
-    <div class="mb-3">
-      <label for="subject" class="form-label">Subject</label>
-      <input type="text" class="form-control" id="subject" name="subject" required>
-    </div>
-    <div class="mb-3">
-      <label for="message" class="form-label">Message</label>
-      <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Recipients</label>
-      <select class="form-select" name="recipient_group" required>
-        <option value="all">All Users</option>
-        <option value="admin">Admins</option>
-        <option value="provider">Providers</option>
-        <option value="client">Clients</option>
-      </select>
-    </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" name="override" id="override">
-      <label class="form-check-label" for="override">Override user preferences (critical alert)</label>
-    </div>
-    <button type="submit" class="btn btn-danger mt-3">Send Notification</button>
-  </form>
-</div>
+<main class="wrap-sm page-body">
+  <div class="card card-pad" data-reveal>
+    <form action="../../actions/send_notification.php" method="POST">
+      <div class="form-grid">
+        <label class="field span-2" for="subject"><span class="label">Subject</span>
+          <input type="text" class="input" id="subject" name="subject" required></label>
+        <label class="field span-2" for="message"><span class="label">Message</span>
+          <textarea class="input" id="message" name="message" rows="4" required></textarea></label>
+        <label class="field span-2"><span class="label">Recipients</span>
+          <select class="input" name="recipient_group" required>
+            <option value="all">All Users</option>
+            <option value="manager">Managers</option>
+            <option value="provider">Providers</option>
+            <option value="client">Clients</option>
+          </select></label>
+        <label class="form-check span-2" for="override">
+          <input class="form-check-input" type="checkbox" name="override" id="override">
+          <span>Override user preferences (critical alert)</span>
+        </label>
+      </div>
+      <button type="submit" class="btn btn-danger mt-6"><?= nu_icon('send') ?> Send Notification</button>
+    </form>
+  </div>
+</main>
 
 <?php include "../../includes/footer.php"; ?>

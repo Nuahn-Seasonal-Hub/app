@@ -1,115 +1,94 @@
 <?php
-require_once "../../config/db.php";
-//session_start();
-require_once("../includes/auth.php");
-requireLogin('admin');
+require_once "../../config/init.php";
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
-// Admin-only content
+$totalUsers     = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+$totalProviders = $pdo->query("SELECT COUNT(*) FROM users WHERE role='provider'")->fetchColumn();
+$totalJobs      = $pdo->query("SELECT COUNT(*) FROM jobs")->fetchColumn();
+$suspended      = $pdo->query("SELECT COUNT(*) FROM users WHERE status='suspended'")->fetchColumn();
 
-// Ensure only admins/superadmins can access
-if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin','superadmin'])) {
-    header("Location: ../login.php?error=unauthorized");
-    exit;
-}
+// Recent activity: staff actions (activity_logs) plus the marketplace audit trail (audit_logs).
+$recent = $pdo->query("
+    SELECT u.name, a.action, a.created_at
+    FROM (
+        SELECT user_id, action, created_at FROM activity_logs
+        UNION ALL
+        SELECT target_user_id AS user_id, action, `timestamp` AS created_at FROM audit_logs WHERE target_user_id IS NOT NULL
+    ) a
+    JOIN users u ON a.user_id = u.id
+    ORDER BY a.created_at DESC LIMIT 10
+")->fetchAll();
 
 include "../../includes/header.php";
+
+nu_band('speedometer2', ucfirst($_SESSION['role']) . ' tools', 'Admin overview', 'Accounts, jobs and the latest activity across the platform.',
+    '<a class="btn btn-glass" href="manage_users.php">' . nu_icon('people') . ' Users</a><a class="btn btn-light" href="../dashboard.php">' . nu_icon('bar-chart-line') . ' Dashboard</a>');
 ?>
 
-<div class="container mt-4">
-  <h2 class="mb-4">Admin Dashboard</h2>
-
-  <!-- Metrics Cards -->
-  <div class="row g-4">
-    <div class="col-md-3">
-      <div class="card text-bg-primary h-100 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title"><i class="bi bi-people"></i> Users</h5>
-          <p class="card-text">Total: <?php echo $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn(); ?></p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-bg-success h-100 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title"><i class="bi bi-briefcase"></i> Providers</h5>
-          <p class="card-text">Total: <?php echo $pdo->query("SELECT COUNT(*) FROM users WHERE role='provider'")->fetchColumn(); ?></p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-bg-warning h-100 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title"><i class="bi bi-card-list"></i> Jobs</h5>
-          <p class="card-text">Total: <?php echo $pdo->query("SELECT COUNT(*) FROM jobs")->fetchColumn(); ?></p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-bg-danger h-100 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title"><i class="bi bi-person-x"></i> Suspended Accounts</h5>
-          <p class="card-text">Total: <?php echo $pdo->query("SELECT COUNT(*) FROM users WHERE status='suspended'")->fetchColumn(); ?></p>
-        </div>
-      </div>
-    </div>
+<main class="wrap page-body">
+  <div class="grid grid-stats">
+    <div class="stat" data-reveal style="--i:0"><span class="stat__icon stat__icon--navy"><?= nu_icon('people-fill') ?></span><div><div class="stat__label">Users</div><div class="stat__value" data-count="<?= (int) $totalUsers ?>"><?= (int) $totalUsers ?></div></div></div>
+    <div class="stat" data-reveal style="--i:1"><span class="stat__icon stat__icon--success"><?= nu_icon('person-badge') ?></span><div><div class="stat__label">Providers</div><div class="stat__value" data-count="<?= (int) $totalProviders ?>"><?= (int) $totalProviders ?></div></div></div>
+    <div class="stat" data-reveal style="--i:2"><span class="stat__icon stat__icon--warning"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Jobs</div><div class="stat__value" data-count="<?= (int) $totalJobs ?>"><?= (int) $totalJobs ?></div></div></div>
+    <div class="stat" data-reveal style="--i:3"><span class="stat__icon stat__icon--danger"><?= nu_icon('x-circle') ?></span><div><div class="stat__label">Suspended accounts</div><div class="stat__value" data-count="<?= (int) $suspended ?>"><?= (int) $suspended ?></div></div></div>
   </div>
 
-  <hr class="my-4">
-
-  <!-- Admin Tools Section -->
-  <h4>Admin Tools</h4>
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <a href="manage_users.php" class="btn btn-outline-primary w-100">
-        <i class="bi bi-person-gear"></i> Manage Users
-      </a>
-    </div>
-    <div class="col-md-3">
-      <a href="manage_jobs.php" class="btn btn-outline-success w-100">
-        <i class="bi bi-briefcase-fill"></i> Manage Jobs
-      </a>
-    </div>
-    <div class="col-md-3">
-      <a href="system_settings.php" class="btn btn-outline-warning w-100">
-        <i class="bi bi-gear"></i> System Settings
-      </a>
-    </div>
-    <div class="col-md-3">
-      <a href="reports.php" class="btn btn-outline-danger w-100">
-        <i class="bi bi-bar-chart"></i> Reports
-      </a>
-    </div>
+  <div class="section-title"><h2>Admin tools</h2></div>
+  <div class="grid grid-3">
+    <a class="tile" href="manage_users.php" data-reveal style="--i:0">
+      <span class="tile__icon tile__icon--navy"><?= nu_icon('people') ?></span>
+      <span><span class="tile__title" style="display:block">Manage users</span><span class="tile__text">Search everyone by name, email, role or status.</span></span>
+      <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+    </a>
+    <a class="tile" href="../manage_applications.php" data-reveal style="--i:1">
+      <span class="tile__icon"><?= nu_icon('clipboard-check') ?></span>
+      <span><span class="tile__title" style="display:block">Applications</span><span class="tile__text">Approve or reject provider applications.</span></span>
+      <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+    </a>
+    <a class="tile" href="analytics_dashboard.php" data-reveal style="--i:2">
+      <span class="tile__icon tile__icon--soft"><?= nu_icon('graph-up-arrow') ?></span>
+      <span><span class="tile__title" style="display:block">Analytics</span><span class="tile__text">Notifications, subscriptions and activity.</span></span>
+      <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+    </a>
+    <a class="tile" href="subscriptions.php" data-reveal style="--i:3">
+      <span class="tile__icon tile__icon--soft"><?= nu_icon('award') ?></span>
+      <span><span class="tile__title" style="display:block">Subscriptions</span><span class="tile__text">Plans and client subscriptions.</span></span>
+      <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+    </a>
+    <a class="tile" href="notifications.php" data-reveal style="--i:4">
+      <span class="tile__icon"><?= nu_icon('bell') ?></span>
+      <span><span class="tile__title" style="display:block">Notifications</span><span class="tile__text">Send a notice to a group of users.</span></span>
+      <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+    </a>
+<?php if (isRole('superadmin')): ?>
+    <a class="tile" href="manage_admins.php" data-reveal style="--i:5">
+      <span class="tile__icon tile__icon--navy"><?= nu_icon('shield-check') ?></span>
+      <span><span class="tile__title" style="display:block">Manage staff</span><span class="tile__text">Promote managers and add team accounts.</span></span>
+      <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+    </a>
+<?php endif; ?>
   </div>
 
-  <hr class="my-4">
-
-  <!-- Recent Activity -->
-  <h4>Recent Activity</h4>
-  <table class="table table-striped table-hover">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Action</th>
-        <th>Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php
-      $stmt = $pdo->query("SELECT u.name, a.action, a.created_at 
-                           FROM activity_logs a 
-                           JOIN users u ON a.user_id = u.id 
-                           ORDER BY a.created_at DESC LIMIT 10");
-      foreach ($stmt as $row) {
-          echo "<tr>
-                  <td>".htmlspecialchars($row['name'])."</td>
-                  <td>".htmlspecialchars($row['action'])."</td>
-                  <td>".htmlspecialchars($row['created_at'])."</td>
-                </tr>";
-      }
-      ?>
-    </tbody>
-  </table>
-  <a href='activity_logs.php' class='btn btn-outline-secondary'>View All Activity</a>
-</div>
+  <div class="section-title"><h2>Recent activity</h2></div>
+<?php if (empty($recent)): ?>
+  <?php nu_empty('clock', 'No activity yet.', 'Actions such as posting, applying and approving will show up here.'); ?>
+<?php else: ?>
+  <div class="table-wrap" data-reveal>
+    <table class="table table--stack">
+      <thead><tr><th>User</th><th>Action</th><th>Date</th></tr></thead>
+      <tbody>
+      <?php foreach ($recent as $row): ?>
+        <tr>
+          <td data-label="User"><strong><?= htmlspecialchars($row['name']) ?></strong></td>
+          <td data-label="Action"><?= htmlspecialchars($row['action']) ?></td>
+          <td class="muted" data-label="Date"><?= nu_e(nu_date($row['created_at'], 'M j, Y · H:i')) ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+<?php endif; ?>
+</main>
 
 <?php include "../../includes/footer.php"; ?>

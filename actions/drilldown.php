@@ -1,6 +1,7 @@
 <?php
-require_once "../config/db.php";
-session_start();
+require_once "../config/init.php";
+// Staff only: superadmin, manager (and legacy admin).
+requireLogin(STAFF_ROLES);
 
 $type = $_GET['type'] ?? '';
 $filter = $_GET['filter'] ?? '';
@@ -19,11 +20,10 @@ if ($type === 'notifications') {
 }
 
 if ($type === 'subscriptions') {
-    $stmt = $pdo->prepare("SELECT u.name, u.email, s.start_date, s.expiry_date, s.status 
+    $stmt = $pdo->prepare("SELECT u.name, u.email, s.start_date, s.end_date AS expiry_date, s.status 
                            FROM subscriptions s 
-                           JOIN users u ON s.user_id=u.id 
-                           JOIN plans p ON s.plan_id=p.id 
-                           WHERE p.name=? ORDER BY s.start_date DESC LIMIT 20");
+                           JOIN users u ON s.client_id=u.id 
+                           WHERE s.plan=? ORDER BY s.start_date DESC LIMIT 20");
     $stmt->execute([$filter]);
     $rows = $stmt->fetchAll();
     echo "<table class='table table-striped'><thead><tr><th>User</th><th>Email</th><th>Start</th><th>Expiry</th><th>Status</th></tr></thead><tbody>";
