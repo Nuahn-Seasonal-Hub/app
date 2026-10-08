@@ -3,170 +3,107 @@
 include "../includes/header.php";
 ?>
 
-<main class="container py-5" style="max-width: 600px;">
-    <h2 class="mb-4 text-center">Register</h2>
+<div class="auth">
+  <?php nu_auth_aside('Join Nuahn in under a minute.', 'Create a free account to post seasonal jobs or find flexible work near you.'); ?>
+  <section class="auth__main">
+    <div class="auth-card">
+      <?php nu_auth_head('Create your account', 'It’s free. Pick how you’ll use Nuahn.', 'stars'); ?>
 
-    <!-- Success & Error Alerts -->
-    <?php if(isset($_GET['success']) && $_GET['success'] === 'registered'): ?>
-        <div class="alert alert-success">Registration successful! You can now log in.</div>
-    <?php endif; ?>
+      <!-- Success & Error Alerts -->
+      <?php if(isset($_GET['success']) && $_GET['success'] === 'registered'): ?>
+        <div class="alert alert-success"><?= nu_icon('check-circle-fill') ?> Registration successful! You can now log in.</div>
+      <?php endif; ?>
 
-    <?php if(isset($_GET['error'])): ?>
+      <?php if(isset($_GET['error'])): ?>
         <?php if($_GET['error'] === 'email_taken'): ?>
-            <div class="alert alert-danger">This email is already registered.</div>
+          <div class="alert alert-danger"><?= nu_icon('x-circle') ?> This email is already registered.</div>
         <?php elseif($_GET['error'] === 'weak_password' && isset($_SESSION['register_errors'])): ?>
-            <div class="alert alert-danger">
-                <strong>Password requirements not met:</strong>
-                <ul class="mb-0">
-                    <?php foreach($_SESSION['register_errors'] as $err): ?>
-                        <li><?php echo htmlspecialchars($err); ?></li>
-                    <?php endforeach; ?>
-                </ul>
+          <div class="alert alert-danger">
+            <div><strong>Password requirements not met:</strong>
+              <ul class="mb-0">
+                <?php foreach($_SESSION['register_errors'] as $err): ?>
+                  <li><?php echo htmlspecialchars($err); ?></li>
+                <?php endforeach; ?>
+              </ul>
             </div>
-            <?php unset($_SESSION['register_errors']); ?>
+          </div>
+          <?php unset($_SESSION['register_errors']); ?>
         <?php elseif($_GET['error'] === 'nomatch'): ?>
-            <div class="alert alert-danger">Passwords do not match.</div>
+          <div class="alert alert-danger"><?= nu_icon('x-circle') ?> Passwords do not match.</div>
         <?php endif; ?>
-    <?php endif; ?>
+      <?php endif; ?>
 
-    <!-- Registration Form -->
-    <div class="card shadow-lg border-0">
-        <div class="card-body p-4">
-            <form action="../actions/register.php" method="POST">
-                <div class="mb-3">
-                    <label for="name" class="form-label fw-semibold">Full Name</label>
-                    <input type="text" class="form-control form-control-lg" id="name" name="name" required>
-                </div>
+      <!-- Registration Form -->
+      <form action="../actions/register.php" method="POST" class="auth-form" id="registerForm">
+        <fieldset class="field" style="border:0;padding:0;margin:0 0 var(--s5)">
+          <legend class="label">I want to</legend>
+          <div class="roles">
+            <label class="role-opt"><input type="radio" name="role" value="client" checked><span><?= nu_icon('briefcase-fill') ?> Hire help</span></label>
+            <label class="role-opt"><input type="radio" name="role" value="provider"><span><?= nu_icon('person-badge') ?> Find work</span></label>
+          </div>
+        </fieldset>
 
-                <div class="mb-3">
-                    <label for="email" class="form-label fw-semibold">Email</label>
-                    <input type="email" class="form-control form-control-lg" id="email" name="email" required>
-                </div>
+        <label class="field" for="name"><span class="label">Full name</span>
+          <span class="input-icon"><?= nu_icon('person') ?><input type="text" class="input" id="name" name="name" placeholder="Jane Doe" autocomplete="name" required></span>
+        </label>
 
-                <!-- Password with strength + toggle + popover -->
-                <div class="mb-3 position-relative">
-                    <label for="password" class="form-label fw-semibold">Password</label>
-                    <div class="input-group">
-                        <input type="password" class="form-control form-control-lg" id="password" name="password"
-                               data-bs-toggle="popover" data-bs-trigger="focus"
-                               data-bs-content="At least 8 characters, uppercase, lowercase, number, and symbol." required>
-                        <button type="button" class="btn btn-outline-secondary" id="togglePassword">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
-                    <div class="progress mt-2" style="height: 6px;">
-                        <div id="password-strength" class="progress-bar" role="progressbar"></div>
-                    </div>
-                </div>
+        <label class="field" for="email"><span class="label">Email</span>
+          <span class="input-icon"><?= nu_icon('envelope') ?><input type="email" class="input" id="email" name="email" placeholder="you@example.com" autocomplete="email" required></span>
+        </label>
 
-                <!-- Confirm password with toggle + live check -->
-                <div class="mb-3 position-relative">
-                    <label for="confirm_password" class="form-label fw-semibold">Confirm Password</label>
-                    <div class="input-group">
-                        <input type="password" class="form-control form-control-lg" id="confirm_password" name="confirm_password" required>
-                        <button type="button" class="btn btn-outline-secondary" id="toggleConfirm">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
-                    <small id="matchMessage" class="form-text"></small>
-                </div>
-
-                <div class="mb-3">
-                    <label for="role" class="form-label fw-semibold">Role</label>
-                    <select class="form-select form-select-lg" id="role" name="role">
-                        <option value="client">Client</option>
-                        <option value="provider">Provider</option>
-                    </select>
-                </div>
-
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-success btn-lg">Register</button>
-                </div>
-            </form>
+        <!-- Password with strength + toggle -->
+        <div class="field">
+          <?php nu_password_field('password', 'password', 'Password', 'new-password', 'aria-describedby="pw-reqs"'); ?>
+          <div class="meter" aria-hidden="true" style="margin-top:-10px"><span id="password-strength"></span></div>
+          <ul class="reqs" id="pw-reqs">
+            <li id="req-length">8+ characters</li>
+            <li id="req-upper">Uppercase</li>
+            <li id="req-lower">Lowercase</li>
+            <li id="req-number">Number</li>
+            <li id="req-symbol">Symbol</li>
+          </ul>
         </div>
-    </div>
 
-    <p class="mt-3 text-center">
-        Already have an account? <a href="login.php" class="fw-bold">Login here</a>
-    </p>
-</main>
+        <!-- Confirm password with toggle + live check -->
+        <?php nu_password_field('confirm_password', 'confirm_password', 'Confirm password', 'new-password'); ?>
+        <p id="matchMessage" class="hint" style="margin-top:-12px;min-height:1.2em"></p>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Create account <?= nu_icon('arrow-right') ?></button>
+      </form>
+
+      <p class="auth-alt">Already have an account? <a href="login.php">Sign in</a></p>
+    </div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var pw = document.getElementById('password');
+    var cf = document.getElementById('confirm_password');
+    var bar = document.getElementById('password-strength');
+    var msg = document.getElementById('matchMessage');
+    var rules = [
+      ['req-length', function (v) { return v.length >= 8; }],
+      ['req-upper', function (v) { return /[A-Z]/.test(v); }],
+      ['req-lower', function (v) { return /[a-z]/.test(v); }],
+      ['req-number', function (v) { return /[0-9]/.test(v); }],
+      ['req-symbol', function (v) { return /[^A-Za-z0-9]/.test(v); }]
+    ];
+    function strength() {
+      var v = pw.value, s = 0;
+      rules.forEach(function (r) { var ok = r[1](v); if (ok) s++; document.getElementById(r[0]).classList.toggle('ok', ok); });
+      bar.style.width = (s * 20) + '%';
+      bar.style.background = s <= 2 ? 'var(--danger)' : (s <= 4 ? 'var(--warning)' : 'var(--success)');
+    }
+    function match() {
+      if (!cf.value) { msg.textContent = ''; return; }
+      var ok = cf.value === pw.value;
+      msg.textContent = ok ? '✓ Passwords match' : 'Passwords do not match';
+      msg.style.color = ok ? 'var(--success)' : 'var(--danger)';
+    }
+    pw.addEventListener('input', function () { strength(); match(); });
+    cf.addEventListener('input', match);
+  })();
+</script>
 
 <?php include "../includes/footer.php"; ?>
-
-<!-- Scripts -->
-<script>
-  const passwordInput = document.getElementById('password');
-  const confirmInput = document.getElementById('confirm_password');
-  const strengthBar = document.getElementById('password-strength');
-  const matchMessage = document.getElementById('matchMessage');
-  const togglePassword = document.getElementById('togglePassword');
-  const toggleConfirm = document.getElementById('toggleConfirm');
-
-  // Initialize Bootstrap popover
-  const popover = new bootstrap.Popover(passwordInput, {
-    html: true,
-    content: `
-      <ul class="mb-0">
-        <li id="req-length">❌ At least 8 characters</li>
-        <li id="req-upper">❌ Uppercase letter</li>
-        <li id="req-lower">❌ Lowercase letter</li>
-        <li id="req-number">❌ Number</li>
-        <li id="req-symbol">❌ Symbol</li>
-      </ul>
-    `
-  });
-
-  // Password strength + requirement check
-  passwordInput.addEventListener('input', () => {
-    const val = passwordInput.value;
-    let strength = 0;
-
-    document.getElementById('req-length').textContent = val.length >= 8 ? "✅ At least 8 characters" : "❌ At least 8 characters";
-    document.getElementById('req-upper').textContent = /[A-Z]/.test(val) ? "✅ Uppercase letter" : "❌ Uppercase letter";
-    document.getElementById('req-lower').textContent = /[a-z]/.test(val) ? "✅ Lowercase letter" : "❌ Lowercase letter";
-    document.getElementById('req-number').textContent = /[0-9]/.test(val) ? "✅ Number" : "❌ Number";
-    document.getElementById('req-symbol').textContent = /[^A-Za-z0-9]/.test(val) ? "✅ Symbol" : "❌ Symbol";
-
-    if (val.length >= 8) strength++;
-    if (/[A-Z]/.test(val)) strength++;
-    if (/[a-z]/.test(val)) strength++;
-    if (/[0-9]/.test(val)) strength++;
-    if (/[^A-Za-z0-9]/.test(val)) strength++;
-
-    strengthBar.style.width = (strength * 20) + "%";
-    strengthBar.className = "progress-bar";
-    if (strength <= 2) strengthBar.classList.add("bg-danger");
-    else if (strength <= 4) strengthBar.classList.add("bg-warning");
-    else strengthBar.classList.add("bg-success");
-  });
-
-  // Confirm password live check
-  function checkMatch() {
-    if (confirmInput.value === "") {
-      matchMessage.textContent = "";
-      return;
-    }
-    if (confirmInput.value === passwordInput.value) {
-      matchMessage.textContent = "✅ Passwords match";
-      matchMessage.style.color = "green";
-    } else {
-      matchMessage.textContent = "❌ Passwords do not match";
-      matchMessage.style.color = "red";
-    }
-  }
-  passwordInput.addEventListener('input', checkMatch);
-  confirmInput.addEventListener('input', checkMatch);
-
-  // Show/hide toggles
-  togglePassword.addEventListener('click', () => {
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
-    togglePassword.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-  });
-
-  toggleConfirm.addEventListener('click', () => {
-    const type = confirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    confirmInput.setAttribute('type', type);
-    toggleConfirm.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-  });
-</script>

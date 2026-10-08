@@ -10,64 +10,60 @@ if (isset($_SESSION['user_id'])) {
 }
 ?>
 
-<main class="container py-5" style="max-width: 500px;">
-    <h2 class="mb-4 text-center">Login</h2>
+<div class="auth">
+  <?php nu_auth_aside('Welcome back to Nuahn.', 'Sign in to post jobs, track applications and find seasonal work near you.'); ?>
+  <section class="auth__main">
+    <div class="auth-card">
+      <?php nu_auth_head('Sign in', 'Choose how you use Nuahn, then enter your details.', 'person-circle'); ?>
 
-    <!-- Flash Messages -->
-    <?php if (isset($_GET['success'])): ?>
+      <!-- Flash Messages -->
+      <?php if (isset($_GET['success'])): ?>
         <?php if ($_GET['success'] === 'registered'): ?>
-            <div class="alert alert-success text-center">Registration successful! Please log in.</div>
-        <?php elseif ($_GET['success'] === 'loggedout'): ?>
-            <div class="alert alert-info text-center">You’ve been logged out successfully.</div>
+          <div class="alert alert-success"><?= nu_icon('check-circle-fill') ?> Registration successful! Please log in.</div>
+        <?php elseif ($_GET['success'] === 'loggedout' || $_GET['success'] === 'logged_out'): ?>
+          <div class="alert alert-info"><?= nu_icon('check-circle-fill') ?> You’ve been logged out successfully.</div>
         <?php endif; ?>
-    <?php endif; ?>
+      <?php endif; ?>
 
-    <?php if (isset($_GET['error'])): ?>
+      <?php if (isset($_GET['error']) && empty($nuFlashes)): ?>
         <?php if ($_GET['error'] === 'invalid'): ?>
-            <div class="alert alert-danger text-center">Invalid email or password.</div>
+          <div class="alert alert-danger"><?= nu_icon('x-circle') ?> Invalid email or password.</div>
         <?php elseif ($_GET['error'] === 'unauthorized'): ?>
-            <div class="alert alert-warning text-center">You must log in to access that page.</div>
+          <div class="alert alert-warning"><?= nu_icon('lock') ?> You must log in to access that page.</div>
         <?php elseif ($_GET['error'] === 'suspended'): ?>
-            <div class="alert alert-danger text-center">Your account has been suspended. Contact support.</div>
+          <div class="alert alert-danger"><?= nu_icon('x-circle') ?> Your account has been suspended. Contact support.</div>
         <?php endif; ?>
-    <?php endif; ?>
+      <?php endif; ?>
 
-    <!-- Login Form -->
-    <div class="card shadow">
-        <div class="card-body">
-            <form method="POST" action="../actions/login_action.php">
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email address</label>
-                    <input type="email" name="email" id="email" class="form-control" required autofocus>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" name="password" id="password" class="form-control" required>
-                </div>
+      <!-- Login Form -->
+      <form method="POST" action="../actions/login_action.php" class="auth-form">
+        <fieldset class="field" style="border:0;padding:0;margin:0 0 var(--s5)">
+          <legend class="label">I’m signing in as</legend>
+          <div class="roles">
+            <label class="role-opt"><input type="radio" name="role" value="client" required><span><?= nu_icon('briefcase-fill') ?> Client</span></label>
+            <label class="role-opt"><input type="radio" name="role" value="provider"><span><?= nu_icon('person-badge') ?> Provider</span></label>
+          </div>
+          <details class="more">
+            <summary><?= nu_icon('chevron-right') ?> Team member?</summary>
+            <div class="roles roles--3 roles--sm">
+              <label class="role-opt"><input type="radio" name="role" value="manager"><span>Manager</span></label>
+              <label class="role-opt"><input type="radio" name="role" value="admin"><span>Admin</span></label>
+              <label class="role-opt"><input type="radio" name="role" value="superadmin"><span>Superadmin</span></label>
+            </div>
+          </details>
+        </fieldset>
 
-                <!-- Optional: Role dropdown if you want to enforce role at login -->
-                <div class="mb-3">
-                    <label for="role" class="form-label">Login as</label>
-                    <select name="role" id="role" class="form-select" required>
-                        <option value="">Select role...</option>
-                        <option value="client">Client</option>
-                        <option value="provider">Provider</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
-                        <option value="superadmin">Superadmin</option>
-                    </select>
-                </div>
+        <label class="field" for="email"><span class="label">Email address</span>
+          <span class="input-icon"><?= nu_icon('envelope') ?><input type="email" name="email" id="email" class="input" placeholder="you@example.com" autocomplete="email" required autofocus></span>
+        </label>
+        <?php nu_password_field('password', 'password', 'Password'); ?>
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Login</button>
-                </div>
-            </form>
-        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Sign in <?= nu_icon('arrow-right') ?></button>
+      </form>
+
+      <p class="auth-alt">Don’t have an account? <a href="register.php">Create one free</a></p>
     </div>
-
-    <p class="mt-3 text-center">
-        Don’t have an account? <a href="auth.php">Register here</a>
-    </p>
-</main>
+  </section>
+</div>
 
 <?php include_once("../includes/footer.php"); ?>

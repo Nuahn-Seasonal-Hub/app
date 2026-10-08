@@ -25,23 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<main class="container py-5">
-  <h2 class="mb-4">Register as Manager</h2>
-  <form method="POST">
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input type="text" name="name" class="form-control" required>
+<div class="auth">
+  <?php nu_auth_aside(); ?>
+  <section class="auth__main">
+    <div class="auth-card">
+      <?php nu_auth_head('Add a manager', 'Create a new manager account. Superadmin only.', 'shield-check', true); ?>
+      <?php nu_register_form(); ?>
+      
     </div>
-    <div class="mb-3">
-      <label class="form-label">Email</label>
-      <input type="email" name="email" class="form-control" required>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-  </form>
-</main>
+  </section>
+</div>
 
 <?php include_once("../includes/footer.php"); ?>

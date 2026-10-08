@@ -16,23 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<main class="container py-5">
-  <h2 class="mb-4">Register as Client</h2>
-  <form method="POST">
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input type="text" name="name" class="form-control" required>
+<div class="auth">
+  <?php nu_auth_aside(); ?>
+  <section class="auth__main">
+    <div class="auth-card">
+      <?php nu_auth_head('Join as a client', 'Post seasonal jobs and hire trusted providers.', 'briefcase-fill', false); ?>
+      <?php nu_register_form(); ?>
+      <p class="auth-alt">Looking for work instead? <a href="register_provider.php">Join as a provider</a> · <a href="login_client.php">Sign in</a></p>
     </div>
-    <div class="mb-3">
-      <label class="form-label">Email</label>
-      <input type="email" name="email" class="form-control" required>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-  </form>
-</main>
+  </section>
+</div>
 
 <?php include_once("../includes/footer.php"); ?>

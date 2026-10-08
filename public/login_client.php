@@ -26,22 +26,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<main class="container py-5" style="max-width: 500px;">
-  <h2 class="mb-4 text-center">Client Login</h2>
-  <?php if (isset($_GET['error']) && $_GET['error'] === 'invalid'): ?>
-    <div class="alert alert-danger text-center">Invalid email or password.</div>
-  <?php endif; ?>
-  <form method="POST" action="login_client.php">
-    <div class="mb-3">
-      <label class="form-label">Email</label>
-      <input type="email" name="email" class="form-control" required autofocus>
+<div class="auth">
+  <?php nu_auth_aside(); ?>
+  <section class="auth__main">
+    <div class="auth-card">
+      <?php nu_auth_head('Client sign in', 'Welcome back. Manage your seasonal jobs and applicants.', 'briefcase-fill', false); ?>
+    <?php if (isset($_GET['error']) && $_GET['error'] === 'invalid' && empty($nuFlashes)): ?>
+      <div class="alert alert-danger"><?= nu_icon('x-circle') ?> Invalid email or password.</div>
+    <?php endif; ?>
+      <?php nu_login_form('login_client.php'); ?>
+      <div class="divider">Other sign-in options</div>
+      <div class="role-links"><a class="btn btn-outline btn-sm" href="login_provider.php">Provider</a><a class="btn btn-outline btn-sm" href="login_admin.php">Team</a></div>
+      <p class="auth-alt">New to Nuahn? <a href="register_client.php">Create a client account</a></p>
     </div>
-    <div class="mb-3">
-      <label class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary w-100">Login</button>
-  </form>
-</main>
+  </section>
+</div>
 
 <?php include_once("../includes/footer.php"); ?>

@@ -25,19 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<main class="container py-5">
-  <h2 class="mb-4 text-center">Super Admin Login</h2>
-  <form method="POST" class="mx-auto" style="max-width: 400px;">
-    <div class="mb-3">
-      <label class="form-label">Email</label>
-      <input type="email" name="email" class="form-control" required>
+<div class="auth">
+  <?php nu_auth_aside(); ?>
+  <section class="auth__main">
+    <div class="auth-card">
+      <?php nu_auth_head('Superadmin sign in', 'Restricted access for superadmins.', 'shield-check', true); ?>
+      <?php nu_login_form(null); ?>
+      <div class="divider">Other sign-in options</div>
+      <div class="role-links"><a class="btn btn-outline btn-sm" href="login_admin.php">Team</a><a class="btn btn-outline btn-sm" href="login.php">All roles</a></div>
+      
     </div>
-    <div class="mb-3">
-      <label class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary w-100">Login</button>
-  </form>
-</main>
+  </section>
+</div>
 
 <?php include_once("../includes/footer.php"); ?>
