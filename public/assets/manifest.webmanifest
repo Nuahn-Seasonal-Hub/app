@@ -1,0 +1,14 @@
+{
+  "name": "Nuahn Seasonal Hub",
+  "short_name": "Nuahn",
+  "description": "Seasonal jobs marketplace: post jobs, apply and hire in minutes.",
+  "start_url": "/public/index.php",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F8FE",
+  "theme_color": "#0A1A3F",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

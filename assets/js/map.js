@@ -1,13 +1,16 @@
-// assets/js/map.js
+// assets/js/map.js — Leaflet helpers shared by the job pages.
+
+var NUAHN_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 // Initialize a map with optional click-to-select behavior
 function initMap(mapId, options = {}) {
     const { lat = 5.6037, lng = -0.1870, zoom = 12, selectable = false, onSelect } = options;
 
-    const map = L.map(mapId).setView([lat, lng], zoom);
+    const map = L.map(mapId, { scrollWheelZoom: false }).setView([lat, lng], zoom);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+    L.tileLayer(NUAHN_TILES, {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
     }).addTo(map);
 
     let marker;
@@ -44,5 +47,22 @@ function reverseGeocode(lat, lng, callback) {
             if (typeof callback === 'function') {
                 callback(data.display_name || '');
             }
-        });
+        })
+        .catch(() => {});
+}
+
+// Create a small read-only map on demand from data-lat/data-lng/data-title attributes.
+function lazyMap(mapId) {
+    const el = document.getElementById(mapId);
+    if (!el || el._nuahnMap || typeof L === 'undefined') {
+        if (el && el._nuahnMap) setTimeout(() => el._nuahnMap.invalidateSize(), 50);
+        return el ? el._nuahnMap : null;
+    }
+    const lat = parseFloat(el.dataset.lat), lng = parseFloat(el.dataset.lng);
+    if (isNaN(lat) || isNaN(lng)) return null;
+    const map = initMap(mapId, { lat, lng, zoom: 13 });
+    addMarker(map, lat, lng, el.dataset.title || null);
+    el._nuahnMap = map;
+    setTimeout(() => map.invalidateSize(), 360);
+    return map;
 }
