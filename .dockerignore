@@ -1,0 +1,25 @@
+# Git / version control
+.git
+.gitignore
+
+# Local secrets — never in image
+config/db.php
+ssl/
+
+# Dev/editor files
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Large uploaded media — use a volume or object storage in prod
+uploads/jobs/*
+
+# Scratch files
+new 1.txt
+nice.php
+*.log
+
+# Docs (not needed in the image)
+README.md
