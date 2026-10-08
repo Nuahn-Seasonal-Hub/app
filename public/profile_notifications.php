@@ -1,6 +1,6 @@
 <?php
 require_once "../config/db.php";
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 $user_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT * FROM notification_preferences WHERE user_id=?");

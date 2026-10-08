@@ -1,6 +1,6 @@
 <?php
 require_once "../config/db.php";
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = htmlspecialchars($_POST['name']);

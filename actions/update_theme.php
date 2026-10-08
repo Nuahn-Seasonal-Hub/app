@@ -1,6 +1,6 @@
 <?php
 require_once "../config/db.php";
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 if (isset($_POST['theme']) && isset($_SESSION['user_id'])) {
     $theme = $_POST['theme'] === 'dark' ? 'dark' : 'light';

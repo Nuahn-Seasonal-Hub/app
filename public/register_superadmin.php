@@ -1,12 +1,8 @@
 <?php
 require_once("../config/init.php");
+// Only superadmins can create staff accounts (others are sent to their own home).
+requireLogin('superadmin');
 include_once("../includes/header.php");
-requireLogin();
-if ($_SESSION['role'] !== 'superadmin') {
-    flashError("Unauthorized access.");
-    header("Location: /Nuahn/public/login.php?error=unauthorized");
-    exit;
-}
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

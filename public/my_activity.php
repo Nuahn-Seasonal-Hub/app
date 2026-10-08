@@ -1,6 +1,6 @@
 <?php
 // public/my_activity.php - Provider Activity Dashboard
-session_start();
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once("../config/db.php");
 require_once("../includes/auth.php");
 include_once("../includes/header.php");

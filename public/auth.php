@@ -46,7 +46,7 @@ include_once("../includes/header.php");
       <h3>Management</h3>
       <p>Restricted access for managers, admins, and superadmins.</p>
       <a href="login_admin.php" class="btn btn-navy btn-block">Team sign in</a>
-      <?php if (isset($_SESSION['role']) === 'superadmin'): ?>
+      <?php if (isRole('superadmin')): ?>
         <a href="register_admin.php" class="btn btn-outline btn-block">Register Admin/Manager</a>
       <?php endif; ?>
     </div>

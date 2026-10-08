@@ -1,12 +1,8 @@
 <?php
 require_once("../config/init.php");
+// Only superadmins can create staff accounts (others are sent to their own home).
+requireLogin('superadmin');
 include_once("../includes/header.php");
-requireLogin();
-if ($_SESSION['role'] !== 'superadmin') {
-    flashError("Unauthorized access.");
-    header("Location: /Nuahn/public/login.php?error=unauthorized");
-    exit;
-}
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -14,7 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
- $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, created_at) VALUES (?, ?, ?, 'admin', NOW())");
+    // users.role has no 'admin' value (superadmin, manager, client, provider), so admin sign-ups are created as managers.
+    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, created_at) VALUES (?, ?, ?, 'manager', NOW())");
 
     $stmt->execute([$name, $email, $password]);
 

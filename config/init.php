@@ -25,7 +25,7 @@ if (isset($_SESSION['LAST_ACTIVITY'])) {
         // Too long since last activity → logout
         session_unset();
         session_destroy();
-        header("Location: ../public/auth.php?message=timeout");
+        header("Location: " . nu_url("public/auth.php") . "?message=timeout");
         exit;
     }
 }
