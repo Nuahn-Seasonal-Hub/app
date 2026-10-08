@@ -1,0 +1,30 @@
+# ============================================
+# Nuahn Seasonal Hub — .gitignore
+# ============================================
+
+# Sensitive config — copy config/db.example.php and fill in locally
+config/db.php
+
+# SSL certificates
+ssl/
+
+# User-uploaded files (large binary assets)
+uploads/jobs/
+
+# Database dumps at root level
+/*.sql
+
+# Allow the schema file in database/
+!database/*.sql
+
+# Editor/OS files
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*.swo
+
+# Temp/scratch
+new 1.txt
+nice.php
+*.log
