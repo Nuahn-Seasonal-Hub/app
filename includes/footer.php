@@ -1,184 +1,86 @@
 <?php
-// includes/footer.php
+// includes/footer.php — Nuahn Seasonal Hub app shell (closing half).
+require_once __DIR__ . '/ui.php';
+if (!isset($nuPage)) { $nuPage = nu_page_config(); }
+$nuLogged = isset($_SESSION['user_id']);
+$nuNav = nu_nav_items();
 ?>
-<footer class="bg-dark text-white mt-5">
-  <div class="container py-4">
-    <div class="row">
-      <div class="col-md-4">
-        <h5>Nuahn Seasonal Hub</h5>
-        <p class="small">Building scalable, regulator‑ready seasonal job solutions.</p>
+</div><!-- /.app-main -->
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="<?= nu_e(nu_url('public/index.php')) ?>">
+          <img src="<?= nu_asset('public/assets/img/logo-72.webp') ?>" width="36" height="35" alt="" loading="lazy">
+          <span class="brand__name">Nuahn <span>Seasonal Hub</span></span>
+        </a>
+        <p>Trusted seasonal work for clients and providers. Post jobs, apply and hire, all in one place.</p>
       </div>
-      <div class="col-md-4">
-        <h5>Quick Links</h5>
-        <ul class="list-unstyled">
-          <li><a href="../public/contact.php" class="text-white text-decoration-none">Contact</a></li>
-          <li><a href="../public/privacy.php" class="text-white text-decoration-none">Privacy Policy</a></li>
-          <li><a href="../public/help.php" class="text-white text-decoration-none">Help</a></li>
+      <div>
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="<?= nu_e(nu_url('public/jobs.php')) ?>">Seasonal jobs</a></li>
+          <li><a href="<?= nu_e(nu_url('public/index.php#how')) ?>">How it works</a></li>
+          <li><a href="<?= nu_e(nu_url('public/index.php#features')) ?>">Why Nuahn</a></li>
         </ul>
       </div>
-      <div class="col-md-4 text-md-end">
-        <h5>Stay Connected</h5>
-        <p class="small">© <?= date("Y") ?> Nuahn Seasonal Hub. All rights reserved.</p>
+      <div>
+        <h4>Account</h4>
+        <ul>
+<?php if ($nuLogged): ?>
+          <li><a href="<?= nu_e(nu_home_url()) ?>">My home</a></li>
+          <li><a href="<?= nu_e(nu_url('public/profile.php')) ?>">Profile</a></li>
+          <li><a href="<?= nu_e(nu_url('public/logout.php')) ?>" data-no-prefetch>Sign out</a></li>
+<?php else: ?>
+          <li><a href="<?= nu_e(nu_url('public/login.php')) ?>">Sign in</a></li>
+          <li><a href="<?= nu_e(nu_url('public/register.php')) ?>">Create account</a></li>
+          <li><a href="<?= nu_e(nu_url('public/auth.php')) ?>">Choose your role</a></li>
+<?php endif; ?>
+        </ul>
       </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <?= date('Y') ?> Nuahn Seasonal Hub. All rights reserved.</span>
+      <span>Made for every season.</span>
     </div>
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<nav class="tabbar" aria-label="Primary">
+<?php foreach ($nuNav as $item):
+    $active = $item[0] === $nuPage['tab'];
+    $primary = !empty($item[5]); ?>
+  <a class="tab<?= $primary ? ' tab--primary' : '' ?>" href="<?= nu_e($item[2]) ?>"<?= $active ? ' aria-current="page"' : '' ?>>
+    <span class="tab__icon"><?= nu_icon($item[3], 'ic-off') ?><?= nu_icon($item[4], 'ic-on') ?></span>
+    <span><?= nu_e($item[1]) ?></span>
+  </a>
+<?php endforeach; ?>
+</nav>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  const passwordField = document.getElementById("password");
-  const strengthBar = document.createElement("div");
-  strengthBar.className = "progress mt-2";
-  strengthBar.innerHTML = '<div id="strength-meter" class="progress-bar" role="progressbar"></div>';
-  passwordField.parentNode.appendChild(strengthBar);
+<?php if ($nuLogged): ?>
+<div id="user-menu" class="sheet" popover>
+  <div class="sheet__head">
+    <span class="avatar"><?= nu_e(nu_initials($_SESSION['user_name'] ?? 'U')) ?></span>
+    <div><div class="sheet__name"><?= nu_e($_SESSION['user_name'] ?? 'Account') ?></div><div class="sheet__role"><?= nu_e($_SESSION['role'] ?? '') ?></div></div>
+  </div>
+  <div class="menu-sep"></div>
+  <a class="menu-item" href="<?= nu_e(nu_home_url()) ?>"><?= nu_icon('house') ?> Home</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/profile.php')) ?>"><?= nu_icon('person') ?> Profile settings</a>
+<?php if (($_SESSION['role'] ?? '') === 'provider'): ?>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/my_activity.php')) ?>"><?= nu_icon('collection') ?> My activity</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/discover_Jobs.php')) ?>"><?= nu_icon('map') ?> Jobs map</a>
+<?php elseif (($_SESSION['role'] ?? '') === 'client'): ?>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/jobs.php')) ?>"><?= nu_icon('search') ?> Browse jobs</a>
+<?php endif; ?>
+  <button type="button" class="menu-item" data-theme-toggle><?= nu_icon('moon-stars') ?> Toggle dark mode</button>
+  <div class="menu-sep"></div>
+  <a class="menu-item menu-item--danger" href="<?= nu_e(nu_url('public/logout.php')) ?>" data-no-prefetch><?= nu_icon('box-arrow-right') ?> Sign out</a>
+</div>
+<?php endif; ?>
 
-  const meter = document.getElementById("strength-meter");
-
-  passwordField.addEventListener("input", function() {
-    const val = passwordField.value;
-    let score = 0;
-
-    if (val.length >= 8) score++;
-    if (/[A-Z]/.test(val)) score++;
-    if (/[a-z]/.test(val)) score++;
-    if (/[0-9]/.test(val)) score++;
-    if (/[\W]/.test(val)) score++;
-
-    meter.style.width = (score * 20) + "%";
-
-    switch(score) {
-      case 0:
-      case 1:
-        meter.className = "progress-bar bg-danger";
-        meter.textContent = "Weak";
-        break;
-      case 2:
-      case 3:
-        meter.className = "progress-bar bg-warning";
-        meter.textContent = "Medium";
-        break;
-      case 4:
-      case 5:
-        meter.className = "progress-bar bg-success";
-        meter.textContent = "Strong";
-        break;
-    }
-  });
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  const alerts = document.querySelectorAll('.alert');
-  alerts.forEach(alert => {
-    setTimeout(() => {
-      alert.classList.remove('show');
-      alert.classList.add('fade');
-    }, 4000); // auto-dismiss after 4 seconds
-  });
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-  const toastList = toastElList.map(function(toastEl) {
-    return new bootstrap.Toast(toastEl, { delay: 4000 }); // auto-dismiss after 4s
-  });
-  toastList.forEach(toast => toast.show());
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  // Auto-dismiss alerts after 4s
-  document.querySelectorAll('.alert').forEach(alert => {
-    setTimeout(() => {
-      alert.classList.remove('show');
-      alert.classList.add('fade');
-    }, 4000);
-  });
-
-  // Initialize toasts
-  const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-  const toastList = toastElList.map(toastEl => new bootstrap.Toast(toastEl, { delay: 4000 }));
-  toastList.forEach(toast => toast.show());
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  // Auto-dismiss alerts after 4s
-  document.querySelectorAll('.alert').forEach(alert => {
-    setTimeout(() => {
-      alert.classList.remove('show');
-      alert.classList.add('fade');
-    }, 4000);
-  });
-
-  // Initialize toasts
-  const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-  const toastList = toastElList.map(toastEl => new bootstrap.Toast(toastEl, { delay: 4000 }));
-  toastList.forEach(toast => toast.show());
-});
-</script>
-<script>
-const toggle = document.getElementById('theme-toggle');
-toggle.addEventListener('click', () => {
-  document.body.classList.toggle('bg-dark');
-  document.body.classList.toggle('text-white');
-});
-</script>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Theme Toggle Script -->
-<script>
-  const toggleBtn = document.getElementById('theme-toggle');
-  const body = document.body;
-
-  // Apply saved theme on load
-  if (localStorage.getItem('theme') === 'dark') {
-    body.classList.add('dark-mode');
-    toggleBtn.textContent = '☀️';
-  }
-
-  toggleBtn.addEventListener('click', () => {
-    body.classList.toggle('dark-mode');
-    if (body.classList.contains('dark-mode')) {
-      localStorage.setItem('theme', 'dark');
-      toggleBtn.textContent = '☀️';
-    } else {
-      localStorage.setItem('theme', 'light');
-      toggleBtn.textContent = '🌙';
-    }
-  });
-</script>
-<script>
-  var map = L.map('map').setView([5.6037, -0.1870], 12); // Accra default
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
-
-  var marker;
-
-  map.on('click', function(e) {
-      var lat = e.latlng.lat.toFixed(6);
-      var lng = e.latlng.lng.toFixed(6);
-
-      if (marker) map.removeLayer(marker);
-      marker = L.marker([lat, lng]).addTo(map);
-
-      document.getElementById('location_lat').value = lat;
-      document.getElementById('location_lng').value = lng;
-
-      // Reverse geocoding using Nominatim
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('location_address').value = data.display_name || '';
-        });
-  });
-</script>
+<?php if (!empty($nuPage['bsjs'])): ?>
+<script src="<?= nu_asset('public/assets/vendor/bootstrap/bootstrap.bundle.min.js') ?>"></script>
+<?php endif; ?>
 </body>
 </html>
