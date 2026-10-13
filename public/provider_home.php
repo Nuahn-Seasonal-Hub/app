@@ -1,10 +1,10 @@
 <?php
 // public/provider_home.php
 require_once("../config/init.php");
-include_once("../includes/header.php");
 
 // Only providers can view this page
 requireLogin('provider');
+include_once("../includes/header.php");
 
 // Read-only figures for the dashboard (display only)
 $uid = $_SESSION['user_id'] ?? 0;
@@ -35,6 +35,14 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
 
 <main class="wrap page-body">
     <?php include_once("../includes/flash.php"); ?>
+<?php $rq = nu_fixture('queue'); $nextStop = null; foreach ($rq['stops'] as $st) { if ($st['status'] !== 'completed') { $nextStop = $st; break; } } ?>
+    <a class="card nb" href="provider_route.php" style="display:flex;gap:var(--s4);align-items:center;margin-bottom:var(--s5);color:var(--ink)" data-reveal>
+      <span class="nb__icon"><?= nu_icon('signpost-split') ?></span>
+      <span style="flex:1;min-width:0"><span class="nb__title" style="display:block">Today’s route · <?= count($rq['stops']) ?> stops</span>
+      <span class="nb__when" style="display:block"><?= $nextStop ? 'Now: ' . nu_e($nextStop['address']) . ' · ' . nu_e($nextStop['window']) : 'All done' ?></span>
+      <span class="nb__team" style="display:block"><?= nu_e($rq['date']) ?> · <?= nu_sample_tag('Sample') ?></span></span>
+      <span class="btn btn-primary btn-sm">Open route</span>
+    </a>
 
     <div class="grid grid-stats">
         <div class="stat" data-reveal style="--i:0"><span class="stat__icon"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Open jobs</div><div class="stat__value" data-count="<?= $openCount ?>"><?= $openCount ?></div></div></div>

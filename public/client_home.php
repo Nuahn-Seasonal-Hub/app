@@ -25,7 +25,10 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
         <h1 style="margin:0">Welcome, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Client'); ?>!</h1>
       </div>
     </div>
-    <a class="btn btn-light enter" style="--i:1" href="jobs.php#post"><?= nu_icon('plus-lg') ?> Post a job</a>
+    <div class="row-flex enter" style="--i:1">
+      <a class="btn btn-light" href="index.php#services"><?= nu_icon('calendar-check') ?> Book a service</a>
+      <a class="btn btn-glass" href="jobs.php#post"><?= nu_icon('plus-lg') ?> Post a job</a>
+    </div>
   </div>
 </section>
 
@@ -34,6 +37,28 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
     <?php if(isset($_GET['success']) && $_GET['success'] === 'profile_updated'): ?>
         <div class="alert alert-success"><?= nu_icon('check-circle-fill') ?> Your profile has been updated successfully.</div>
     <?php endif; ?>
+
+<?php
+    $svcs = nu_fixture('services'); $wx = nu_fixture('weather'); $nb = null;
+    foreach (nu_fixture('bookings') as $b) { if ($b['status'] !== 'completed') { $nb = $b; break; } }
+    $notes = array_slice(nu_fixture('notifications'), 0, 3);
+?>
+    <div class="grid grid-2" style="margin-bottom:var(--s5)">
+<?php if ($nb): $nsv = $svcs[$nb['service']]; ?>
+      <section class="card nb" data-reveal>
+        <div class="wx__top"><h2 class="lside__h">Your next booking</h2><?= nu_booking_chip($nb['status']) ?></div>
+        <div class="nb__row"><span class="nb__icon"><?= nu_icon($nsv['icon']) ?></span><div><div class="nb__title"><?= nu_e($nsv['name']) ?></div><div class="nb__when"><?= nu_e($nb['when']) ?> · <?= nu_e($nb['window']) ?></div><div class="nb__team"><?= nu_e($nb['team']) ?> · <?= nu_sample_tag('Sample') ?></div></div></div>
+        <div class="nb__actions"><a class="btn btn-primary btn-sm" href="track.php?id=<?= nu_e(rawurlencode($nb['id'])) ?>">Track</a><a class="btn btn-outline btn-sm" href="chat.php?thread=t1"><?= nu_icon('chat-dots') ?> Message team</a></div>
+      </section>
+<?php endif; ?>
+      <section class="card nb" data-reveal style="--i:1">
+        <div class="wx__top"><h2 class="lside__h">Today in <?= nu_e($wx['city']) ?></h2><span class="wx__temp" style="font-size:1.3rem"><?= (int) $wx['now']['temp'] ?>°C</span></div>
+<?php foreach ($notes as $n): ?>
+        <div class="notif notif--<?= nu_e($n['type']) ?>" style="padding:8px 0"><span class="notif__ic"><?= nu_icon($n['icon']) ?></span><div><p class="notif__t" style="font-size:.92rem"><?= nu_e($n['title']) ?></p></div></div>
+<?php endforeach; ?>
+        <a class="btn btn-soft btn-sm btn-block mt-2" href="calendar.php">Open calendar <?= nu_icon('arrow-right') ?></a>
+      </section>
+    </div>
 
     <div class="grid grid-stats">
         <div class="stat" data-reveal style="--i:0"><span class="stat__icon"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Jobs posted</div><div class="stat__value" data-count="<?= $myJobs ?>"><?= $myJobs ?></div></div></div>

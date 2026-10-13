@@ -108,3 +108,11 @@ mysql -u root -p nuahseasonalapp_db < database/migrations.sql
 ## 📄 License
 
 MIT
+
+## UI v2 (client proposed design) and the sample-data screens
+
+The UI follows the client's proposed design: teal/pine palette, serif headlines, photo service cards, and the mobile Book and Track flows.
+Screens whose backend doesn't exist yet (bookings, plans, weather/calendar, tracking, chat, snow queue, proof-of-work/escrow)
+read **sample data** from `fixtures/*.php`, one file per feature, and are marked with a "Sample data" tag.
+**Hook-up notes for each screen (data shapes and the endpoints to supply): [`docs/UI-DATA-HOOKUP.md`](docs/UI-DATA-HOOKUP.md).**
+Photo sources and licences: `public/assets/img/photos/CREDITS.md`.
