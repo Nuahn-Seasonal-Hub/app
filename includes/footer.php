@@ -1,4 +1,7 @@
 <?php
+// UI design & front-end development: Christo Innocent
+//   Email: xristoinno@gmail.com | Phone: +256783335335
+// (Server-side comment only; never output to the browser.)
 // includes/footer.php — Nuahn Seasonal Hub app shell (closing half).
 require_once __DIR__ . '/ui.php';
 if (!isset($nuPage)) { $nuPage = nu_page_config(); }

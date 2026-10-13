@@ -116,3 +116,9 @@ Screens whose backend doesn't exist yet (bookings, plans, weather/calendar, trac
 read **sample data** from `fixtures/*.php`, one file per feature, and are marked with a "Sample data" tag.
 **Hook-up notes for each screen (data shapes and the endpoints to supply): [`docs/UI-DATA-HOOKUP.md`](docs/UI-DATA-HOOKUP.md).**
 Photo sources and licences: `public/assets/img/photos/CREDITS.md`.
+
+---
+
+## Credits
+
+UI designed and developed by Christo Innocent (xristoinno@gmail.com, +256783335335). See `docs/CREDITS.md`.

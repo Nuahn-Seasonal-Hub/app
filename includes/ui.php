@@ -1,4 +1,7 @@
 <?php
+// UI design & front-end development: Christo Innocent
+//   Email: xristoinno@gmail.com | Phone: +256783335335
+// (Server-side comment only; never output to the browser.)
 // includes/ui.php — view helpers for the Nuahn UI shell (presentation only).
 // Safe to include more than once.
 

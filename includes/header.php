@@ -1,4 +1,7 @@
 <?php
+// UI design & front-end development: Christo Innocent
+//   Email: xristoinno@gmail.com | Phone: +256783335335
+// (Server-side comment only; never output to the browser.)
 // includes/header.php — Nuahn Seasonal Hub app shell (opening half).
 // Presentation only: renders <head>, the desktop top nav / mobile app bar and flash toasts.
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
