@@ -11,22 +11,20 @@ $nuNav = nu_nav_items();
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="<?= nu_e(nu_url('public/index.php')) ?>">
-          <img src="<?= nu_asset('public/assets/img/logo-72.webp') ?>" width="36" height="35" alt="" loading="lazy">
-          <span class="brand__name">Nuahn <span>Seasonal Hub</span></span>
-        </a>
-        <p>Trusted seasonal work for clients and providers. Post jobs, apply and hire, all in one place.</p>
+        <a class="brand" href="<?= nu_e(nu_url('public/index.php')) ?>"><?= nu_logo(38) ?></a>
+        <p>Home and property services, all in one place. Reliable. Local. Built for Canadian seasons.</p>
       </div>
       <div>
-        <h4>Explore</h4>
+        <h2 class="footer-h">Explore</h2>
         <ul>
-          <li><a href="<?= nu_e(nu_url('public/jobs.php')) ?>">Seasonal jobs</a></li>
+          <li><a href="<?= nu_e(nu_url('public/index.php#services')) ?>">Our services</a></li>
+          <li><a href="<?= nu_e(nu_url('public/index.php#plans')) ?>">Basic &amp; Premium plans</a></li>
           <li><a href="<?= nu_e(nu_url('public/index.php#how')) ?>">How it works</a></li>
-          <li><a href="<?= nu_e(nu_url('public/index.php#features')) ?>">Why Nuahn</a></li>
+          <li><a href="<?= nu_e(nu_url('public/jobs.php')) ?>">Open jobs</a></li>
         </ul>
       </div>
       <div>
-        <h4>Account</h4>
+        <h2 class="footer-h">Account</h2>
         <ul>
 <?php if ($nuLogged): ?>
           <li><a href="<?= nu_e(nu_home_url()) ?>">My home</a></li>
@@ -42,7 +40,7 @@ $nuNav = nu_nav_items();
     </div>
     <div class="footer-bottom">
       <span>© <?= date('Y') ?> Nuahn Seasonal Hub. All rights reserved.</span>
-      <span>Made for every season.</span>
+      <span>Every season. Every service. One hub.</span>
     </div>
   </div>
 </footer>
@@ -53,7 +51,7 @@ $nuNav = nu_nav_items();
     $primary = !empty($item[5]); ?>
   <a class="tab<?= $primary ? ' tab--primary' : '' ?>" href="<?= nu_e($item[2]) ?>"<?= $active ? ' aria-current="page"' : '' ?>>
     <span class="tab__icon"><?= nu_icon($item[3], 'ic-off') ?><?= nu_icon($item[4], 'ic-on') ?></span>
-    <span><?= nu_e($item[1]) ?></span>
+    <span><?= nu_e($item[1]) ?></span><?php if ($item[0] === 'messages' && nu_unread_count()): ?><span class="tab__dot" aria-label="unread"></span><?php endif; ?>
   </a>
 <?php endforeach; ?>
 </nav>
@@ -68,9 +66,16 @@ $nuNav = nu_nav_items();
   <a class="menu-item" href="<?= nu_e(nu_home_url()) ?>"><?= nu_icon('house') ?> Home</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/profile.php')) ?>"><?= nu_icon('person') ?> Profile settings</a>
 <?php if (($_SESSION['role'] ?? '') === 'provider'): ?>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/provider_route.php')) ?>"><?= nu_icon('signpost-split') ?> Today’s route</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/saved_jobs.php')) ?>"><?= nu_icon('bookmark') ?> Saved jobs</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/applications.php')) ?>"><?= nu_icon('clipboard-check') ?> My applications</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/my_activity.php')) ?>"><?= nu_icon('collection') ?> My activity</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/discover_Jobs.php')) ?>"><?= nu_icon('map') ?> Jobs map</a>
 <?php elseif (($_SESSION['role'] ?? '') === 'client'): ?>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/bookings.php')) ?>"><?= nu_icon('calendar-check') ?> My bookings</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/jobs.php#post')) ?>"><?= nu_icon('plus-lg') ?> Post a job</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/my_jobs.php')) ?>"><?= nu_icon('briefcase') ?> My posted jobs</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/client_applications.php')) ?>"><?= nu_icon('people') ?> Applicants</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/jobs.php')) ?>"><?= nu_icon('search') ?> Browse jobs</a>
 <?php endif; ?>
   <button type="button" class="menu-item" data-theme-toggle><?= nu_icon('moon-stars') ?> Toggle dark mode</button>

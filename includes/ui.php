@@ -126,8 +126,8 @@ function nu_page_config() {
     $rel = ltrim(substr($script, strlen($root)), '/');
 
     $pages = [
-        'index.php'                    => ['title' => 'Seasonal work, simplified', 'tab' => 'home', 'lean' => true, 'landing' => true],
-        'public/index.php'             => ['title' => 'Seasonal work, simplified', 'tab' => 'home', 'lean' => true, 'landing' => true],
+        'index.php'                    => ['title' => 'Every season. Every service. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
+        'public/index.php'             => ['title' => 'Every season. Every service. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
         'public/auth.php'              => ['title' => 'Welcome', 'tab' => 'login', 'lean' => true],
         'public/login.php'             => ['title' => 'Sign in', 'tab' => 'login', 'lean' => true],
         'public/login_client.php'      => ['title' => 'Client sign in', 'tab' => 'login', 'lean' => true, 'sub' => true],
@@ -153,6 +153,13 @@ function nu_page_config() {
         'public/manage_applications.php' => ['title' => 'Applications', 'tab' => 'apps', 'lean' => true],
         'public/dashboard.php'         => ['title' => 'Dashboard', 'tab' => 'dash', 'lean' => true, 'chart' => true],
         'public/profile.php'           => ['title' => 'Profile', 'tab' => 'profile', 'lean' => true],
+        'public/book.php'              => ['title' => 'Book a service', 'tab' => 'book', 'lean' => true, 'sub' => true],
+        'public/track.php'             => ['title' => 'Track your service', 'tab' => 'bookings', 'lean' => true, 'sub' => true, 'map' => 'defer'],
+        'public/bookings.php'          => ['title' => 'My bookings', 'tab' => 'bookings', 'lean' => true],
+        'public/messages.php'          => ['title' => 'Messages', 'tab' => 'messages', 'lean' => true],
+        'public/chat.php'              => ['title' => 'Chat', 'tab' => 'messages', 'lean' => true, 'sub' => true],
+        'public/calendar.php'          => ['title' => 'Calendar', 'tab' => 'calendar', 'lean' => true],
+        'public/provider_route.php'    => ['title' => 'Today’s route', 'tab' => 'route', 'lean' => true],
         'public/admin/dashboard.php'   => ['title' => 'Admin overview', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/admin/manage_users.php' => ['title' => 'Manage users', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/admin/manage_admins.php' => ['title' => 'Manage staff', 'tab' => 'dash', 'lean' => true, 'sub' => true],
@@ -193,18 +200,18 @@ function nu_nav_items() {
         case 'provider':
             return [
                 ['home', 'Home', $u('public/provider_home.php'), 'house', 'house-fill'],
+                ['route', 'Route', $u('public/provider_route.php'), 'signpost-split', 'signpost-split-fill'],
                 ['jobs', 'Find jobs', $u('public/jobs.php'), 'search', 'search'],
-                ['saved', 'Saved', $u('public/saved_jobs.php'), 'bookmark', 'bookmark-fill'],
-                ['applied', 'Applied', $u('public/applications.php'), 'clipboard-check', 'clipboard-check-fill'],
+                ['messages', 'Messages', $u('public/messages.php'), 'chat-dots', 'chat-dots-fill'],
                 ['profile', 'Profile', $u('public/profile.php'), 'person', 'person-fill'],
             ];
         case 'client':
             return [
                 ['home', 'Home', $u('public/client_home.php'), 'house', 'house-fill'],
-                ['myjobs', 'My jobs', $u('public/my_jobs.php'), 'briefcase', 'briefcase-fill'],
-                ['post', 'Post', $u('public/jobs.php#post'), 'plus-lg', 'plus-lg', true],
-                ['applicants', 'Applicants', $u('public/client_applications.php'), 'people', 'people-fill'],
-                ['profile', 'Profile', $u('public/profile.php'), 'person', 'person-fill'],
+                ['calendar', 'Calendar', $u('public/calendar.php'), 'calendar-event', 'calendar-event-fill'],
+                ['book', 'Book', $u('public/index.php#services'), 'plus-lg', 'plus-lg', true],
+                ['bookings', 'Bookings', $u('public/bookings.php'), 'calendar-check', 'calendar-check'],
+                ['messages', 'Messages', $u('public/messages.php'), 'chat-dots', 'chat-dots-fill'],
             ];
         case 'manager': case 'admin': case 'superadmin':
             return [
@@ -216,9 +223,9 @@ function nu_nav_items() {
         default:
             return [
                 ['home', 'Home', $u('public/index.php'), 'house', 'house-fill'],
+                ['services', 'Services', $u('public/index.php#services'), 'grid-1x2', 'grid-1x2-fill'],
                 ['jobs', 'Jobs', $u('public/jobs.php'), 'search', 'search'],
                 ['login', 'Sign in', $u('public/login.php'), 'person-circle', 'person-fill'],
-                ['join', 'Join', $u('public/register.php'), 'stars', 'stars'],
             ];
     }
 }
@@ -231,8 +238,8 @@ function nu_auth_head($title, $subtitle, $icon = 'person-circle', $navy = false)
 }
 
 /** Left brand panel of the auth layout. */
-function nu_auth_aside($headline = 'Seasonal work, made simple.', $copy = 'Post short-term jobs, find trusted providers and keep every application in one calm, fast workspace.') {
-    echo '<aside class="auth__aside"><span class="eyebrow" style="color:var(--blue-300)">' . nu_icon('stars') . ' Nuahn Seasonal Hub</span>';
+function nu_auth_aside($headline = 'Every season. Every service. One hub.', $copy = 'Home and property services, all in one place. Reliable. Local. Built for Canadian seasons.') {
+    echo '<aside class="auth__aside"><span class="auth__logo">' . nu_logo(40) . '</span>';
     echo '<h2>' . nu_e($headline) . '</h2><p>' . nu_e($copy) . '</p>';
     echo '<ul class="auth__list">';
     echo '<li>' . nu_icon('geo-alt') . 'Location-based job matching</li>';
@@ -333,7 +340,7 @@ function nu_band($icon, $eyebrow, $title, $lead = '', $actions = '') {
 
 /** Shared Chart.js look for the light/navy themes. Call inside DOMContentLoaded. */
 function nu_chart_defaults_js() {
-    return "var css=getComputedStyle(document.documentElement);function tone(){var d=document.documentElement.getAttribute('data-theme')==='dark';Chart.defaults.color=d?'#8E9DC0':'#64738F';Chart.defaults.borderColor=d?'rgba(255,255,255,.08)':'rgba(10,26,63,.07)';}tone();Chart.defaults.font.family=css.getPropertyValue('--font');Chart.defaults.font.weight=600;Chart.defaults.maintainAspectRatio=false;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.tooltip.backgroundColor='#0A1A3F';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=10;var PALETTE=['#1B5BEA','#0A1A3F','#5C92FF','#0E9F6E','#C77700','#DC3248','#93B6FF'];";
+    return "var css=getComputedStyle(document.documentElement);function tone(){var d=document.documentElement.getAttribute('data-theme')==='dark';Chart.defaults.color=d?'#8FA5A0':'#5D6B67';Chart.defaults.borderColor=d?'rgba(255,255,255,.08)':'rgba(12,40,36,.07)';}tone();Chart.defaults.font.family=css.getPropertyValue('--font');Chart.defaults.font.weight=600;Chart.defaults.maintainAspectRatio=false;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.tooltip.backgroundColor='#0A3D3B';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=10;var PALETTE=['#11706D','#0A3D3B','#3E9C97','#2A8C42','#C77700','#DC3248','#8CC7C2'];";
 }
 
 /** Run a read-only COUNT query for display; returns 0 on any error. */
@@ -345,6 +352,98 @@ function nu_count($pdo, $sql, $params = []) {
     } catch (Throwable $e) {
         return 0;
     }
+}
+
+
+/* ---------- v2 (client design) helpers ---------- */
+
+/**
+ * SAMPLE DATA loader for features that have no backend yet (bookings, plans, weather, tracking,
+ * messages, queue, notifications, proof of work). One file per feature in /fixtures.
+ * See docs/UI-DATA-HOOKUP.md for the endpoint each one should be replaced with.
+ */
+function nu_fixture($name) {
+    static $cache = [];
+    $name = preg_replace('/[^a-z0-9_]/', '', $name);
+    if (!isset($cache[$name])) {
+        $f = __DIR__ . '/../fixtures/' . $name . '.php';
+        $cache[$name] = is_file($f) ? (array) require $f : [];
+    }
+    return $cache[$name];
+}
+
+/** "Sample data" marker shown on screens fed by fixtures. */
+function nu_sample_tag($text = 'Sample data') {
+    return '<span class="sample-tag" title="Preview content until the backend endpoint is connected">' . nu_icon('info-circle') . nu_e($text) . '</span>';
+}
+
+/**
+ * Responsive self-hosted photo: AVIF + WebP sources, JPEG fallback, lazy by default.
+ * $name = base name in public/assets/img/photos (files are {name}-{w}.{avif|webp}, largest also .jpg).
+ */
+function nu_photo($name, $alt, $opts = []) {
+    $widths = $opts['widths'] ?? [400, 800];
+    $sizes  = $opts['sizes'] ?? '(max-width: 640px) 92vw, 320px';
+    $ratio  = $opts['ratio'] ?? (4 / 3);
+    $eager  = !empty($opts['eager']);
+    $class  = $opts['class'] ?? '';
+    $dir = 'public/assets/img/photos/';
+    $set = function ($ext) use ($widths, $name, $dir) {
+        $o = [];
+        foreach ($widths as $w) { $o[] = nu_url($dir . $name . '-' . $w . '.' . $ext) . ' ' . $w . 'w'; }
+        return implode(', ', $o);
+    };
+    $max = max($widths);
+    $jpgW = $max;
+    $h = (int) round($max / $ratio);
+    $out = '<picture class="' . nu_e($class) . '">';
+    $out .= '<source type="image/avif" srcset="' . nu_e($set('avif')) . '" sizes="' . nu_e($sizes) . '">';
+    $out .= '<source type="image/webp" srcset="' . nu_e($set('webp')) . '" sizes="' . nu_e($sizes) . '">';
+    $jpg = is_file(__DIR__ . '/../' . $dir . $name . '-' . $jpgW . '.jpg') ? $name . '-' . $jpgW . '.jpg' : $name . '-' . $jpgW . '.webp';
+    $out .= '<img src="' . nu_e(nu_url($dir . $jpg)) . '" alt="' . nu_e($alt) . '" width="' . $max . '" height="' . $h . '"'
+          . ($eager ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"') . '>';
+    return $out . '</picture>';
+}
+
+/** Nuahn mark: pine trees + house, drawn as inline SVG (inherits currentColor). */
+function nu_logo_mark($size = 34) {
+    return '<svg class="logo-mark" width="' . (int) $size . '" height="' . (int) $size . '" viewBox="0 0 48 48" aria-hidden="true" focusable="false">'
+        . '<path fill="currentColor" d="M11 6 3.5 19H7l-5 8.5h6.2L4 34h6v6h3v-6h6l-4.2-6.5H21L16 19h3.5Z"/>'
+        . '<path fill="currentColor" opacity=".72" d="M37.5 9 31.8 19h2.7l-3.8 6.6h4.6l-3 5h4.3v4.4h2.4v-4.4h4.3l-3-5h4.6L41 19h2.7Z"/>'
+        . '<path fill="currentColor" d="M24.5 16 13 25.4V42h8.2v-8.2h6.6V42H36V25.4Zm0 3.3 8.3 6.8v12.7H31v-8.2H18v8.2h-1.8V26.1Z"/>'
+        . '<rect x="22.3" y="26" width="4.4" height="3.6" rx=".6" fill="currentColor"/>'
+        . '<path fill="currentColor" d="M2 43.2h44v1.8H2z"/>'
+        . '</svg>';
+}
+
+/** Full lockup: mark + "Nuahn" serif wordmark + "SEASONAL HUB" small caps. */
+function nu_logo($size = 34) {
+    return '<span class="logo">' . nu_logo_mark($size) . '<span class="logo__word"><span class="logo__name">Nuahn</span><span class="logo__sub">Seasonal Hub</span></span></span>';
+}
+
+/** Booking URL for a service slug. */
+function nu_book_url($slug) { return nu_url('public/book.php') . '?service=' . rawurlencode($slug); }
+
+/** Booking status → [label, tone]. */
+function nu_booking_status($s) {
+    $m = [
+        'requested' => ['Requested', 'warning'], 'confirmed' => ['Confirmed', 'blue'], 'assigned' => ['Assigned', 'blue'],
+        'on_the_way' => ['On the way', 'success'], 'in_progress' => ['In progress', 'success'], 'completed' => ['Completed', ''],
+        'cancelled' => ['Cancelled', 'danger'], 'next' => ['Up next', 'blue'], 'queued' => ['Queued', ''],
+    ];
+    return $m[$s] ?? [ucfirst(str_replace('_', ' ', (string) $s)), ''];
+}
+function nu_booking_chip($s) {
+    [$l, $t] = nu_booking_status($s);
+    return '<span class="chip' . ($t ? ' chip--' . $t : '') . '">' . nu_e($l) . '</span>';
+}
+
+/** Unread message count for the nav dot (sample data until messages exist). */
+function nu_unread_count() {
+    if (!in_array(nu_role(), ['client', 'provider'], true)) return 0;
+    $n = 0;
+    foreach ((nu_fixture('messages')['threads'] ?? []) as $t) { $n += (int) ($t['unread'] ?? 0); }
+    return $n;
 }
 
 } // end guard
