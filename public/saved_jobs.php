@@ -1,8 +1,8 @@
 <?php
 // public/saved_jobs.php
 require_once("../config/init.php");
-include_once("../includes/header.php");
 requireLogin('provider');
+include_once("../includes/header.php");
 
 $provider_id = $_SESSION['user_id'];
 

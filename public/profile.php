@@ -1,5 +1,4 @@
 <?php
-include "../includes/header.php";
 require_once "../config/db.php";
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
@@ -7,6 +6,7 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
+include "../includes/header.php";
 
 $user_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");

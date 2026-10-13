@@ -1,10 +1,10 @@
 <?php
 // public/client_applications.php - Applications for Client's Jobs
 require_once("../config/init.php");
-include_once("../includes/header.php");
 
 // Only clients can view this page
 requireLogin('client');
+include_once("../includes/header.php");
 
 $client_id = $_SESSION['user_id'];
 

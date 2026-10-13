@@ -1,10 +1,10 @@
 <?php
 // public/applications.php - Provider Applications Page
 require_once("../config/init.php");
-include_once("../includes/header.php");
 
 // Only providers can view this page
 requireLogin('provider');
+include_once("../includes/header.php");
 
 $provider_id = $_SESSION['user_id'];
 

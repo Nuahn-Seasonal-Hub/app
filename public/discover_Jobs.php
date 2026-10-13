@@ -1,10 +1,10 @@
 <?php
 // public/discover_jobs.php
 require_once("../config/init.php");
-include_once("../includes/header.php");                                                                                  
 
 // Both clients and providers can view this page
 requireLogin(); 
+include_once("../includes/header.php");
 
 // Fetch all posted jobs
 $stmt = $pdo->prepare("

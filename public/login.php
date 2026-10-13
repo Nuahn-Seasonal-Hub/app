@@ -1,13 +1,13 @@
 <?php
 // public/login.php
 require_once("../config/init.php");
-include_once("../includes/header.php");
 
 // If already logged in, redirect
 if (isset($_SESSION['user_id'])) {
     redirectByRole($_SESSION['role']);
     exit;
 }
+include_once("../includes/header.php");
 ?>
 
 <div class="auth">

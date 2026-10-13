@@ -2,7 +2,6 @@
 // public/my_jobs.php - Client's Posted Jobs
 //session_start();
 require_once("../config/init.php");
-include_once("../includes/header.php");
 // Only clients can view this page
 requireLogin('client');
 
@@ -23,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_job'])) {
     header("Location: my_jobs.php?success=job_deleted");
     exit;
 }
+include_once("../includes/header.php");
 
 // Fetch jobs posted by this client
 $stmt = $pdo->prepare("SELECT jobs.*, COUNT(applications.id) AS application_count

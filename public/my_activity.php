@@ -3,9 +3,9 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once("../config/db.php");
 require_once("../includes/auth.php");
-include_once("../includes/header.php");
 
 requireLogin('provider');
+include_once("../includes/header.php");
 $provider_id = $_SESSION['user_id'];
 
 // Fetch applications
