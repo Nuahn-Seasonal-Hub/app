@@ -1,4 +1,4 @@
-app = "nuahn-seasonal-hub"
+app = "nuahn-seasonal-hub-v2"
 primary_region = "iad"
 
 # Give the entrypoint time to stop Apache and shut MariaDB down cleanly
