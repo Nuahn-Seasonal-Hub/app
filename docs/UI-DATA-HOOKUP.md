@@ -1,6 +1,6 @@
 # UI ↔ data hook-up notes (client design v2)
 
-**Who owns what:** Christo/Sharon (+ bot) own the UI. **Sir Paul builds the functionality.**
+**Who owns what:** Christo Innocent owns the UI. **Sir Paul builds the functionality.**
 Every screen below is already built and clickable. Where there is no backend yet, the screen reads
 **sample data from one fixture file per feature** in `/fixtures/*.php`, loaded with `nu_fixture('<name>')`
 (`includes/ui.php`). These screens show a yellow dashed **"Sample data"** tag so nobody mistakes them for live data.
