@@ -109,6 +109,12 @@
     requestAnimationFrame(step);
   });
 
+  /* Character counters for textareas: <textarea data-chars> + sibling [data-count-out] */
+  d.querySelectorAll('textarea[data-chars]').forEach(function (t) {
+    var o = t.parentNode.querySelector('[data-count-out]'); if (!o || t.dataset.charsBound) return;
+    t.dataset.charsBound = '1'; t.addEventListener('input', function () { o.textContent = t.value.length; });
+  });
+
   /* Toasts and legacy alerts auto-dismiss */
   d.querySelectorAll('.toast').forEach(function (t, i) {
     setTimeout(function () { t.classList.add('is-leaving'); setTimeout(function () { t.remove(); }, 300); }, 4200 + i * 400);

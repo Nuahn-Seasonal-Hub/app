@@ -40,7 +40,8 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
 
 <?php
     $svcs = nu_fixture('services'); $wx = nu_fixture('weather'); $nb = null;
-    foreach (nu_fixture('bookings') as $b) { if ($b['status'] !== 'completed') { $nb = $b; break; } }
+    foreach (nu_fixture('bookings') as $b) { if (!in_array($b['status'], ['completed', 'disputed', 'closed', 'cancelled'], true)) { $nb = $b; break; } }
+    $rem = nu_fixture('care_plans')['reminders'][0] ?? null; // Premium panel only for enrolled customers (doc2 p1)
     $notes = array_slice(nu_fixture('notifications'), 0, 3);
 ?>
     <div class="grid grid-2" style="margin-bottom:var(--s5)">
@@ -60,6 +61,14 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
       </section>
     </div>
 
+<?php if ($rem): ?>
+    <section class="pl-rem ch-home-rem" data-reveal aria-label="Premium reminder">
+      <span class="pl-ic"><?= nu_icon($svcs[$rem['service']]['icon']) ?></span>
+      <div class="pl-rem__t"><b><?= nu_e($rem['title']) ?></b><span><?= nu_e($rem['provider']) ?>: <?= nu_e($rem['text']) ?></span></div>
+      <div class="pl-rem__a"><a class="btn btn-primary btn-sm" href="book.php?service=<?= nu_e($rem['service']) ?>&amp;from=reminder">Confirm a visit</a><a class="btn btn-outline btn-sm" href="change_appointment.php?id=WASH-1048&amp;reminder=1">Change date</a><a class="btn btn-outline btn-sm" href="care_plans.php">Skip this month</a></div>
+    </section>
+    <a class="se-wx ch-home-snow" href="snow_event.php" data-reveal><?= nu_icon('cloud-snow') ?><span><b>Snow event confirmed for your area</b> Team A is assigned to #SNOW-1045. Busy? Ask them to come later. <?= nu_icon('arrow-right') ?></span></a>
+<?php endif; ?>
     <div class="grid grid-stats">
         <div class="stat" data-reveal style="--i:0"><span class="stat__icon"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Jobs posted</div><div class="stat__value" data-count="<?= $myJobs ?>"><?= $myJobs ?></div></div></div>
         <div class="stat" data-reveal style="--i:1"><span class="stat__icon stat__icon--success"><?= nu_icon('lightning-charge-fill') ?></span><div><div class="stat__label">Open now</div><div class="stat__value" data-count="<?= $myOpen ?>"><?= $myOpen ?></div></div></div>
@@ -93,7 +102,7 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
             <span><span class="tile__title" style="display:block">Profile Settings</span><span class="tile__text">Update your personal details and preferences.</span></span>
             <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
         </a>
-        <a class="tile" href="support.php" data-reveal style="--i:5">
+        <a class="tile" href="chat.php?thread=support" data-reveal style="--i:5">
             <span class="tile__icon tile__icon--soft"><?= nu_icon('envelope') ?></span>
             <span><span class="tile__title" style="display:block">Support</span><span class="tile__text">Need help? Contact our support team for assistance.</span></span>
             <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>

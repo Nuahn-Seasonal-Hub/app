@@ -303,7 +303,7 @@ function sv_activity($visit, $inMid) {
   if (f) {
     var hint = f.querySelector('[data-plan-hint]');
     f.addEventListener('change', function () { if (hint) hint.hidden = !f.querySelector('input[name=plan][value=premium]').checked; util(); });
-    f.querySelectorAll('[data-count]').forEach(function (t) { var o = t.parentNode.querySelector('[data-count-out]'); if (o) t.addEventListener('input', function () { o.textContent = t.value.length; }); });
+
     f.querySelectorAll('[data-files]').forEach(function (i) { i.addEventListener('change', function () { var s = i.closest('label').querySelector('small'); if (s) s.textContent = i.files.length + ' photo(s) ready to upload'; }); });
     // Utilities & equipment matching preview (doc2 p11). The real price / team re-check is server-side.
     var notes = { 'customer-customer': 'Team brings cleaning equipment, hoses and leads. You make a tap and outlet available.', 'provider-customer': 'Team brings a water tank. You make an outlet available.', 'customer-provider': 'Team brings self-contained power. You make a tap available.', 'provider-provider': 'Self-contained visit: provider brings water and power.' };

@@ -13,7 +13,7 @@ return [
             ['#1042', 'Snow Removal', '8 – 11 AM', 'in_progress', 'Team A', 'Open'],
             ['#1043', 'Garbage Can Cleaning', '11 AM – 1 PM', 'unassigned', '—', 'Assign'],
             ['#1044', 'Mobile Mechanics', '1 – 3 PM', 'quote_pending', 'Team B', 'Review'],
-            ['#1045', 'Mobile Detailing', '2 – 4 PM', 'weather_review', 'Team C', 'Review'],
+            ['#1045', 'Mobile Car Wash', '2 – 4 PM', 'weather_review', 'Team C', 'Review'],
         ]],
         'reschedule' => ['label' => 'Reschedule requests', 'rows' => [
             ['#SNOW-1045', 'Winter Snow Removal', 'Today 9–11 AM → 2–4 PM', 'change_requested', 'Team A', 'Review'],
@@ -35,6 +35,6 @@ return [
         ]],
     ],
     'teams' => [['Team A', 'busy'], ['Team B', 'available'], ['Team C', 'busy']],
-    'weather' => ['title' => 'Snow expected · Edmonton', 'text' => 'Exterior detailing appointments may need rescheduling.'],
+    'weather' => ['title' => 'Snow expected · Edmonton', 'text' => 'Exterior car-wash and lawn appointments may need rescheduling.'],
     'payments' => [['authorized', 6], ['paid', 17], ['failed', 1], ['partially_refunded', 1]],
 ];

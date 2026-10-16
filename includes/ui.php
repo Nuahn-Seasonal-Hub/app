@@ -456,7 +456,7 @@ function nu_service($slug) { $all = nu_fixture('services'); return $all[nu_servi
 function nu_booking_status($s) {
     $m = [
         'requested' => ['Requested', 'warning'], 'searching' => ['Searching for provider', 'warning'], 'no_provider' => ['No provider available', 'danger'],
-        'quote_pending' => ['Quote pending', 'blue'], 'confirmed' => ['Confirmed', 'blue'], 'assigned' => ['Assigned', 'blue'],
+        'quote_pending' => ['Quote pending', 'blue'], 'awaiting_quote' => ['Awaiting quote', 'blue'], 'reschedule_pending' => ['Reschedule pending', 'warning'], 'confirmed' => ['Confirmed', 'blue'], 'assigned' => ['Assigned', 'blue'],
         'unassigned' => ['Unassigned', 'warning'], 'change_requested' => ['Change requested', 'warning'],
         'on_the_way' => ['On the way', 'success'], 'arrived' => ['Arrived', 'success'], 'in_progress' => ['In progress', 'success'],
         'paused' => ['Paused', 'warning'], 'delayed' => ['Delayed', 'danger'], 'weather_review' => ['Weather review', 'danger'],
@@ -590,7 +590,7 @@ function nu_form_field($f, $idp = 'f') {
             break;
         case 'textarea':
             $max = (int) ($f['max'] ?? 500);
-            $o .= $lab($id) . '<textarea class="input" id="' . $id . '" name="' . nu_e($name) . '" rows="2" maxlength="' . $max . '" placeholder="' . nu_e($f['placeholder'] ?? '') . '" data-count></textarea>';
+            $o .= $lab($id) . '<textarea class="input" id="' . $id . '" name="' . nu_e($name) . '" rows="2" maxlength="' . $max . '" placeholder="' . nu_e($f['placeholder'] ?? '') . '" data-chars></textarea>';
             if (!empty($f['max'])) $o .= '<span class="counter" aria-hidden="true"><span data-count-out>0</span>/' . $max . '</span>';
             break;
         case 'upload':

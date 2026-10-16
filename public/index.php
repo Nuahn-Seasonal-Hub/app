@@ -119,7 +119,7 @@ $addr = trim((string) ($_GET['address'] ?? ''));
   </div>
 
   <section class="steps4" id="how" aria-label="How it works">
-<?php foreach ([['search', 'Select a service', 'Choose from seasonal home and property services.'], ['calendar-check', 'Book', 'Pick your address, options and arrival window.'], ['bell', 'Receive updates', 'Live map, arrival alerts and chat with your team.'], ['image', 'View completed work', 'Before/after photos, then release payment.']] as $n => $st): ?>
+<?php foreach ([['search', 'Select a service', 'Choose from seasonal home and property services.'], ['calendar-check', 'Book', 'Pick your address, options and arrival window.'], ['bell', 'Receive updates', 'Live map, arrival alerts and chat with your team.'], ['image', 'View completed work', 'Before/after photos, checklist and invoice.']] as $n => $st): ?>
     <div class="step4" data-reveal style="--i:<?= $n ?>">
       <span class="step4__ic"><?= nu_icon($st[0]) ?></span>
       <div><div class="step4__t"><?= nu_e($st[1]) ?></div><p><?= nu_e($st[2]) ?></p></div>
@@ -130,7 +130,7 @@ $addr = trim((string) ($_GET['address'] ?? ''));
   <section class="plans" id="plans" aria-labelledby="plans-h">
     <div class="lsec-head lsec-head--center">
       <h2 id="plans-h" class="serif">Basic or Premium: your choice</h2>
-      <p class="muted">Book on demand, or put your seasons on autopilot.</p>
+      <p class="muted">Available across Nuahn services. Premium adds provider reminders you confirm, change or skip.</p>
     </div>
     <div class="plans__grid">
 <?php foreach ($plans as $key => $pl): ?>
@@ -145,11 +145,11 @@ $addr = trim((string) ($_GET['address'] ?? ''));
           <li><?= nu_icon('check-lg') ?> <?= nu_e($pt) ?></li>
 <?php endforeach; ?>
         </ul>
-        <a class="btn <?= $key === 'premium' ? 'btn-primary' : 'btn-outline' ?> btn-block" href="<?= nu_e(nu_book_url('garbage-can-cleaning') . '&plan=' . $key) ?>"><?= $key === 'premium' ? 'Go Premium' : 'Book on demand' ?></a>
+        <a class="btn <?= $key === 'premium' ? 'btn-primary' : 'btn-outline' ?> btn-block" href="<?= nu_e($key === 'premium' ? nu_url('public/plans.php') : nu_book_url('garbage-bin-cleaning')) ?>"><?= $key === 'premium' ? 'Set up a care plan' : 'Book a one-time service' ?></a>
       </article>
 <?php endforeach; ?>
     </div>
-    <p class="text-center mt-4"><?= nu_sample_tag('Plan details are sample content') ?></p>
+    <p class="text-center mt-4"><a class="btn btn-ghost btn-sm" href="<?= nu_e(nu_url('public/plans.php')) ?>">Compare plans by service <?= nu_icon('arrow-right') ?></a> <?= nu_sample_tag('Plan details are sample content') ?></p>
   </section>
 </main>
 
