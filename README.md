@@ -112,10 +112,29 @@ MIT
 ## UI v2 (client proposed design) and the sample-data screens
 
 The UI follows the client's proposed design: teal/pine palette, serif headlines, photo service cards, and the mobile Book and Track flows.
-Screens whose backend doesn't exist yet (bookings, plans, weather/calendar, tracking, chat, snow queue, proof-of-work/escrow)
+Screens whose backend doesn't exist yet (bookings, plans, weather/calendar, tracking, chat, snow queue, completion evidence)
 read **sample data** from `fixtures/*.php`, one file per feature, and are marked with a "Sample data" tag.
 **Hook-up notes for each screen (data shapes and the endpoints to supply): [`docs/UI-DATA-HOOKUP.md`](docs/UI-DATA-HOOKUP.md).**
 Photo sources and licences: `public/assets/img/photos/CREDITS.md`.
+
+### UI v3 (client guides doc1 + doc2, all six services)
+
+UI only: every screen below is presentational, with sample data and preview states. The functionality (APIs, payments,
+dispatch, weather, notifications) belongs to Sir Paul and is listed per screen in `docs/UI-DATA-HOOKUP.md` sections 10-22.
+
+| Screen | URL |
+|---|---|
+| Service pages (bins, mechanics, snow, fall cleanup, lawn, car wash) | `/public/service.php?s=garbage-bin-cleaning` (etc.; `&as=basic` shows the Basic view) |
+| Booking review | `/public/book.php` (from a service page) |
+| Basic vs Premium / care plans | `/public/plans.php`, `/public/care_plans.php` |
+| Change appointment | `/public/change_appointment.php` (`?state=on_route`) |
+| Snow event, come later | `/public/snow_event.php` (`?state=forecast/published/pending/confirmed/declined`, `?weather=unavailable`) |
+| Live tracking | `/public/track.php` (`?state=stale`, `?state=completed`) |
+| Activity + notifications | `/public/activity.php`, `?tab=notifications` |
+| Mechanic menu, request, quote | `/public/mechanics.php`, `/public/mechanic_request.php`, `/public/quote.php` |
+| Provider dashboard | `/public/provider_dashboard.php` (provider) |
+| Operations, service settings | `/public/operations.php`, `/public/service_settings.php` (manager / admin) |
+| States, timing and exception reference | `/public/status.php` (public) |
 
 ---
 

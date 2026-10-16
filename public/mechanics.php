@@ -9,7 +9,7 @@
 // Sir Paul: GET /api/services/mobile-mechanics/categories?lat=&lng= (availability per location), geocoding for the address box.
 require_once("../config/init.php");
 
-$m = nu_fixture('mechanic');
+$mech = nu_fixture('mechanic');
 $req = nu_url('public/mechanic_request.php');
 include_once("../includes/header.php");
 ?>
@@ -31,7 +31,7 @@ include_once("../includes/header.php");
       <form class="mx-confirm" data-loc-form>
         <span class="mx-confirm__ic"><?= nu_icon('geo-alt-fill') ?></span>
         <label class="sr-only" for="mx-addr">Service location</label>
-        <input class="mx-confirm__in" id="mx-addr" value="Service location · <?= nu_e($m['location']['value']) ?>" autocomplete="street-address">
+        <input class="mx-confirm__in" id="mx-addr" value="Service location · <?= nu_e($mech['location']['value']) ?>" autocomplete="street-address">
         <button class="btn btn-primary btn-sm" type="submit" data-loc-btn>Confirm service location</button>
       </form>
     </section>
@@ -40,7 +40,7 @@ include_once("../includes/header.php");
     <section class="mx-sec" id="roadside">
       <h2>Need roadside help?</h2>
       <div class="mx-road">
-<?php foreach ($m['roadside'] as $k => $r): ?>
+<?php foreach ($mech['roadside'] as $k => $r): ?>
         <a class="mx-road__t" href="<?= nu_e($req . '?svc=' . $k) ?>"><span class="mx-road__ic mx-tone--<?= nu_e($r['tone']) ?>"><?= nu_icon($r['icon']) ?></span><span><?= nu_e($r['name']) ?></span></a>
 <?php endforeach; ?>
       </div>
@@ -50,7 +50,7 @@ include_once("../includes/header.php");
     <section class="mx-sec" id="services">
       <h2>Book vehicle services</h2>
       <div class="mx-svc">
-<?php foreach ($m['maintenance'] as $k => $s): ?>
+<?php foreach ($mech['maintenance'] as $k => $s): ?>
         <a class="mx-svc__t<?= !empty($s['selected']) ? ' is-sel' : '' ?>" href="<?= nu_e($req . '?svc=' . $k) ?>"><span class="mx-svc__ic"><?= nu_icon($s['icon']) ?></span><span><?= nu_e($s['name']) ?></span><?= !empty($s['selected']) ? '<em>Selected</em>' : '' ?></a>
 <?php endforeach; ?>
       </div>

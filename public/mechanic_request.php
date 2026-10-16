@@ -13,11 +13,11 @@
 // Preview: ?step=3 (quote requested), ?state=searching|no_provider (roadside).
 require_once("../config/init.php");
 
-$m = nu_fixture('mechanic');
+$mech = nu_fixture('mechanic');
 $svc = (string) ($_GET['svc'] ?? 'brake-pads');
-$road = $m['roadside'][$svc] ?? null;
-$maint = $m['maintenance'][$svc] ?? null;
-if (!$road && !$maint) { $svc = 'brake-pads'; $maint = $m['maintenance'][$svc]; }
+$road = $mech['roadside'][$svc] ?? null;
+$maint = $mech['maintenance'][$svc] ?? null;
+if (!$road && !$maint) { $svc = 'brake-pads'; $maint = $mech['maintenance'][$svc]; }
 $name = $road ? $road['name'] : $maint['name'];
 $posted = $_SERVER['REQUEST_METHOD'] === 'POST';
 $state = (string) ($_GET['state'] ?? '');
@@ -34,7 +34,7 @@ include_once("../includes/header.php");
 <?php if ($state === ''): ?>
     <h1 class="mr-title"><?= nu_e($name) ?></h1>
     <p class="mr-sub"><?= $road ? 'Tell us what’s happening and where the vehicle is.' : 'Tell us about your vehicle.' ?></p>
-    <form class="mr-form" method="post" action="?svc=<?= nu_e($svc) ?>" data-mr>
+    <form class="mr-form" method="post" action="?svc=<?= nu_e($svc) ?>" data-mr novalidate>
       <section class="mr-box"><h2><?= nu_icon('car-front-fill') ?> Vehicle details</h2><?= nu_form_field(['type' => 'vehicle4', 'name' => 'vehicle', 'label' => ''], 'mr') ?></section>
 <?php if ($road): ?>
 <?php foreach (array_slice($road['fields'], 1) as $f): ?>
@@ -44,7 +44,7 @@ include_once("../includes/header.php");
       <section class="mr-box"><h2><?= nu_icon('disc') ?> Which brakes?</h2>
         <div class="mr-seg" role="radiogroup" aria-label="Which brakes"><?php foreach (['Front', 'Rear', 'Not sure'] as $i => $b): ?><label><input type="radio" name="brakes" value="<?= $b ?>"<?= $i === 0 ? ' checked' : '' ?>><span><?= $b ?></span></label><?php endforeach; ?></div></section>
       <section class="mr-box"><h2><?= nu_icon('clipboard2-pulse') ?> What are you noticing?</h2>
-        <div class="checks checks--2"><?php foreach ($m['brake_symptoms'] as $s): ?><label class="check"><input type="checkbox" name="symptoms[]" value="<?= nu_e($s) ?>"<?= $s === 'Squeaking' ? ' checked' : '' ?>><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($s) ?></span></label><?php endforeach; ?></div></section>
+        <div class="checks checks--2"><?php foreach ($mech['brake_symptoms'] as $s): ?><label class="check"><input type="checkbox" name="symptoms[]" value="<?= nu_e($s) ?>"<?= $s === 'Squeaking' ? ' checked' : '' ?>><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($s) ?></span></label><?php endforeach; ?></div></section>
 <?php else: ?>
       <section class="mr-box"><h2><?= nu_icon('clipboard2-pulse') ?> What should we know?</h2>
         <label class="sr-only" for="mr-desc">Describe the issue</label><textarea class="input" id="mr-desc" name="details" rows="3" placeholder="Symptoms, warning lights, when it started, last service date"></textarea></section>
