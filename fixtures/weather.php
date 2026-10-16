@@ -1,7 +1,7 @@
 <?php
 // fixtures/weather.php — SAMPLE DATA ONLY. Sir Paul: replace with a forecast feed (e.g. Environment Canada / Open-Meteo) keyed by the client's address.
 return [
-    'city' => 'Calgary, AB',
+    'city' => 'Edmonton, AB',
     'now' => ['temp' => -5, 'icon' => 'cloud-snow', 'text' => 'Snow expected', 'detail' => '5–10 cm overnight · Wind 15 km/h'],
     'days' => [
         ['d' => 'Today', 'icon' => 'cloud-snow', 'hi' => -3, 'lo' => -9, 'snow' => true],

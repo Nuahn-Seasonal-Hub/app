@@ -21,7 +21,8 @@ $nuNav = nu_nav_items();
         <h2 class="footer-h">Explore</h2>
         <ul>
           <li><a href="<?= nu_e(nu_url('public/index.php#services')) ?>">Our services</a></li>
-          <li><a href="<?= nu_e(nu_url('public/index.php#plans')) ?>">Basic &amp; Premium plans</a></li>
+          <li><a href="<?= nu_e(nu_url('public/plans.php')) ?>">Basic &amp; Premium</a></li>
+          <li><a href="<?= nu_e(nu_url('public/mechanics.php')) ?>">Roadside help &amp; repairs</a></li>
           <li><a href="<?= nu_e(nu_url('public/index.php#how')) ?>">How it works</a></li>
           <li><a href="<?= nu_e(nu_url('public/jobs.php')) ?>">Open jobs</a></li>
         </ul>
@@ -69,18 +70,27 @@ $nuNav = nu_nav_items();
   <a class="menu-item" href="<?= nu_e(nu_home_url()) ?>"><?= nu_icon('house') ?> Home</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/profile.php')) ?>"><?= nu_icon('person') ?> Profile settings</a>
 <?php if (($_SESSION['role'] ?? '') === 'provider'): ?>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/provider_dashboard.php')) ?>"><?= nu_icon('calendar-check') ?> Today’s jobs</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/provider_route.php')) ?>"><?= nu_icon('signpost-split') ?> Today’s route</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/provider_home.php')) ?>"><?= nu_icon('briefcase') ?> Jobs hub</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/saved_jobs.php')) ?>"><?= nu_icon('bookmark') ?> Saved jobs</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/applications.php')) ?>"><?= nu_icon('clipboard-check') ?> My applications</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/my_activity.php')) ?>"><?= nu_icon('collection') ?> My activity</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/discover_Jobs.php')) ?>"><?= nu_icon('map') ?> Jobs map</a>
 <?php elseif (($_SESSION['role'] ?? '') === 'client'): ?>
   <a class="menu-item" href="<?= nu_e(nu_url('public/bookings.php')) ?>"><?= nu_icon('calendar-check') ?> My bookings</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/care_plans.php')) ?>"><?= nu_icon('arrow-repeat') ?> Care plans &amp; reminders</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/calendar.php')) ?>"><?= nu_icon('calendar-event') ?> Calendar</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/jobs.php#post')) ?>"><?= nu_icon('plus-lg') ?> Post a job</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/my_jobs.php')) ?>"><?= nu_icon('briefcase') ?> My posted jobs</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/client_applications.php')) ?>"><?= nu_icon('people') ?> Applicants</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/jobs.php')) ?>"><?= nu_icon('search') ?> Browse jobs</a>
 <?php endif; ?>
+<?php if (nu_is_staff()): ?>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/operations.php')) ?>"><?= nu_icon('speedometer2') ?> Operations overview</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/service_settings.php')) ?>"><?= nu_icon('sliders') ?> Service settings</a>
+<?php endif; ?>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/status.php')) ?>"><?= nu_icon('list-check') ?> Booking states</a>
   <button type="button" class="menu-item" data-theme-toggle><?= nu_icon('moon-stars') ?> Toggle dark mode</button>
   <div class="menu-sep"></div>
   <a class="menu-item menu-item--danger" href="<?= nu_e(nu_url('public/logout.php')) ?>" data-no-prefetch><?= nu_icon('box-arrow-right') ?> Sign out</a>

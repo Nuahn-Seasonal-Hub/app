@@ -28,6 +28,7 @@ $bodyClass = [
     $nuIsTab ? 'is-tabpage' : '',
     ($nuPage['sub'] || !$nuIsTab) ? 'is-subpage' : '',
     $nuPage['landing'] ? 'page-landing' : '',
+    $nuPage['console'] ? 'is-console' : '',
 ];
 ?><!DOCTYPE html>
 <html lang="en" data-theme="<?= $nuTheme ?>" data-bs-theme="<?= $nuTheme ?>">
@@ -95,12 +96,12 @@ $bodyClass = [
 <?php if ($nuRole === 'client' || !$nuLogged): ?>
       <button type="button" class="navlink navlink--menu" popovertarget="services-menu"<?= $nuPage['tab'] === 'book' ? ' aria-current="page"' : '' ?>>Services <?= nu_icon('chevron-down') ?></button>
       <a class="navlink" href="<?= nu_e(nu_url('public/bookings.php')) ?>"<?= $nuPage['tab'] === 'bookings' ? ' aria-current="page"' : '' ?>>My Bookings</a>
-      <a class="navlink" href="<?= nu_e(nu_url('public/messages.php')) ?>"<?= $nuPage['tab'] === 'messages' ? ' aria-current="page"' : '' ?>>Messages<?= $nuUnread ? '<span class="dot" aria-label="' . (int) $nuUnread . ' unread"></span>' : '' ?></a>
 <?php if ($nuLogged): ?>
-      <a class="navlink" href="<?= nu_e(nu_url('public/calendar.php')) ?>"<?= $nuPage['tab'] === 'calendar' ? ' aria-current="page"' : '' ?>>Calendar</a>
+      <a class="navlink" href="<?= nu_e(nu_url('public/activity.php')) ?>"<?= $nuPage['tab'] === 'activity' ? ' aria-current="page"' : '' ?>>Activity</a>
 <?php else: ?>
-      <a class="navlink" href="<?= nu_e(nu_url('public/index.php#plans')) ?>">Plans</a>
+      <a class="navlink" href="<?= nu_e(nu_url('public/plans.php')) ?>"<?= $nuPage['rel'] === 'public/plans.php' ? ' aria-current="page"' : '' ?>>Plans</a>
 <?php endif; ?>
+      <a class="navlink" href="<?= nu_e(nu_url('public/messages.php')) ?>"<?= $nuPage['tab'] === 'messages' ? ' aria-current="page"' : '' ?>>Messages<?= $nuUnread ? '<span class="dot" aria-label="' . (int) $nuUnread . ' unread"></span>' : '' ?></a>
 <?php else: foreach ($nuNav as $item):
         if ($item[0] === 'profile') continue; ?>
       <a class="navlink" href="<?= nu_e($item[2]) ?>"<?= $item[0] === $nuPage['tab'] ? ' aria-current="page"' : '' ?>><?= nu_e($item[1]) ?><?= ($item[0] === 'messages' && $nuUnread) ? '<span class="dot" aria-label="' . (int) $nuUnread . ' unread"></span>' : '' ?></a>
@@ -129,6 +130,8 @@ $bodyClass = [
   <a class="menu-item" href="<?= nu_e(nu_book_url($nuSvSlug)) ?>"><?= nu_icon($nuSv['icon']) ?> <span><?= nu_e($nuSv['name']) ?><small><?= nu_e($nuSv['blurb']) ?></small></span></a>
 <?php endforeach; ?>
   <div class="menu-sep"></div>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/mechanics.php')) ?>"><?= nu_icon('tools') ?> <span>Roadside help &amp; repairs<small>Mobile mechanic service menu</small></span></a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/plans.php')) ?>"><?= nu_icon('arrow-repeat') ?> <span>Basic or Premium<small>Book when needed, or get monthly provider reminders</small></span></a>
   <a class="menu-item" href="<?= nu_e($nuLogged ? nu_url('public/jobs.php#post') : nu_url('public/register_client.php')) ?>"><?= nu_icon('plus-circle-fill') ?> <span>Other jobs<small>Post any job and get offers from local providers</small></span></a>
 </div>
 <?php endif; ?>

@@ -146,7 +146,7 @@ function nu_page_config() {
         'public/register_superadmin.php' => ['title' => 'Add a superadmin', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/jobs.php'              => ['title' => 'Seasonal jobs', 'tab' => 'jobs', 'lean' => true, 'map' => 'lazy'],
         'public/discover_Jobs.php'     => ['title' => 'Jobs map', 'tab' => 'jobs', 'lean' => true, 'map' => 'defer', 'cluster' => true, 'sub' => true],
-        'public/provider_home.php'     => ['title' => 'Home', 'tab' => 'home', 'lean' => true],
+        'public/provider_home.php'     => ['title' => 'Jobs hub', 'tab' => 'jobs', 'lean' => true],
         'public/client_home.php'       => ['title' => 'Home', 'tab' => 'home', 'lean' => true],
         'public/my_jobs.php'           => ['title' => 'My jobs', 'tab' => 'myjobs', 'lean' => true, 'map' => 'lazy'],
         'public/applications.php'      => ['title' => 'My applications', 'tab' => 'applied', 'lean' => true],
@@ -163,6 +163,19 @@ function nu_page_config() {
         'public/chat.php'              => ['title' => 'Chat', 'tab' => 'messages', 'lean' => true, 'sub' => true],
         'public/calendar.php'          => ['title' => 'Calendar', 'tab' => 'calendar', 'lean' => true],
         'public/provider_route.php'    => ['title' => 'Today’s route', 'tab' => 'route', 'lean' => true],
+        'public/service.php'           => ['title' => 'Book a service', 'tab' => 'book', 'lean' => true, 'sub' => true],
+        'public/plans.php'             => ['title' => 'Basic or Premium', 'tab' => 'book', 'lean' => true, 'sub' => true],
+        'public/care_plans.php'        => ['title' => 'Your care plans', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
+        'public/change_appointment.php' => ['title' => 'Change appointment', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
+        'public/snow_event.php'        => ['title' => 'Snow event', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
+        'public/activity.php'          => ['title' => 'Activity', 'tab' => 'activity', 'lean' => true],
+        'public/mechanics.php'         => ['title' => 'Mobile Mechanics', 'tab' => 'book', 'lean' => true, 'sub' => true],
+        'public/mechanic_request.php'  => ['title' => 'Mechanic request', 'tab' => 'book', 'lean' => true, 'sub' => true],
+        'public/quote.php'             => ['title' => 'Review quote', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
+        'public/provider_dashboard.php' => ['title' => 'Today', 'tab' => 'today', 'lean' => true, 'console' => true],
+        'public/operations.php'        => ['title' => 'Operations', 'tab' => 'ops', 'lean' => true, 'console' => true],
+        'public/service_settings.php'  => ['title' => 'Service settings', 'tab' => 'ops', 'lean' => true, 'console' => true, 'sub' => true],
+        'public/status.php'            => ['title' => 'Booking states', 'tab' => '', 'lean' => true, 'sub' => true],
         'public/admin/dashboard.php'   => ['title' => 'Admin overview', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/admin/manage_users.php' => ['title' => 'Manage users', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/admin/manage_admins.php' => ['title' => 'Manage staff', 'tab' => 'dash', 'lean' => true, 'sub' => true],
@@ -190,7 +203,7 @@ function nu_page_config() {
             'bsjs'  => (strpos($src, 'data-bs-') !== false || strpos($src, 'bootstrap.') !== false),
         ];
     }
-    $cfg += ['lean' => false, 'map' => false, 'cluster' => false, 'chart' => false, 'icons' => false, 'bsjs' => false, 'sub' => false, 'landing' => false, 'tab' => ''];
+    $cfg += ['console' => false, 'lean' => false, 'map' => false, 'cluster' => false, 'chart' => false, 'icons' => false, 'bsjs' => false, 'sub' => false, 'landing' => false, 'tab' => ''];
     $cfg['rel'] = $rel;
     $cfg['slug'] = preg_replace('/[^a-z0-9]+/', '-', strtolower(str_replace('.php', '', $rel)));
     return $cfg;
@@ -202,22 +215,23 @@ function nu_nav_items() {
     switch (nu_role()) {
         case 'provider':
             return [
-                ['home', 'Home', $u('public/provider_home.php'), 'house', 'house-fill'],
+                ['today', 'Today', $u('public/provider_dashboard.php'), 'calendar-check', 'calendar2-check'],
                 ['route', 'Route', $u('public/provider_route.php'), 'signpost-split', 'signpost-split-fill'],
-                ['jobs', 'Find jobs', $u('public/jobs.php'), 'search', 'search'],
+                ['jobs', 'Find jobs', $u('public/provider_home.php'), 'search', 'search'],
                 ['messages', 'Messages', $u('public/messages.php'), 'chat-dots', 'chat-dots-fill'],
                 ['profile', 'Profile', $u('public/profile.php'), 'person', 'person-fill'],
             ];
         case 'client':
             return [
                 ['home', 'Home', $u('public/client_home.php'), 'house', 'house-fill'],
-                ['calendar', 'Calendar', $u('public/calendar.php'), 'calendar-event', 'calendar-event-fill'],
+                ['bookings', 'Bookings', $u('public/bookings.php'), 'calendar-check', 'calendar2-check'],
                 ['book', 'Book', $u('public/index.php#services'), 'plus-lg', 'plus-lg', true],
-                ['bookings', 'Bookings', $u('public/bookings.php'), 'calendar-check', 'calendar-check'],
+                ['activity', 'Activity', $u('public/activity.php'), 'activity', 'activity'],
                 ['messages', 'Messages', $u('public/messages.php'), 'chat-dots', 'chat-dots-fill'],
             ];
         case 'manager': case 'admin': case 'superadmin':
             return [
+                ['ops', 'Operations', $u('public/operations.php'), 'speedometer2', 'speedometer2'],
                 ['dash', 'Dashboard', $u('public/dashboard.php'), 'grid-1x2', 'grid-1x2-fill'],
                 ['apps', 'Applications', $u('public/manage_applications.php'), 'clipboard-check', 'clipboard-check-fill'],
                 ['jobs', 'Jobs', $u('public/jobs.php'), 'briefcase', 'briefcase-fill'],
@@ -424,21 +438,196 @@ function nu_logo($size = 34) {
     return '<span class="logo">' . nu_logo_mark($size) . '<span class="logo__word"><span class="logo__name">Nuahn</span><span class="logo__sub">Seasonal Hub</span></span></span>';
 }
 
-/** Booking URL for a service slug. */
-function nu_book_url($slug) { return nu_url('public/book.php') . '?service=' . rawurlencode($slug); }
+/** Legacy (v2) service slugs -> current slugs, so old links keep working. */
+function nu_service_slug($slug) {
+    $alias = ['garbage-can-cleaning' => 'garbage-bin-cleaning', 'mobile-detailing' => 'car-wash', 'summer-cleanup' => 'fall-cleanup', 'snow' => 'snow-removal'];
+    $slug = (string) $slug;
+    return $alias[$slug] ?? $slug;
+}
+/** Service page URL (doc2 p2-7: one page per service with the booking form). */
+function nu_book_url($slug) { return nu_url('public/service.php') . '?s=' . rawurlencode(nu_service_slug($slug)); }
+/** Service record for a slug (aliases resolved), or null. */
+function nu_service($slug) { $all = nu_fixture('services'); return $all[nu_service_slug($slug)] ?? null; }
 
-/** Booking status → [label, tone]. */
+/**
+ * Shared booking / job status vocabulary (doc1 p8 "State and payment rules", doc2 p21).
+ * One value drives every panel for customer, provider and admin. Returns [label, tone].
+ */
 function nu_booking_status($s) {
     $m = [
-        'requested' => ['Requested', 'warning'], 'confirmed' => ['Confirmed', 'blue'], 'assigned' => ['Assigned', 'blue'],
-        'on_the_way' => ['On the way', 'success'], 'in_progress' => ['In progress', 'success'], 'completed' => ['Completed', ''],
-        'cancelled' => ['Cancelled', 'danger'], 'next' => ['Up next', 'blue'], 'queued' => ['Queued', ''],
+        'requested' => ['Requested', 'warning'], 'searching' => ['Searching for provider', 'warning'], 'no_provider' => ['No provider available', 'danger'],
+        'quote_pending' => ['Quote pending', 'blue'], 'confirmed' => ['Confirmed', 'blue'], 'assigned' => ['Assigned', 'blue'],
+        'unassigned' => ['Unassigned', 'warning'], 'change_requested' => ['Change requested', 'warning'],
+        'on_the_way' => ['On the way', 'success'], 'arrived' => ['Arrived', 'success'], 'in_progress' => ['In progress', 'success'],
+        'paused' => ['Paused', 'warning'], 'delayed' => ['Delayed', 'danger'], 'weather_review' => ['Weather review', 'danger'],
+        'completed' => ['Completed', 'navy'], 'disputed' => ['Disputed', 'danger'], 'closed' => ['Closed', ''], 'cancelled' => ['Cancelled', 'danger'],
+        'reminder_due' => ['Reminder due', 'blue'], 'skipped' => ['Skipped', ''], 'next' => ['Up next', 'blue'], 'queued' => ['Queued', ''],
+        'available' => ['Available', 'success'], 'busy' => ['Busy', 'danger'],
     ];
     return $m[$s] ?? [ucfirst(str_replace('_', ' ', (string) $s)), ''];
 }
-function nu_booking_chip($s) {
+function nu_booking_chip($s, $dot = true) {
     [$l, $t] = nu_booking_status($s);
-    return '<span class="chip' . ($t ? ' chip--' . $t : '') . '">' . nu_e($l) . '</span>';
+    return '<span class="chip' . ($t ? ' chip--' . $t : '') . ($dot ? ' chip--dot' : '') . '">' . nu_e($l) . '</span>';
+}
+/** Payment is a separate state from job progress (doc2 p21). */
+function nu_payment_chip($s) {
+    $m = ['unpaid' => ['Unpaid', ''], 'authorized' => ['Authorized', 'blue'], 'paid' => ['Paid', 'success'], 'failed' => ['Payment failed', 'danger'],
+          'partially_refunded' => ['Partially refunded', 'warning'], 'refunded' => ['Refunded', '']];
+    [$l, $t] = $m[$s] ?? [ucfirst((string) $s), ''];
+    return '<span class="chip chip--pay' . ($t ? ' chip--' . $t : '') . '">' . nu_icon('credit-card') . nu_e($l) . '</span>';
+}
+
+/**
+ * Horizontal progress stepper. $steps = [[label, time], ...]; $at = index of the current step (-1 = none yet).
+ * Done steps get a check, the current step a filled ring.
+ */
+function nu_steps($steps, $at, $class = '') {
+    $o = '<ol class="hsteps ' . nu_e($class) . '">';
+    foreach ($steps as $i => $st) {
+        $label = is_array($st) ? $st[0] : $st; $time = is_array($st) ? ($st[1] ?? '') : '';
+        $cls = $i < $at ? 'is-done' : ($i === $at ? 'is-current' : '');
+        $o .= '<li class="' . $cls . '"' . ($i === $at ? ' aria-current="step"' : '') . '><span class="hsteps__dot">' . ($i < $at || $i === $at ? nu_icon('check-lg') : '') . '</span>'
+            . '<span class="hsteps__l">' . nu_e($label) . '</span>' . ($time !== '' ? '<span class="hsteps__t">' . nu_e($time) . '</span>' : '') . '</li>';
+    }
+    return $o . '</ol>';
+}
+
+/**
+ * Lightweight illustrative route map (inline SVG, no tiles). Used on service pages where the mockups show a
+ * small trip map. The live map on track.php uses real tiles. $v picks one of three sample routes.
+ */
+function nu_mini_map($v = 0, $label = 'Map preview of the team’s route to your home') {
+    $routes = [
+        'M40 132 C 80 132, 96 104, 132 104 S 176 76, 206 76 S 252 60, 268 44',
+        'M34 52 L 92 52 L 92 98 L 168 98 L 168 128 L 236 128 L 236 70 L 280 70',
+        'M30 140 C 70 120, 90 70, 140 74 S 210 120, 250 92 S 270 50, 284 40',
+    ];
+    $r = $routes[$v % 3];
+    preg_match_all('/-?\d+(?:\.\d+)?/', $r, $m); $n = $m[0];
+    $sx = $n[0]; $sy = $n[1]; $ex = $n[count($n) - 2]; $ey = $n[count($n) - 1];
+    return '<svg class="minimap" viewBox="0 0 320 180" role="img" aria-label="' . nu_e($label) . '" preserveAspectRatio="xMidYMid slice">'
+        . '<rect width="320" height="180" fill="var(--map-bg)"/>'
+        . '<path d="M200 0 C 230 40, 300 40, 320 30 V0Z M0 150 C 40 140, 60 180, 70 180 H0Z" fill="var(--map-park)"/>'
+        . '<path d="M262 120 c 18 -6 40 6 42 26 s -22 30 -40 22 s -18 -42 -2 -48z" fill="var(--map-water)"/>'
+        . '<g stroke="var(--map-road)" stroke-width="7" fill="none" stroke-linecap="round"><path d="M0 52 H320 M0 104 H320 M0 150 H320 M92 0 V180 M168 0 V180 M236 0 V180"/></g>'
+        . '<g stroke="var(--map-road)" stroke-width="3" fill="none" opacity=".85"><path d="M0 78 H320 M0 128 H320 M40 0 V180 M128 0 V180 M204 0 V180 M282 0 V180"/></g>'
+        . '<path d="' . $r . '" fill="none" stroke="var(--teal)" stroke-width="3.2" stroke-dasharray="2 6" stroke-linecap="round"/>'
+        . '<g transform="translate(' . $sx . ' ' . $sy . ')"><circle r="13" fill="var(--teal)" opacity=".18"/><rect x="-10" y="-7" width="20" height="13" rx="3" fill="var(--pine)"/><rect x="4" y="-4" width="5" height="5" rx="1" fill="#CFE9E5"/></g>'
+        . '<g transform="translate(' . $ex . ' ' . $ey . ')"><circle r="15" fill="var(--teal)" opacity=".2"/><circle r="10" fill="var(--pine)"/><path d="M-5 1 L0 -4 L5 1 V5 H-5Z" fill="#fff"/></g>'
+        . '</svg>';
+}
+
+/**
+ * Render one service-form field (fixtures/services.php form[] / fixtures/mechanic.php fields[]).
+ * Presentation only: names are what Sir Paul's booking endpoint should accept.
+ */
+function nu_form_field($f, $idp = 'f') {
+    $name = $f['name'] ?? 'field'; $id = $idp . '-' . $name; $label = $f['label'] ?? '';
+    $ic = !empty($f['icon']) ? nu_icon($f['icon']) : '';
+    $val = $f['value'] ?? null; $o = '';
+    $lab = function ($for = null) use ($label, $ic, $f) {
+        if ($label === '') return '';
+        $tag = $for ? '<label class="label" for="' . nu_e($for) . '">' : '<span class="label">';
+        return $tag . ($ic && empty($f['icon_in']) ? $ic : '') . nu_e($label) . ($for ? '</label>' : '</span>');
+    };
+    switch ($f['type']) {
+        case 'address':
+            $v = !empty($f['prefix']) ? $f['prefix'] . ' · Edmonton, AB' : '123 Maple Grove Drive, Edmonton, AB';
+            $o .= $lab($id) . '<span class="input-icon">' . nu_icon('geo-alt-fill') . '<input class="input" id="' . $id . '" name="' . nu_e($name) . '" value="' . nu_e($v) . '" autocomplete="street-address"></span>';
+            if (!empty($f['note'])) $o .= '<p class="fld-note">' . nu_icon('file-text') . nu_e($f['note']) . '</p>';
+            break;
+        case 'select':
+            $o .= $lab($id) . '<select class="input" id="' . $id . '" name="' . nu_e($name) . '">';
+            foreach ($f['options'] as $op) { $o .= '<option' . ((string) $val === (string) $op ? ' selected' : '') . '>' . nu_e($op) . '</option>'; }
+            $o .= '</select>';
+            if (!empty($f['links'])) $o .= '<p class="fld-links"><a href="' . nu_e(nu_url('public/mechanics.php')) . '#roadside">Roadside help ' . nu_icon('arrow-right') . '</a><a href="' . nu_e(nu_url('public/mechanics.php')) . '#services">Browse all repairs ' . nu_icon('arrow-right') . '</a></p>';
+            break;
+        case 'checks':
+            $o .= '<fieldset class="fset"><legend class="label">' . $ic . nu_e($label) . '</legend><div class="checks' . (!empty($f['inline']) ? ' checks--inline' : '') . (!empty($f['cols']) ? ' checks--2' : '') . '">';
+            foreach ($f['options'] as $op) {
+                [$t, $d] = array_pad(explode('|', $op, 2), 2, '');
+                $on = in_array($t, (array) $val, true);
+                $o .= '<label class="check"><input type="checkbox" name="' . nu_e($name) . '[]" value="' . nu_e($t) . '"' . ($on ? ' checked' : '') . '><span class="check__box">' . nu_icon('check-lg') . '</span><span class="check__t">' . nu_e($t) . ($d !== '' ? '<small>' . nu_e($d) . '</small>' : '') . '</span></label>';
+            }
+            $o .= '</div></fieldset>';
+            break;
+        case 'radios':
+            $o .= '<fieldset class="fset"><legend class="label">' . $ic . nu_e($label) . '</legend><div class="radios' . (!empty($f['pills']) ? ' radios--pills' : '') . '">';
+            foreach ($f['options'] as $op) {
+                $o .= '<label class="radio"><input type="radio" name="' . nu_e($name) . '" value="' . nu_e($op) . '"' . ((string) $val === (string) $op ? ' checked' : '') . '><span>' . nu_e($op) . '</span></label>';
+            }
+            $o .= '</div></fieldset>';
+            break;
+        case 'cards':
+            $o .= '<fieldset class="fset"><legend class="label">' . nu_e($label) . '</legend><div class="ocards">';
+            foreach ($f['options'] as $op) {
+                $o .= '<label class="ocard"><input type="radio" name="' . nu_e($name) . '" value="' . nu_e($op[0]) . '"' . ($val === $op[0] ? ' checked' : '') . '><span>' . nu_icon($op[1]) . '<b>' . nu_e($op[0]) . '</b><i class="ocard__r" aria-hidden="true"></i></span></label>';
+            }
+            $o .= '</div></fieldset>';
+            break;
+        case 'utility':
+            $w = $f['water'] ?? 'provider'; $p = $f['power'] ?? 'provider';
+            $o .= '<div class="util" data-util>';
+            $o .= '<fieldset class="fset"><legend class="label">Water supply</legend><div class="radios"><label class="radio"><input type="radio" name="water_source" value="customer"' . ($w === 'customer' ? ' checked' : '') . '><span>Use my water</span></label><label class="radio"><input type="radio" name="water_source" value="provider"' . ($w === 'provider' ? ' checked' : '') . '><span>Provider brings water</span></label></div></fieldset>';
+            $o .= '<fieldset class="fset"><legend class="label">' . nu_icon('plug') . 'Electricity supply</legend><div class="radios"><label class="radio"><input type="radio" name="power_source" value="customer"' . ($p === 'customer' ? ' checked' : '') . '><span>Use my electricity</span></label><label class="radio"><input type="radio" name="power_source" value="provider"' . ($p === 'provider' ? ' checked' : '') . '><span>Provider brings power</span></label></div></fieldset>';
+            $o .= '<p class="util__note" data-util-note aria-live="polite">' . nu_icon('check-circle-fill') . '<span>Self-contained visit: provider brings water and power.</span></p></div>';
+            break;
+        case 'vehicle':
+        case 'vehicle4':
+            $vv = (array) ($val ?? []);
+            $parts = $f['type'] === 'vehicle4' ? [['Year', 'Select year', ['2024', '2023', '2022', '2021', '2020', '2019', '2018', 'Older']], ['Make', 'Select make', ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Hyundai', 'Other']], ['Model', 'Select model', ['RAV4', 'Corolla', 'Camry', 'Other']], ['Trim / engine', 'Select if known', ['LE 2.5 L', 'XLE 2.5 L', 'Hybrid', 'Not sure']]]
+                                              : [['Year', '', ['2022', '2021', '2020', '2019', '2018']], ['Make', '', ['Toyota', 'Honda', 'Ford', 'Hyundai']], ['Model', '', ['RAV4', 'Corolla', 'Camry']]];
+            $o .= '<fieldset class="fset"><legend class="label">' . (!empty($f['icon']) ? nu_icon($f['icon']) : '') . nu_e($label) . '</legend><div class="vgrid vgrid--' . count($parts) . '">';
+            foreach ($parts as $k => $pt) {
+                $pid = $id . '-' . $k; $sel = $vv[$k] ?? '';
+                $o .= '<label class="vgrid__f" for="' . $pid . '"><span class="label label--sm">' . nu_e($pt[0]) . '</span><select class="input" id="' . $pid . '" name="' . nu_e($name) . '[' . strtolower(strtok($pt[0], ' ')) . ']">';
+                if ($pt[1] !== '') $o .= '<option value="">' . nu_e($pt[1]) . '</option>';
+                foreach ($pt[2] as $op) { $o .= '<option' . ($sel === $op ? ' selected' : '') . '>' . nu_e($op) . '</option>'; }
+                $o .= '</select></label>';
+            }
+            $o .= '</div></fieldset>';
+            break;
+        case 'textarea':
+            $max = (int) ($f['max'] ?? 500);
+            $o .= $lab($id) . '<textarea class="input" id="' . $id . '" name="' . nu_e($name) . '" rows="2" maxlength="' . $max . '" placeholder="' . nu_e($f['placeholder'] ?? '') . '" data-count></textarea>';
+            if (!empty($f['max'])) $o .= '<span class="counter" aria-hidden="true"><span data-count-out>0</span>/' . $max . '</span>';
+            break;
+        case 'upload':
+            $o .= '<span class="label">' . nu_e($label) . '</span><label class="drop2" for="' . $id . '">' . nu_icon('image') . '<span>Drag and drop photos here<small>or click to upload</small></span><span class="btn btn-soft btn-sm">' . nu_icon('upload') . ' Add photos</span>'
+                . '<input type="file" id="' . $id . '" name="' . nu_e($name) . '[]" accept="image/*" multiple class="sr-only" data-files></label>';
+            break;
+        default: // text
+            $o .= $lab($id) . '<span class="input-icon">' . ($ic ?: nu_icon('pencil')) . '<input class="input" id="' . $id . '" name="' . nu_e($name) . '" value="' . nu_e(is_string($val) ? $val : '') . '" placeholder="' . nu_e($f['placeholder'] ?? '') . '"></span>';
+    }
+    return '<div class="fld' . (!empty($f['half']) ? ' fld--half' : '') . '">' . $o . '</div>';
+}
+
+/** Render a list of form fields, pairing consecutive half-width fields in one row. */
+function nu_form_fields($fields, $idp = 'f') {
+    $o = ''; $buf = [];
+    foreach ($fields as $f) {
+        if (!empty($f['half'])) { $buf[] = nu_form_field($f, $idp); if (count($buf) === 2) { $o .= '<div class="fld-row">' . implode('', $buf) . '</div>'; $buf = []; } continue; }
+        if ($buf) { $o .= '<div class="fld-row">' . implode('', $buf) . '</div>'; $buf = []; }
+        $o .= nu_form_field($f, $idp);
+    }
+    if ($buf) $o .= '<div class="fld-row">' . implode('', $buf) . '</div>';
+    return $o;
+}
+
+/**
+ * Dark sidebar for the provider / admin consoles (doc1 p4-5, doc2 p19-20). Becomes a scrolling pill row on mobile.
+ * $items = [[key, label, url, icon, badge?], ...]
+ */
+function nu_console_nav($items, $active, $label, $tagline = '') {
+    $o = '<aside class="console__side" aria-label="' . nu_e($label) . '"><a class="console__brand" href="' . nu_e(nu_home_url()) . '">' . nu_logo(40) . '</a><nav class="console__nav">';
+    foreach ($items as $it) {
+        $o .= '<a href="' . nu_e($it[2]) . '"' . ($it[0] === $active ? ' aria-current="page"' : '') . '>' . nu_icon($it[3]) . '<span>' . nu_e($it[1]) . '</span>'
+            . (!empty($it[4]) ? '<b class="console__badge">' . (int) $it[4] . '</b>' : '') . '</a>';
+    }
+    $o .= '</nav>';
+    if ($tagline !== '') $o .= '<div class="console__art" aria-hidden="true"></div><p class="console__tag">' . $tagline . '</p>';
+    return $o . '</aside>';
 }
 
 /** Unread message count for the nav dot (sample data until messages exist). */
