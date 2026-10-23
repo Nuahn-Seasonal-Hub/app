@@ -3,16 +3,16 @@
 // 'me' => true marks messages sent by the signed-in user. 'actions' renders quick-reply chips (confirm / reschedule).
 return [
     'threads' => [
-        ['id' => 't1', 'name' => 'Nuahn Team A', 'about' => 'Snow Removal · Today', 'last' => 'On our way, about 12 minutes out.', 'time' => '9:13 AM', 'unread' => 2, 'initials' => 'TA'],
-        ['id' => 't2', 'name' => 'Nuahn Team A', 'about' => 'Snow Removal · Tomorrow', 'last' => 'You’re #3 in the queue for tomorrow morning.', 'time' => 'Yesterday', 'unread' => 1, 'initials' => 'TA'],
-        ['id' => 't3', 'name' => 'Mike’s Mobile Mechanics', 'about' => 'Mobile Mechanics · Mon', 'last' => 'Can you do 1–3 PM instead?', 'time' => 'Tue', 'unread' => 0, 'initials' => 'MM'],
-        ['id' => 't4', 'name' => 'Detail Team E', 'about' => 'Mobile Car Wash · Completed', 'last' => 'Thanks! Photos are uploaded.', 'time' => 'Oct 1', 'unread' => 0, 'initials' => 'SC'],
+        ['id' => 't1', 'name' => 'Jordan Mercer', 'about' => 'Snow Removal · Today', 'last' => 'On our way, about 12 minutes out.', 'time' => '9:13 AM', 'unread' => 2, 'initials' => 'JM'],
+        ['id' => 't2', 'name' => 'Priya Nair', 'about' => 'Snow Removal · Offer on TASK-2051', 'last' => 'I can do steps and walkway by hand. Salt included.', 'time' => 'Yesterday', 'unread' => 1, 'initials' => 'PN'],
+        ['id' => 't3', 'name' => 'Marcus Tran', 'about' => 'Mobile Mechanics · Mon', 'last' => 'Can you do 1–3 PM instead?', 'time' => 'Tue', 'unread' => 0, 'initials' => 'MT'],
+        ['id' => 't4', 'name' => 'Jordan Mercer', 'about' => 'Snow Removal · SNOW-1031 completed', 'last' => 'Thanks! Before and after photos are uploaded.', 'time' => 'Oct 17', 'unread' => 0, 'initials' => 'JM'],
     ],
     'thread' => [
-        'id' => 't3', 'name' => 'Mike’s Mobile Mechanics', 'about' => 'Mobile Mechanics · MECH-1042', 'initials' => 'MM',
+        'id' => 't3', 'name' => 'Marcus Tran', 'about' => 'Mobile Mechanics · MECH-1042', 'initials' => 'MT',
         'messages' => [
             ['me' => true, 'text' => 'Hi! Booked a diagnostic for Monday 10–12. Check engine light is on.', 'time' => 'Tue 4:02 PM'],
-            ['me' => false, 'text' => 'Thanks Alice. I have a job across town that morning. Can you do 1–3 PM instead?', 'time' => 'Tue 4:20 PM'],
+            ['me' => false, 'text' => 'Thanks Alice. I have another job that morning. Can you do 1–3 PM instead?', 'time' => 'Tue 4:20 PM'],
             ['me' => false, 'type' => 'proposal', 'title' => 'Reschedule request', 'text' => 'Mon · 1:00 – 3:00 PM', 'time' => 'Tue 4:20 PM'],
         ],
         'actions' => ['Confirm 1–3 PM', 'Suggest another time', 'Keep original'],

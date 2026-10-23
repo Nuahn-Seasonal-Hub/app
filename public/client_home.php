@@ -26,8 +26,8 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
       </div>
     </div>
     <div class="row-flex enter" style="--i:1">
-      <a class="btn btn-light" href="index.php#services"><?= nu_icon('calendar-check') ?> Book a service</a>
-      <a class="btn btn-glass" href="jobs.php#post"><?= nu_icon('plus-lg') ?> Post a job</a>
+      <a class="btn btn-light" href="post_task.php"><?= nu_icon('plus-lg') ?> Post a task</a>
+      <a class="btn btn-glass" href="mechanics.php"><?= nu_icon('wrench-adjustable') ?> Get a mechanic</a>
     </div>
   </div>
 </section>
@@ -40,16 +40,22 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
 
 <?php
     $svcs = nu_fixture('services'); $wx = nu_fixture('weather'); $nb = null;
-    foreach (nu_fixture('bookings') as $b) { if (!in_array($b['status'], ['completed', 'disputed', 'closed', 'cancelled'], true)) { $nb = $b; break; } }
+    foreach (nu_fixture('bookings') as $b) { if ($b['id'] === 'NSH-1042') { $nb = $b; break; } }
     $rem = nu_fixture('care_plans')['reminders'][0] ?? null; // Premium panel only for enrolled customers (doc2 p1)
     $notes = array_slice(nu_fixture('notifications'), 0, 3);
 ?>
+    <section class="mk-action" data-reveal aria-label="Needs your attention">
+      <a class="mk-action__row" href="approve.php?id=SNOW-1035"><span class="mk-action__ic"><?= nu_icon('check2-all') ?></span><span><b>Approve the work to release payment</b><small>Priya Nair finished SNOW-1035. Before and after photos are ready. <?= nu_sample_tag('Sample') ?></small></span><?= nu_icon('chevron-right') ?></a>
+      <a class="mk-action__row" href="offers.php?state=many"><span class="mk-action__ic"><?= nu_icon('chat-square-text') ?></span><span><b>4 offers on your task</b><small>TASK-2051 · from $39 · fastest about 40 min</small></span><?= nu_icon('chevron-right') ?></a>
+      <a class="mk-action__row" href="post_task.php" data-draft hidden><span class="mk-action__ic"><?= nu_icon('pencil-square') ?></span><span><b>Continue your task draft</b><small data-draft-t>You started a snow task. Pick up where you left off.</small></span><?= nu_icon('chevron-right') ?></a>
+    </section>
+    <script>try{var d=JSON.parse(sessionStorage.getItem('nuahn.taskDraft')||'null');if(d){var a=document.querySelector('[data-draft]');a.hidden=false;if(d.addr)document.querySelector('[data-draft-t]').textContent=d.addr+' · budget $'+(d.budget||'')}}catch(e){}</script>
     <div class="grid grid-2" style="margin-bottom:var(--s5)">
 <?php if ($nb): $nsv = $svcs[$nb['service']]; ?>
       <section class="card nb" data-reveal>
         <div class="wx__top"><h2 class="lside__h">Your next booking</h2><?= nu_booking_chip($nb['status']) ?></div>
         <div class="nb__row"><span class="nb__icon"><?= nu_icon($nsv['icon']) ?></span><div><div class="nb__title"><?= nu_e($nsv['name']) ?></div><div class="nb__when"><?= nu_e($nb['when']) ?> · <?= nu_e($nb['window']) ?></div><div class="nb__team"><?= nu_e($nb['team']) ?> · <?= nu_sample_tag('Sample') ?></div></div></div>
-        <div class="nb__actions"><a class="btn btn-primary btn-sm" href="track.php?id=<?= nu_e(rawurlencode($nb['id'])) ?>">Track</a><a class="btn btn-outline btn-sm" href="chat.php?thread=t1"><?= nu_icon('chat-dots') ?> Message team</a></div>
+        <div class="nb__actions"><a class="btn btn-primary btn-sm" href="track.php?id=<?= nu_e(rawurlencode($nb['id'])) ?>">Track</a><a class="btn btn-outline btn-sm" href="chat.php?thread=t1"><?= nu_icon('chat-dots') ?> Message contractor</a></div>
       </section>
 <?php endif; ?>
       <section class="card nb" data-reveal style="--i:1">
@@ -67,7 +73,7 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
       <div class="pl-rem__t"><b><?= nu_e($rem['title']) ?></b><span><?= nu_e($rem['provider']) ?>: <?= nu_e($rem['text']) ?></span></div>
       <div class="pl-rem__a"><a class="btn btn-primary btn-sm" href="book.php?service=<?= nu_e($rem['service']) ?>&amp;from=reminder">Confirm a visit</a><a class="btn btn-outline btn-sm" href="change_appointment.php?id=MECH-1042&amp;reminder=1">Change date</a><a class="btn btn-outline btn-sm" href="care_plans.php">Skip this month</a></div>
     </section>
-    <a class="se-wx ch-home-snow" href="snow_event.php" data-reveal><?= nu_icon('cloud-snow') ?><span><b>Snow event confirmed for your area</b> Team A is assigned to #SNOW-1045. Busy? Ask them to come later. <?= nu_icon('arrow-right') ?></span></a>
+    <a class="se-wx ch-home-snow" href="snow_event.php" data-reveal><?= nu_icon('cloud-snow') ?><span><b>Snow event confirmed for your area</b> Jordan Mercer is booked for #SNOW-1045. Busy? Ask them to come later. <?= nu_icon('arrow-right') ?></span></a>
 <?php endif; ?>
     <div class="grid grid-stats">
         <div class="stat" data-reveal style="--i:0"><span class="stat__icon"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Jobs posted</div><div class="stat__value" data-count="<?= $myJobs ?>"><?= $myJobs ?></div></div></div>
@@ -75,7 +81,7 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
         <div class="stat" data-reveal style="--i:2"><span class="stat__icon stat__icon--navy"><?= nu_icon('people-fill') ?></span><div><div class="stat__label">Applicants</div><div class="stat__value" data-count="<?= $received ?>"><?= $received ?></div></div></div>
     </div>
 
-    <div class="section-title"><h2>Book a service</h2></div>
+    <div class="section-title"><h2>Start a task</h2></div>
     <div class="grid grid-2 ch-svcs">
 <?php $ti = 0; foreach (nu_services_by_status('live') as $sl => $sv): ?>
         <a class="tile" href="<?= nu_e(nu_book_url($sl)) ?>" data-reveal style="--i:<?= $ti++ ?>">

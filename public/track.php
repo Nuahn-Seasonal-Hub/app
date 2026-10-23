@@ -3,7 +3,7 @@
 //   Email: xristoinno@gmail.com | Phone: +256783335335
 // (Server-side comment only; never output to the browser.)
 // public/track.php: "Your service, step by step" (doc1 p3, doc2 p14). One timeline per accepted booking:
-// trip map (provider GPS during the accepted trip only), status steps, assigned team, shared conversation,
+// trip map (contractor GPS during the accepted trip only), the 8-step job status, payment status (separate), the contractor, shared conversation,
 // local weather and the completion report. Before/after photos and checklist appear only after upload;
 // while on the way, placeholders are shown, never invented work. Payment is a separate state (doc2 p21).
 // UI ONLY: everything is SAMPLE DATA from fixtures/tracking.php + fixtures/proof_of_work.php. The vehicle marker
@@ -19,20 +19,26 @@ $sv  = nu_fixture('services')[$trk['service']];
 $state = (string) ($_GET['state'] ?? '');
 $completed = $state === 'completed';
 $stale = $state === 'stale';
-$steps = []; $at = 0;
-foreach ($trk['timeline'] as $i => $t) { $steps[] = [$t['label'], $t['time']]; if (!empty($t['current'])) $at = $i; }
-if ($completed) { $steps[3][1] = '9:21 AM'; $steps[4][1] = $pow['before']['time']; $steps[5][1] = $pow['after']['time']; $at = 5; }
+$times = []; $jobKey = 'on_the_way';
+foreach ($trk['timeline'] as $t) { $times[$t['key']] = $t['time']; if (!empty($t['current'])) $jobKey = $t['key']; }
+if ($completed) { $jobKey = 'pending_approval'; $times['arrived'] = '9:21 AM'; $times['in_progress'] = $pow['before']['time']; $times['pending_approval'] = $pow['after']['time']; }
+$ctr = nu_contractor($trk['team']['id']); $payState = $completed ? 'authorized' : 'authorized';
 $inv = $trk['invoice'];
 include_once("../includes/header.php");
 ?>
 <main class="tk<?= $completed ? " tk--done" : "" ?>" id="track">
   <div class="tk-head">
-    <h1>Your service, step by step</h1>
-    <p>Real-time updates for your booking. <?= nu_sample_tag('Sample tracking data') ?></p>
+    <h1>Your job, step by step</h1>
+    <p>Real-time updates from your contractor. <?= nu_sample_tag('Sample tracking data') ?></p>
   </div>
   <section class="tk-bar">
     <div><b>#<?= nu_e($trk['booking']) ?> · <?= nu_e($sv['name']) ?></b><span><?= nu_icon('geo-alt-fill') ?> <?= nu_e($trk['address']) ?></span></div>
     <div class="tk-bar__win"><?= nu_icon('calendar3') ?><span>Arrival window<b><?= nu_e($trk['window']) ?></b></span></div>
+  </section>
+  <section class="tk-pay" aria-label="Payment status">
+    <span class="tk-pay__ic"><?= nu_icon('shield-lock-fill') ?></span>
+    <div><b>Payment <?= nu_payment_chip($payState) ?></b><span><?= $completed ? 'Funds held securely until you approve the work.' : 'Funds held securely until you approve the work. Your contractor is paid after you approve.' ?></span></div>
+    <?php if ($completed): ?><a class="btn btn-primary btn-sm" href="<?= nu_e(nu_url('public/approve.php')) ?>?id=NSH-1042">Review and approve</a><?php endif; ?>
   </section>
 
   <div class="tk-grid">
@@ -47,27 +53,28 @@ include_once("../includes/header.php");
           <span class="tk-eta__v" data-eta-v><?= nu_e($stale ? $trk['eta_range'] : $trk['eta']) ?></span>
           <span class="tk-eta__u"><?= $stale ? 'Location last updated ' . nu_e($trk['location_updated']) . ' · ETA less precise' : 'Updated ' . nu_e($trk['location_updated']) . ' · <span data-eta-min>' . (int) $trk['eta_min'] . '</span> min away' ?></span>
 <?php endif; ?>
-          <div class="arrive" data-arrive role="status"><?= nu_icon('house-check') ?><div><b>Arrived</b><span><?= nu_e($trk['team']['name']) ?> is at your home.</span></div></div>
+          <div class="arrive" data-arrive role="status"><?= nu_icon('house-check') ?><div><b>Arrived</b><span><?= nu_e($trk['team']['name']) ?> is at your property.</span></div></div>
         </div>
         <div class="tk-map<?= $stale ? ' is-stale' : '' ?>">
-          <div id="trk-map" data-route="<?= nu_e(json_encode($trk['route'])) ?>" data-home="<?= nu_e(json_encode($trk['home'])) ?>"<?= ($completed || $stale) ? ' data-static="1"' : '' ?><?= $stale ? ' data-stale="1"' : '' ?> role="img" aria-label="Map showing the team’s vehicle on the way to your home"></div>
+          <div id="trk-map" data-route="<?= nu_e(json_encode($trk['route'])) ?>" data-home="<?= nu_e(json_encode($trk['home'])) ?>"<?= ($completed || $stale) ? ' data-static="1"' : '' ?><?= $stale ? ' data-stale="1"' : '' ?> role="img" aria-label="Map showing your contractor’s vehicle on the way to your home"></div>
           <p class="tk-map__note"><?= nu_icon('geo-alt') ?> <?= $completed ? 'Location sharing ended when the trip finished.' : ($stale ? 'Location is stale. Showing last known position.' : 'Location sharing active for this trip.') ?></p>
         </div>
       </div>
-      <?= nu_steps($steps, $at, 'tk-steps') ?>
+      <div class="tk-jsm"><?= nu_job_machine($jobKey, 'list', $times) ?></div>
     </section>
 
     <div class="tk-col">
       <section class="sv-card tk-team">
-        <h2 class="tk-h">Your team</h2>
-        <div class="tk-team__row"><span class="tk-team__ic"><?= nu_icon('people-fill') ?></span><div><b><?= nu_e($trk['team']['name']) ?></b><span><?= nu_e($trk['team']['note']) ?></span></div>
-        <a class="btn btn-outline btn-sm" href="<?= nu_e(nu_url('public/chat.php')) ?>?thread=t1"><?= nu_icon('chat-dots') ?> Message team</a></div>
+        <h2 class="tk-h">Your contractor</h2>
+        <div class="tk-team__row"><?= nu_avatar($ctr, 'md') ?><div><b><a href="<?= nu_e(nu_url('public/contractor.php')) ?>?id=<?= nu_e($ctr['id']) ?>"><?= nu_e($ctr['name']) ?></a></b><span><?= nu_rating($ctr) ?> · <?= (int) $ctr['jobs'] ?> jobs · <?= nu_e($trk['team']['vehicle']) ?></span></div></div>
+        <?= nu_badges($ctr) ?>
+        <div class="tk-team__acts"><a class="btn btn-outline btn-sm" href="<?= nu_e(nu_url('public/chat.php')) ?>?thread=t1"><?= nu_icon('chat-dots') ?> Message</a><a class="btn btn-soft btn-sm" href="<?= nu_e(nu_url('public/contractor.php')) ?>?id=<?= nu_e($ctr['id']) ?>">View profile</a></div>
       </section>
       <section class="sv-card tk-msgs" aria-label="Messages">
         <div class="tk-msgs__top"><h2 class="tk-h">Messages</h2><span>Today, Oct 16</span></div>
         <ol class="tk-chat" data-chat>
 <?php foreach ($trk['messages'] as $m): ?>
-          <li class="tk-msg tk-msg--<?= $m['from'] ?>"><span class="tk-msg__av"><?= nu_icon($m['from'] === 'me' ? 'person-fill' : 'tree-fill') ?></span><div><small><?= nu_e($m['name']) ?> · <?= nu_e($m['time']) ?></small><p><?= nu_e($m['text']) ?></p></div></li>
+          <li class="tk-msg tk-msg--<?= $m['from'] ?>"><span class="tk-msg__av"><?= ($m['from'] === 'me' ? nu_icon('person-fill') : nu_e($ctr['initials'])) ?></span><div><small><?= nu_e($m['name']) ?> · <?= nu_e($m['time']) ?></small><p><?= nu_e($m['text']) ?></p></div></li>
 <?php endforeach; ?>
         </ol>
         <form class="tk-send" data-send><label class="sr-only" for="tk-msg">Write a message</label><input class="input" id="tk-msg" placeholder="Write a message…" autocomplete="off"><button class="btn btn-primary btn-sm" type="submit"><?= nu_icon('send-fill') ?> Send</button></form>
@@ -90,20 +97,20 @@ include_once("../includes/header.php");
         </div>
         <div class="tk-rep__side">
           <ul class="tk-check"><?php foreach ($trk['checklist'] as $c): ?><li><?= nu_icon('check-circle-fill') ?><?= nu_e($c) ?></li><?php endforeach; ?></ul>
-          <div class="tk-inv"><span>Invoice <?= nu_e($inv['number']) ?> · <?= nu_e($inv['currency']) ?> <?= number_format($inv['amount'] + $inv['tax'], 2) ?></span><?= nu_payment_chip($inv['payment']) ?></div>
-          <a class="btn btn-primary btn-sm" href="<?= nu_e(nu_url('public/activity.php')) ?>#feedback">Review &amp; rate this visit</a>
+          <div class="tk-inv"><span>Invoice <?= nu_e($inv['number']) ?> · <?= nu_e($inv['currency']) ?> <?= number_format($inv['amount'] + $inv['tax'], 2) ?></span><?= nu_payment_chip($payState) ?></div>
+          <a class="btn btn-primary btn-sm" href="<?= nu_e(nu_url('public/approve.php')) ?>?id=NSH-1042">Review and approve</a>
         </div>
       </div>
 <?php else: ?>
       <div class="tk-rep__body tk-rep__body--empty">
         <div class="tk-ph"><?= nu_icon('image') ?><span>Before</span></div>
         <div class="tk-ph"><?= nu_icon('image') ?><span>After</span></div>
-        <p class="tk-rep__wait"><?= nu_icon('file-earmark-text') ?><span>Photos and checklist will appear when the job is completed.</span></p>
+        <p class="tk-rep__wait"><?= nu_icon('file-earmark-text') ?><span>Before and after photos are required from your contractor. They appear here when the work is submitted.</span></p>
       </div>
 <?php endif; ?>
     </section>
   </div>
-  <p class="ch-demo tk-demo">Preview states: <a href="?"<?= $state === '' ? ' aria-current="page"' : '' ?>>On the way (live)</a> · <a href="?state=stale"<?= $stale ? ' aria-current="page"' : '' ?>>Stale location</a> · <a href="?state=completed"<?= $completed ? ' aria-current="page"' : '' ?>>Completed</a> · <a href="<?= nu_e(nu_url('public/status.php')) ?>">All booking states</a></p>
+  <p class="ch-demo tk-demo">Preview states: <a href="?"<?= $state === '' ? ' aria-current="page"' : '' ?>>On the way (live)</a> · <a href="?state=stale"<?= $stale ? ' aria-current="page"' : '' ?>>Stale location</a> · <a href="?state=completed"<?= $completed ? ' aria-current="page"' : '' ?>>Completed</a> · <a href="<?= nu_e(nu_url('public/status.php')) ?>">All job states</a></p>
 </main>
 <script>
 (function () {
@@ -145,10 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
   function arrived() {
     document.querySelector('[data-arrive]').classList.add('is-on');
     var pill = document.querySelector('[data-pill] span'); pill.textContent = 'Arrived'; pill.parentNode.classList.add('is-done');
-    var steps = document.querySelectorAll('.tk-steps li');
-    if (steps[2] && steps[3]) { steps[2].classList.remove('is-current'); steps[2].classList.add('is-done'); steps[2].removeAttribute('aria-current'); steps[3].classList.add('is-current'); steps[3].setAttribute('aria-current', 'step');
-      var dot = steps[3].querySelector('.hsteps__dot'); dot.innerHTML = steps[2].querySelector('.hsteps__dot').innerHTML;
-      var t = document.createElement('span'); t.className = 'hsteps__t'; t.textContent = 'Now'; steps[3].appendChild(t); }
+    var steps = document.querySelectorAll('.jsm-list li');
+    if (steps[3] && steps[4]) { steps[3].className = 'is-done'; steps[3].removeAttribute('aria-current'); steps[4].className = 'is-now'; steps[4].setAttribute('aria-current', 'step');
+      steps[4].querySelector('.jsm-list__dot').innerHTML = steps[3].querySelector('.jsm-list__dot').innerHTML;
+      var t = document.createElement('small'); t.textContent = 'Now'; steps[4].appendChild(t); }
   }
   function frame(ts) {
     if (t0 === null) t0 = ts;

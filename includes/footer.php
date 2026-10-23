@@ -94,7 +94,7 @@ $nuNav = nu_nav_items();
   <a class="menu-item" href="<?= nu_e(nu_url('public/operations.php')) ?>"><?= nu_icon('speedometer2') ?> Operations overview</a>
   <a class="menu-item" href="<?= nu_e(nu_url('public/service_settings.php')) ?>"><?= nu_icon('sliders') ?> Service settings</a>
 <?php endif; ?>
-  <a class="menu-item" href="<?= nu_e(nu_url('public/status.php')) ?>"><?= nu_icon('list-check') ?> Booking states</a>
+  <a class="menu-item" href="<?= nu_e(nu_url('public/status.php')) ?>"><?= nu_icon('list-check') ?> Job states</a>
   <button type="button" class="menu-item" data-theme-toggle><?= nu_icon('moon-stars') ?> Toggle dark mode</button>
   <div class="menu-sep"></div>
   <a class="menu-item menu-item--danger" href="<?= nu_e(nu_url('public/logout.php')) ?>" data-no-prefetch><?= nu_icon('box-arrow-right') ?> Sign out</a>

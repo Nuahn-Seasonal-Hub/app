@@ -8,7 +8,7 @@ include_once("../includes/header.php");
 ?>
 <main class="screen">
   <div class="screen__head">
-    <div><h1>Messages</h1><p>Confirm, reschedule or ask your team anything.</p></div>
+    <div><h1>Messages</h1><p>Confirm, reschedule or ask your contractor anything.</p></div>
     <?= nu_sample_tag() ?>
   </div>
   <div class="panel2 list-card">

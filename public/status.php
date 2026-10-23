@@ -9,29 +9,31 @@
 require_once("../config/init.php");
 
 $u = function ($p) { return nu_url('public/' . $p); };
-$life = ['requested', 'awaiting_quote', 'confirmed', 'assigned', 'on_the_way', 'arrived', 'in_progress', 'paused', 'completed', 'closed'];
-$exc = ['cancelled', 'delayed', 'reschedule_pending', 'disputed', 'weather_review', 'no_provider'];
-$pay = ['unpaid', 'authorized', 'paid', 'failed', 'partially_refunded', 'refunded'];
+$life = ['requested', 'open_for_bids', 'funds_held', 'on_the_way', 'arrived', 'in_progress', 'pending_approval', 'approved'];
+$exc = ['cancelled', 'delayed', 'change_requested', 'disputed', 'weather_review', 'no_provider'];
+$pay = ['unpaid', 'authorized', 'paid', 'failed', 'partially_refunded', 'refunded', 'disputed'];
 $rules = [
-  ['Requested / quote pending', ['requested', 'quote_pending'], 'Request received; next action; no promised repair slot', 'Confirm scope, availability and quote; show no-provider fallback', [['Quote requested', 'mechanic_request.php?step=3'], ['No provider', 'mechanic_request.php?svc=flat-tire&state=no_provider']]],
-  ['Confirmed / assigned', ['confirmed', 'assigned'], 'Agreed scope, price, window; provider when assigned', 'Reserve team capacity and required equipment / parts', [['Booking confirmed', 'book.php?service=car-wash'], ['Quote approved', 'quote.php?state=approved']]],
-  ['Change requested', ['change_requested'], 'Old window retained; proposed new window pending', 'Re-check capacity / route; confirm or decline without losing old slot', [['Change appointment', 'change_appointment.php'], ['Snow: pending', 'snow_event.php?state=pending'], ['Declined', 'snow_event.php?state=declined']]],
-  ['On the way / arrived', ['on_the_way', 'arrived'], 'ETA freshness, trip map, message; arrival update', 'Active-trip location sharing; route to dispatch for late changes', [['Live tracking', 'track.php'], ['Stale location', 'track.php?state=stale']]],
-  ['In progress / paused', ['in_progress', 'paused'], 'Work update, issue or extra quote if needed', 'Timestamp work; pause affected extra work until approval', [['Extra work found', 'quote.php?state=revised'], ['Provider job', 'provider_dashboard.php']]],
-  ['Completed / disputed', ['completed', 'disputed'], 'Evidence and invoice; issue / case status', 'Require successful uploads; support reviews disputes; preserve audit trail', [['Completion report', 'track.php?state=completed'], ['Activity & issue', 'activity.php#feedback']]],
+  ['Requested / open for bids', ['requested', 'open_for_bids'], 'The task, the target budget and the offers coming in; a boost raises pickup speed', 'Notify nearby approved contractors; show no-offers and no-provider fallbacks; keep the payment Unpaid', [['Post a task', 'post_task.php'], ['Review offers', 'offers.php?state=many'], ['No offers yet', 'offers.php?state=none'], ['Roadside request', 'mechanic_request.php?path=roadside&svc=flat-tire&state=broadcast']]],
+  ['Confirmed with funds held', ['confirmed'], 'Agreed contractor, price and window; “Funds held securely until you approve the work”', 'Authorize (hold) the payment with the secure processor; show Authorized in the payment chip', [['Accept an offer', 'offers.php?state=many'], ['Quote approved', 'quote.php?state=approved']]],
+  ['Change requested', ['change_requested'], 'Old window retained; proposed new window pending', 'Ask the contractor to confirm or decline without losing the old slot', [['Change appointment', 'change_appointment.php'], ['Snow: pending', 'snow_event.php?state=pending'], ['Declined', 'snow_event.php?state=declined']]],
+  ['On the way / arrived', ['on_the_way', 'arrived'], 'ETA freshness, trip map, message; arrival update', 'Active-trip location sharing only; contractor confirms arrival', [['Live tracking', 'track.php'], ['Stale location', 'track.php?state=stale']]],
+  ['In progress / revised quote', ['in_progress'], 'Work update; an on-site revised quote needs your approval before extra work', 'Pause the extra work until the client approves the amended amount', [['Revised quote', 'quote.php?state=revised'], ['Contractor job', 'provider_dashboard.php']]],
+  ['Completed, pending approval / approved', ['pending_approval', 'approved'], 'Before and after photos, checklist; Approve and release payment or Report a problem', 'Require at least one before and one after photo; capture and pay out only after approval', [['Review and approve', 'approve.php?id=SNOW-1035'], ['Completion report', 'track.php?state=completed']]],
+  ['Disputed', ['disputed'], 'Funds stay held; the case and the decision are visible', 'Operations reviews evidence, then releases, refunds or splits the held amount', [['Report a problem', 'approve.php?id=SNOW-1035&state=dispute'], ['Disputes queue', 'operations.php?view=disputes']]],
 ];
 $scen = [
-  ['Basic car wash with provider water + customer power', 'Correct equipment match; utility selection visible to both parties; charges reviewed before booking.', [['Car wash page', 'service.php?s=car-wash'], ['Equipment queue', 'operations.php?queue=equipment#queue']]],
-  ['Premium monthly reminder', 'Attributed provider reminder; confirm / change / skip actions; no visit or charge until authorized.', [['Care plans', 'care_plans.php'], ['Plans', 'plans.php']]],
-  ['Tuesday mechanic moved to Wednesday', 'Available new slot reserved; old slot released only after success; both users notified; Activity records old and new.', [['Change appointment', 'change_appointment.php?id=MECH-1042']]],
-  ['Snow customer does not want to be first', 'Later-visit request enters dispatch; pending state visible; route and customer window update only after confirmation.', [['Snow event', 'snow_event.php'], ['Reschedule queue', 'operations.php?queue=reschedule#queue']]],
-  ['Location / weather / connectivity failure', 'Last-update / unavailable / pending-sync states are honest; booking remains actionable; no fabricated activity.', [['Stale location', 'track.php?state=stale'], ['Weather unavailable', 'snow_event.php?weather=unavailable'], ['Pending sync', 'provider_dashboard.php']]],
-  ['Work finished or extra work found', 'Successful evidence upload before completion; extra quote needs approval; invoice and support case remain accessible.', [['Provider upload', 'provider_dashboard.php'], ['Revised quote', 'quote.php?state=revised'], ['Activity', 'activity.php']]],
+  ['A guest prices a snow task', 'Address, scope and a price range before any sign-in; the sign-in prompt appears only at Post task; the draft survives sign-in.', [['Post a task (guest)', 'post_task.php']]],
+  ['The budget is too low', 'Boost your bid shows the effect on expected pickup time; offers still arrive at the contractor’s own price.', [['Post a task', 'post_task.php'], ['Boosted offers', 'offers.php?state=boosted']]],
+  ['Roadside breakdown', 'Proximity broadcast to nearby approved technicians; no scheduling; the first to accept is shown with an ETA.', [['Roadside request', 'mechanic_request.php?path=roadside&svc=flat-tire&state=broadcast'], ['Mobile mechanics', 'mechanics.php']]],
+  ['Mechanic finds more work on site', 'A revised quote with the new amount; the client approves or declines before extra work; funds held change only after approval.', [['Revised quote', 'quote.php?state=revised']]],
+  ['Contractor must prove the work', 'The completion report cannot be submitted until a before and an after photo are uploaded.', [['Contractor job', 'provider_dashboard.php'], ['Review and approve', 'approve.php?id=SNOW-1035']]],
+  ['Work is contested', 'The client reports a problem; payment shows Disputed; operations resolves it from the disputes queue.', [['Report a problem', 'approve.php?id=SNOW-1035&state=dispute'], ['Disputes', 'operations.php?view=disputes']]],
+  ['A new contractor joins', 'Identity, insurance, licence and mechanic certification are reviewed before they can see open jobs.', [['Vetting queue', 'operations.php?view=vetting'], ['Contractor profile', 'contractor.php?id=c-1001']]],
 ];
 $checks = [
-  ['Book each service through the same flow with the correct questions.', 'service.php?s=garbage-bin-cleaning'], ['Reject unsupported addresses and prevent double-booking team capacity.', 'book.php?service=snow-removal'],
-  ['Show price and scope before confirmation; require approval for extra work.', 'quote.php'], ['Provider status changes appear in the customer timeline and notifications.', 'activity.php?tab=notifications'],
-  ['Weather rescheduling records a reason and does not duplicate jobs.', 'snow_event.php?state=declined'], ['Completion shows a checklist and photos; an issue opens an admin case.', 'activity.php#feedback'],
+  ['A guest can explore scope and a price range; sign-in is asked for only when posting.', 'post_task.php'], ['Only the two live services take tasks; locked services show Coming soon.', 'index.php#services'],
+  ['Show price and scope before confirmation; extra work needs approval.', 'quote.php'], ['Contractor status changes appear in the client timeline and notifications.', 'activity.php?tab=notifications'],
+  ['Weather rescheduling records a reason and does not duplicate jobs.', 'snow_event.php?state=declined'], ['Completion needs before and after photos; an issue opens a disputes case.', 'approve.php?id=SNOW-1035'],
   ['Payment retries cannot create duplicate charges; failed payments stay visible.', 'operations.php#payments'], ['Each role can access only its permitted records.', 'operations.php'],
   ['A new service can be configured without rebuilding the common workflow.', 'service_settings.php?new=1'],
 ];
@@ -39,8 +41,8 @@ include_once("../includes/header.php");
 ?>
 <main class="st" id="states">
   <header class="st-head">
-    <h1>Booking states &amp; rules</h1>
-    <p>Customers, providers and admins see the same booking state. Each rule links to the screen that shows it.</p>
+    <h1>Job states &amp; rules</h1>
+    <p>Clients, contractors and admins see the same job state, and payment is shown separately. Each rule links to the screen that shows it.</p>
   </header>
 
   <section class="op-card st-sec">
@@ -49,7 +51,7 @@ include_once("../includes/header.php");
     <div class="st-cols">
       <div><h3 class="st-h3">Exceptions</h3><div class="st-chips"><?php foreach ($exc as $s) echo nu_booking_chip($s); ?></div></div>
       <div><h3 class="st-h3">Payment (separate state)</h3><div class="st-chips"><?php foreach ($pay as $s) echo nu_payment_chip($s); ?></div>
-        <p class="op-mini">A paid job is not necessarily completed. Plan fees and visit fees are shown separately; reminders, job creation and confirmed reschedules never trigger duplicate payment attempts.</p></div>
+        <p class="op-mini">A job with funds held is not paid out. Payment is captured and paid out only after the client approves the work; reminders, job creation and confirmed reschedules never trigger duplicate payment attempts.</p></div>
     </div>
   </section>
 
@@ -59,7 +61,7 @@ include_once("../includes/header.php");
 <?php foreach ($rules as $r): ?>
       <article class="st-rule">
         <h3><?= nu_e($r[0]) ?> <span><?php foreach ($r[1] as $c) echo nu_booking_chip($c); ?></span></h3>
-        <dl><div><dt>Customer sees</dt><dd><?= nu_e($r[2]) ?></dd></div><div><dt>System / team must do</dt><dd><?= nu_e($r[3]) ?></dd></div></dl>
+        <dl><div><dt>Customer sees</dt><dd><?= nu_e($r[2]) ?></dd></div><div><dt>System must do</dt><dd><?= nu_e($r[3]) ?></dd></div></dl>
         <p class="st-links"><?php foreach ($r[4] as $l): ?><a href="<?= nu_e($u($l[1])) ?>"><?= nu_e($l[0]) ?> <?= nu_icon('arrow-right') ?></a><?php endforeach; ?></p>
       </article>
 <?php endforeach; ?>

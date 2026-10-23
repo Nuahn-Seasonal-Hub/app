@@ -6,13 +6,13 @@ require_once("../config/init.php");
 requireLogin('client');
 $wx = nu_fixture('weather');
 $services = nu_fixture('services');
-$bookings = array_filter(nu_fixture('bookings'), function ($b) { return $b['status'] !== 'completed'; });
+$bookings = array_filter(nu_fixture('bookings'), function ($b) { return !in_array($b['status'], ['approved', 'disputed', 'completed', 'closed', 'cancelled'], true); });
 $notes = nu_fixture('notifications');
 $msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $a = (string) ($_POST['queue_action'] ?? '');
-    if ($a === 'defer') { $msg = 'Done: you’ve let others go first. You are now #5 in Nuahn Team A’s queue (est. 7:50 – 8:20 AM).'; }
-    elseif ($a === 'window') { $msg = 'Request sent: clear my driveway ' . nu_e($_POST['window'] ?? '') . '. The team will confirm in chat.'; }
+    if ($a === 'defer') { $msg = 'Done: you’ve let others go first. You are now #5 on Jordan Mercer’s list (est. 7:50 – 8:20 AM).'; }
+    elseif ($a === 'window') { $msg = 'Request sent: clear my driveway ' . nu_e($_POST['window'] ?? '') . '. Your contractor will confirm in chat.'; }
 }
 include_once("../includes/header.php");
 ?>
@@ -69,7 +69,7 @@ include_once("../includes/header.php");
       <h2 class="panel2__h"><?= nu_icon('calendar-event') ?> Upcoming services</h2>
       <div class="agenda">
 <?php foreach ($bookings as $b): $sv = $services[$b['service']]; $ts = strtotime($b['date']); ?>
-        <a class="agenda__item" href="<?= nu_e(nu_url('public/track.php') . '?id=' . rawurlencode($b['id'])) ?>">
+        <a class="agenda__item" href="<?= nu_e(nu_booking_href($b)) ?>">
           <span class="agenda__date"><small><?= date('D', $ts) ?></small><b><?= date('j', $ts) ?></b></span>
           <span style="flex:1;min-width:0"><span class="brow__t" style="display:block"><?= nu_e($sv['name']) ?></span><span class="brow__s" style="display:block"><?= nu_e($b['window']) ?> · <?= nu_e($b['team']) ?></span></span>
           <?= nu_booking_chip($b['status']) ?>

@@ -76,7 +76,7 @@ include_once("../includes/header.php");
     <p><?= nu_sample_tag('Preview only: nothing was saved or charged') ?></p>
     <div class="row-flex" style="justify-content:center">
 <?php if ($logged): ?>
-      <a class="btn btn-primary" href="<?= nu_e(nu_book_url($slug)) ?>">Back to <?= nu_e($sv['name']) ?></a>
+      <a class="btn btn-primary" href="<?= nu_e(nu_service_page_url($slug)) ?>">Back to <?= nu_e($sv['name']) ?></a>
       <a class="btn btn-outline" href="<?= nu_e(nu_url('public/bookings.php')) ?>">My bookings</a>
 <?php else: ?>
       <a class="btn btn-primary" href="<?= nu_e(nu_url('public/login_client.php')) ?>">Sign in</a>
@@ -112,7 +112,7 @@ include_once("../includes/header.php");
           </dl>
         </div>
         <label class="btn btn-outline btn-sm rv-photo-btn"><?= nu_icon('camera') ?> Add access photo<input type="file" accept="image/*" class="sr-only" data-files></label>
-        <a class="sv-link rv-edit" href="<?= nu_e(nu_book_url($slug)) ?>"><?= nu_icon('pencil') ?> Edit details</a>
+        <a class="sv-link rv-edit" href="<?= nu_e(nu_service_page_url($slug)) ?>"><?= nu_icon('pencil') ?> Edit details</a>
       </section>
       <section class="rv-plan<?= $plan === 'premium' ? ' is-premium' : '' ?>">
         <?= nu_icon($plan === 'premium' ? 'calendar-week' : 'calendar-check') ?>

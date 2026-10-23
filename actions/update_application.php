@@ -50,12 +50,12 @@ if ($status) {
 
     // Notify provider
     $providerSubject = "Your application for '{$app['title']}' has been $status";
-    $providerBody = "Hello,\n\nYour application for the job '{$app['title']}' has been $status by {$_SESSION['role']}.\n\nRegards,\nNuahn Team";
+    $providerBody = "Hello,\n\nYour application for the job '{$app['title']}' has been $status by {$_SESSION['role']}.\n\nRegards,\nNuahn";
     mail($app['provider_email'], $providerSubject, $providerBody);
 
     // Notify client
     $clientSubject = "Application for your job '{$app['title']}' has been $status";
-    $clientBody = "Hello,\n\nAn application for your job '{$app['title']}' has been $status by {$_SESSION['role']}.\n\nRegards,\nNuahn Team";
+    $clientBody = "Hello,\n\nAn application for your job '{$app['title']}' has been $status by {$_SESSION['role']}.\n\nRegards,\nNuahn";
     mail($app['client_email'], $clientSubject, $clientBody);
 
     flashSuccess("Application $status successfully and notifications sent.");

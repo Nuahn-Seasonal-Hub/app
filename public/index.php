@@ -14,7 +14,7 @@ $services = nu_fixture('services');
 $weather  = nu_fixture('weather');
 $plans    = nu_fixture('plans');
 $next = null;
-foreach (nu_fixture('bookings') as $b) { if ($b['status'] !== 'completed') { $next = $b; break; } }
+foreach (nu_fixture('bookings') as $b) { if ($b['id'] === 'NSH-1042') { $next = $b; break; } }
 $nextSvc = $next ? ($services[$next['service']] ?? null) : null;
 $isClient = isRole('client');
 $postUrl = $isClient ? nu_url('public/jobs.php#post') : nu_url('public/register_client.php');
@@ -60,7 +60,7 @@ uksort($live, function ($x, $y) { $o = ['snow-removal' => 0, 'mobile-mechanics' 
         <div class="svc__body">
           <h3><?= nu_e($sv['name']) ?></h3>
           <p><?= nu_e($sv['blurb']) ?></p>
-          <a class="btn btn-primary btn-sm btn-block" href="<?= nu_e(nu_book_url($slug)) ?>" aria-label="Book <?= nu_e($sv['name']) ?>">Book service <?= nu_icon('arrow-right') ?></a>
+          <a class="btn btn-primary btn-sm btn-block" href="<?= nu_e(nu_book_url($slug)) ?>" aria-label="<?= nu_e($sv['name']) ?>: <?= $slug === 'snow-removal' ? 'post a task' : 'get a mechanic' ?>"><?= $slug === 'snow-removal' ? 'Post a task' : 'Get a mechanic' ?> <?= nu_icon('arrow-right') ?></a>
         </div>
       </article>
 <?php endforeach; ?>
@@ -123,14 +123,14 @@ uksort($live, function ($x, $y) { $o = ['snow-removal' => 0, 'mobile-mechanics' 
       </div>
       <div class="nb__actions">
         <a class="btn btn-primary btn-sm" href="<?= nu_e(nu_url('public/track.php') . '?id=' . rawurlencode($next['id'])) ?>">View booking</a>
-        <a class="btn btn-outline btn-sm" href="<?= nu_e(nu_url('public/chat.php') . '?thread=t1') ?>">Message team</a>
+        <a class="btn btn-outline btn-sm" href="<?= nu_e(nu_url('public/chat.php') . '?thread=t1') ?>">Message contractor</a>
       </div>
     </section>
 <?php endif; ?>
   </div>
 
   <section class="steps4" id="how" aria-label="How it works">
-<?php foreach ([['search', 'Select a service', 'Choose a seasonal service from a vetted local independent pro.'], ['calendar-check', 'Book', 'Pick your address, options and arrival window.'], ['bell', 'Receive updates', 'Live map, arrival alerts and chat with your team.'], ['image', 'View completed work', 'Before/after photos, checklist and invoice.']] as $n => $st): ?>
+<?php foreach ([['pin-map', 'Post a task', 'Pin your property, choose the scope and set a target budget. Guests can see a price range first.'], ['people', 'Compare offers', 'Independent, verified contractors send price, arrival time and a note. Boost your bid to be picked up faster.'], ['shield-lock-fill', 'Funds held securely', 'Pay when you accept. Your payment is held until you approve the work.'], ['image', 'Approve with photos', 'Review before and after photos and the checklist, then release payment.']] as $n => $st): ?>
     <div class="step4" data-reveal style="--i:<?= $n ?>">
       <span class="step4__ic"><?= nu_icon($st[0]) ?></span>
       <div><div class="step4__t"><?= nu_e($st[1]) ?></div><p><?= nu_e($st[2]) ?></p></div>

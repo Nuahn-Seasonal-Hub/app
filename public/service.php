@@ -3,7 +3,7 @@
 //   Email: xristoinno@gmail.com | Phone: +256783335335
 // (Server-side comment only; never output to the browser.)
 // public/service.php: one page per service (client guide doc2 p2-7). New booking form (service-specific),
-// current visit, Change appointment, Message team, Track this visit, Premium care (enrolled customers only),
+// current visit, Change appointment, Message contractor, Track this visit, Premium care (enrolled customers only),
 // a service-specific side card, completion report and recent activity.
 // UI ONLY: every value comes from fixtures/services.php + fixtures/visits.php. The New booking form and the current
 // visit are separate records; editing the form never alters the existing job (doc2 p1).
@@ -110,7 +110,7 @@ include_once("../includes/header.php");
             <option><?= nu_e($sv['window_value'] ?? '1:00 PM – 3:00 PM') ?></option><option>Tomorrow, 9:00 AM – 11:00 AM</option><option>Tomorrow, 1:00 PM – 3:00 PM</option><option disabled>Today, 3:00 – 5:00 PM (full)</option>
           </select></span>
 <?php endif; ?>
-          <p class="hint">Only windows with team capacity are listed. <?= nu_sample_tag('Sample availability') ?></p>
+          <p class="hint">Only windows with contractor availability are listed. <?= nu_sample_tag('Sample availability') ?></p>
         </div>
 <?php endif; ?>
         <button class="btn btn-primary btn-lg btn-block sv-cta" type="submit"><?= nu_icon($isMech ? 'arrow-right' : 'file-earmark-check') ?> <?= nu_e($sv['cta']) ?> <?= nu_icon('arrow-right') ?></button>
@@ -127,7 +127,7 @@ include_once("../includes/header.php");
 <?php if (($visit['layout'] ?? '') === 'table'): ?>
         <dl class="sv-vt">
           <div><dt>Booking #</dt><dd><?= nu_e($visit['id']) ?></dd></div><div><dt>Date</dt><dd><?= nu_e($visit['date']) ?></dd></div><div><dt>Arrival window</dt><dd><?= nu_e($visit['window']) ?></dd></div>
-          <div><dt>Service</dt><dd><?= nu_icon($sv['icon']) ?> <?= nu_e($sv['name']) ?></dd></div><div><dt>Package</dt><dd><?= nu_e($visit['package'] ?? '') ?></dd></div><div><dt>Team</dt><dd><?= nu_icon('people') ?> <?= nu_e($visit['team']) ?></dd></div>
+          <div><dt>Service</dt><dd><?= nu_icon($sv['icon']) ?> <?= nu_e($sv['name']) ?></dd></div><div><dt>Package</dt><dd><?= nu_e($visit['package'] ?? '') ?></dd></div><div><dt>Contractor</dt><dd><?= nu_icon('people') ?> <?= nu_e($visit['team']) ?></dd></div>
         </dl>
 <?php else: ?>
         <div class="sv-visit__body<?= !empty($visit['photo']) ? ' has-photo' : '' ?>">
@@ -146,7 +146,7 @@ include_once("../includes/header.php");
 <?php endif; ?>
         <div class="sv-visit__acts">
           <a class="btn btn-outline btn-sm" href="<?= nu_e(nu_url('public/change_appointment.php') . '?id=' . rawurlencode($visit['id'])) ?>"><?= nu_icon('calendar3') ?> Change appointment</a>
-          <a class="btn btn-primary btn-sm" href="<?= nu_e(nu_url('public/chat.php')) ?>?thread=t1"><?= nu_icon('chat-dots') ?> <?= nu_e($visit['msg'] ?? 'Message team') ?></a>
+          <a class="btn btn-primary btn-sm" href="<?= nu_e(nu_url('public/chat.php')) ?>?thread=t1"><?= nu_icon('chat-dots') ?> <?= nu_e($visit['msg'] ?? 'Message contractor') ?></a>
         </div>
 <?php if (!empty($visit['change_hint'])): ?>
         <p class="sv-note"><?= nu_e($visit['change_hint']) ?></p>
@@ -205,7 +205,7 @@ include_once("../includes/header.php");
           <p class="sv-propose"><?= nu_icon('calendar-check') ?><span><b>New proposed window</b><?= nu_e($lt['proposed']) ?></span></p>
           <button class="btn btn-primary btn-block" type="submit">Request later visit</button>
         </form>
-        <p class="sv-note">Current slot stays until dispatch confirms.</p>
+        <p class="sv-note">Current slot stays until your contractor confirms.</p>
       </section>
       <section class="sv-card" aria-labelledby="sf-h">
         <h2 class="sv-card__h" id="sf-h"><?= nu_icon('snow') ?> Snowfall update<span class="spacer"></span><small class="sv-upd">Updated <?= nu_e($visit['snowfall']['updated']) ?></small></h2>
@@ -265,7 +265,7 @@ include_once("../includes/header.php");
     <div class="sv-mid">
       <section class="sv-card sv-signin">
         <h2 class="sv-card__h"><?= nu_icon('person-circle') ?> Your visits appear here</h2>
-        <p>Browse and price a booking without an account. Sign in to see your current visit, change the appointment, message the team and track the trip.</p>
+        <p>Browse and price a booking without an account. Sign in to see your current visit, change the appointment, message your contractor and track the trip.</p>
         <div class="row-flex"><a class="btn btn-primary" href="<?= nu_e(nu_url('public/login_client.php')) ?>">Sign in</a><a class="btn btn-outline" href="<?= nu_e(nu_url('public/register_client.php')) ?>">Create account</a></div>
       </section>
       <section class="sv-card">
@@ -313,7 +313,7 @@ function sv_activity($visit, $inMid) {
 
     f.querySelectorAll('[data-files]').forEach(function (i) { i.addEventListener('change', function () { var s = i.closest('label').querySelector('small'); if (s) s.textContent = i.files.length + ' photo(s) ready to upload'; }); });
     // Utilities & equipment matching preview (doc2 p11). The real price / team re-check is server-side.
-    var notes = { 'customer-customer': 'Team brings cleaning equipment, hoses and leads. You make a tap and outlet available.', 'provider-customer': 'Team brings a water tank. You make an outlet available.', 'customer-provider': 'Team brings self-contained power. You make a tap available.', 'provider-provider': 'Self-contained visit: provider brings water and power.' };
+    var notes = { 'customer-customer': 'Your contractor brings cleaning equipment, hoses and leads. You make a tap and outlet available.', 'provider-customer': 'Your contractor brings a water tank. You make an outlet available.', 'customer-provider': 'Your contractor brings self-contained power. You make a tap available.', 'provider-provider': 'Self-contained visit: provider brings water and power.' };
     function util() { var u = f.querySelector('[data-util]'); if (!u) return; var w = f.querySelector('input[name=water_source]:checked'), p = f.querySelector('input[name=power_source]:checked'); u.querySelector('[data-util-note] span').textContent = notes[w.value + '-' + p.value] + (w.value === 'provider' || p.value === 'provider' ? ' Any equipment charge is shown before you confirm.' : ''); }
     util();
   }

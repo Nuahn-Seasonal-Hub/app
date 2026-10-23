@@ -36,11 +36,11 @@ include_once("../includes/header.php");
       <ul class="pl-list">
         <li><?= nu_icon('check-lg') ?>One service visit at a time</li>
         <li><?= nu_icon('check-lg') ?>Pick an available date and window</li>
-        <li><?= nu_icon('check-lg') ?>Track your team and job progress</li>
+        <li><?= nu_icon('check-lg') ?>Track your contractor and job progress</li>
         <li><?= nu_icon('check-lg') ?>Message, reschedule and view receipts</li>
         <li><?= nu_icon('check-lg') ?>No ongoing care plan</li>
       </ul>
-      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_book_url('snow-removal')) ?>" data-plan-link="basic">Book a one-time service <?= nu_icon('arrow-right') ?></a>
+      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_book_url('snow-removal')) ?>" data-plan-link="basic">Post a task <?= nu_icon('arrow-right') ?></a>
     </section>
     <section class="pl-card pl-card--prem">
       <span class="pl-ic"><?= nu_icon('arrow-repeat') ?></span>
@@ -51,9 +51,9 @@ include_once("../includes/header.php");
         <li><?= nu_icon('check-lg') ?>Save service and location preferences</li>
         <li><?= nu_icon('check-lg') ?>Confirm, change or skip the next visit</li>
         <li><?= nu_icon('check-lg') ?>Manage an ongoing care plan</li>
-        <li><?= nu_icon('check-lg') ?>Track every visit and message your team</li>
+        <li><?= nu_icon('check-lg') ?>Track every visit and message your contractor</li>
       </ul>
-      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_book_url('snow-removal')) ?>&amp;plan=premium" data-plan-link="premium">Set up a care plan <?= nu_icon('arrow-right') ?></a>
+      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_start_url('snow-removal')) ?>?plan=seasonal" data-plan-link="premium">Set up a seasonal plan <?= nu_icon('arrow-right') ?></a>
     </section>
   </div>
 <?php if ($logged): ?>
