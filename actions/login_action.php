@@ -3,6 +3,12 @@
 require_once "../config/init.php"; // init.php should load db, session_start, and auth helpers
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    require_once __DIR__ . '/../includes/marketplace/core.php';
+    if (!mk_csrf_ok()) {
+        flashError('Your session expired. Please try signing in again.');
+        header("Location: ../public/login.php?error=invalid");
+        exit;
+    }
     $email    = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
 
@@ -30,6 +36,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $_SESSION['theme']     = $user['theme_preference'] ?? 'light';
         $_SESSION['user_name'] = $user['name'];
 
+        // Return to the page that asked for sign-in (same-site relative path only).
+        $next = mk_safe_next($_POST['next'] ?? '');
+        if ($next !== '') {
+            header('Location: ' . nu_url(strpos($next, 'public/') === 0 ? $next : 'public/' . $next));
+            exit;
+        }
         // ✅ Centralized redirect
         redirectByRole($user['role']);
     } else {

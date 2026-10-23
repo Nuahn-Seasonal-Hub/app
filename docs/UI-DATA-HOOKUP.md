@@ -1,5 +1,7 @@
 # UI ↔ data hook-up notes (client design v2)
 
+> **Update:** Snow Removal and Mobile Mechanics are now live, database-backed flows. Sections about tracking, the provider dashboard, operations, the mechanic screens and the contractor model describe the original sample-data shapes; the live implementation is in [`BOOKING-BACKEND.md`](BOOKING-BACKEND.md). The other four services still use the sample data described here.
+
 **Who owns what:** Christo Innocent owns the UI. **Sir Paul builds the functionality.**
 Every screen below is already built and clickable. Where there is no backend yet, the screen reads
 **sample data from one fixture file per feature** in `/fixtures/*.php`, loaded with `nu_fixture('<name>')`

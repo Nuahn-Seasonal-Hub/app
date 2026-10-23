@@ -5,16 +5,17 @@
 // public/post_task.php: Post a snow-removal task with a target budget (marketplace model).
 // GUEST EXPLORATION: anyone can enter an address, choose scope and see an estimated price range. The sign-in prompt
 // appears only when pressing "Post task". The draft is kept in sessionStorage so it survives sign-in.
-// SAMPLE DATA: price ranges come from fixtures/marketplace.php ['snow']. All numbers are invented for the preview.
-// Sir Paul: GET /api/pricing/snow-estimate?size=&sqft=&walk=&steps=&ice=&plan= -> {lo, hi, mid}  (replace the client-side estimator),
-//           GET /api/pricing/pickup?budget=&mid= -> expected pickup tier,
-//           POST /api/tasks (client only; 401 for a guest -> open sign-in then retry) -> {task_id}; then go to offers.php?task=.
-//           Map: window.NuahnMapProvider hook, see nu_map_picker() in includes/ui.php. Login/register should honour ?next=.
+// Prices come from the pricing table in fixtures/marketplace.php ['snow'] (static config, mirrored server-side in
+// includes/marketplace/config.php mk_snow_estimate). Posting creates a real task (action snow_post in actions/marketplace.php):
+// CSRF-protected, client role only, address + map pin lat/lng stored, then broadcast to approved contractors in range.
+// Sir Paul: replace the client-side estimator with GET /api/pricing/snow-estimate when the API exists; geocoding key still pending.
 require_once("../config/init.php");
+require_once("../includes/marketplace/core.php");
 $m = nu_fixture('marketplace');
 $sn = $m['snow'];
 $signedIn = isset($_SESSION['user_id']);
 $isClient = $signedIn && isRole('client');
+$wrongRole = $signedIn && !$isClient;
 $cfg = [
     'sizes' => array_map(fn($s) => ['lo' => $s['lo'], 'hi' => $s['hi'], 'sq' => $s['per_sqft'] ?? null], $sn['sizes']),
     'walk' => array_map(fn($w) => [$w[1], $w[2]], $sn['walk']),
@@ -28,8 +29,11 @@ include_once("../includes/header.php");
   <p class="crumbs"><a href="<?= nu_e(nu_url('public/service.php')) ?>?s=snow-removal">Winter Snow Removal</a> / Post a task</p>
   <div class="screen__head"><div><h1>Post a snow task</h1><p>Tell contractors what needs clearing and what you would like to pay. Verified local contractors send offers.</p></div></div>
 
-  <form class="pt-form" id="ptForm" method="get" action="<?= nu_e(nu_url('public/offers.php')) ?>" data-pt='<?= nu_e(json_encode($cfg)) ?>' data-signed="<?= $signedIn ? '1' : '0' ?>" novalidate>
-    <input type="hidden" name="state" value="none"><input type="hidden" name="posted" value="1">
+  <?php if ($wrongRole): ?>
+  <p class="of-posted" role="status"><?= nu_icon('info-circle') ?> <span>You are signed in as <b><?= nu_e(isRole('provider') ? 'a contractor' : 'staff') ?></b>. Posting tasks needs a client account.</span></p>
+<?php endif; ?>
+  <form class="pt-form" id="ptForm" method="post" action="<?= nu_e(nu_url('actions/marketplace.php')) ?>" data-pt='<?= nu_e(json_encode($cfg)) ?>' data-signed="<?= $isClient ? '1' : '0' ?>" novalidate>
+    <?= mk_csrf_field() ?><input type="hidden" name="do" value="snow_post">
 
     <section class="sv-card pt-sec">
       <h2 class="pt-h"><span class="pt-n">1</span> Where is the property?</h2>
@@ -71,7 +75,7 @@ include_once("../includes/header.php");
 
     <section class="sv-card pt-sec pt-budget">
       <h2 class="pt-h"><span class="pt-n">5</span> Your target budget</h2>
-      <p class="pt-sugg">Suggested for your job: <b data-range>$55–$85</b> <?= nu_sample_tag('Sample prices') ?></p>
+      <p class="pt-sugg">Suggested for your job: <b data-range>$55–$85</b></p>
       <div class="pt-money">
         <button class="pt-step" type="button" data-bd="-5" aria-label="Lower budget by 5 dollars"><?= nu_icon('dash-lg') ?></button>
         <label class="pt-money__in"><span>$</span><input id="budget" name="budget" type="number" inputmode="numeric" min="10" max="999" value="45" aria-label="Target budget in dollars"></label>
@@ -99,7 +103,7 @@ include_once("../includes/header.php");
 
     <div class="pt-bar">
       <div class="pt-bar__sum"><small>Estimated price</small><b data-est>$55–$85</b><span data-planline>per clear</span></div>
-      <button class="btn btn-primary btn-lg" type="button" id="postBtn" data-signed="<?= $signedIn ? '1' : '0' ?>"><?= nu_icon('send-fill') ?> Post task</button>
+      <button class="btn btn-primary btn-lg" type="button" id="postBtn" data-signed="<?= $isClient ? '1' : '0' ?>"<?= $wrongRole ? ' disabled' : '' ?>><?= nu_icon('send-fill') ?> Post task</button>
       <button class="btn btn-primary btn-lg" type="submit" id="postGo" hidden>Post task</button>
     </div>
     <?= nu_trust_note('held') ?>

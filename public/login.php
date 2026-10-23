@@ -37,6 +37,7 @@ include_once("../includes/header.php");
 
       <!-- Login Form -->
       <form method="POST" action="../actions/login_action.php" class="auth-form">
+        <?= nu_csrf_field() ?>
         <fieldset class="field" style="border:0;padding:0;margin:0 0 var(--s5)">
           <legend class="label">I’m signing in as</legend>
           <div class="roles">
@@ -61,7 +62,7 @@ include_once("../includes/header.php");
         <button type="submit" class="btn btn-primary btn-lg btn-block">Sign in <?= nu_icon('arrow-right') ?></button>
       </form>
 
-      <p class="auth-alt">Don’t have an account? <a href="register.php">Create one free</a></p>
+      <p class="auth-alt">Don’t have an account? <a href="register.php<?= ($n = mk_safe_next($_GET['next'] ?? '')) !== '' ? '?next=' . rawurlencode($n) : '' ?>">Create one free</a></p>
     </div>
   </section>
 </div>

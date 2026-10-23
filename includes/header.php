@@ -106,7 +106,7 @@ $bodyClass = [
 <?php else: ?>
       <a class="navlink" href="<?= nu_e(nu_url('public/plans.php')) ?>"<?= $nuPage['rel'] === 'public/plans.php' ? ' aria-current="page"' : '' ?>>Plans</a>
 <?php endif; ?>
-      <a class="navlink" href="<?= nu_e(nu_url('public/messages.php')) ?>"<?= $nuPage['tab'] === 'messages' ? ' aria-current="page"' : '' ?>>Messages<?= $nuUnread ? '<span class="dot" aria-label="' . (int) $nuUnread . ' unread"></span>' : '' ?></a>
+      <a class="navlink" href="<?= nu_e(nu_url('public/updates.php')) ?>"<?= $nuPage['tab'] === 'messages' ? ' aria-current="page"' : '' ?>>Updates<?= $nuUnread ? '<span class="dot" aria-label="' . (int) $nuUnread . ' unread"></span>' : '' ?></a>
 <?php else: foreach ($nuNav as $item):
         if ($item[0] === 'profile') continue; ?>
       <a class="navlink" href="<?= nu_e($item[2]) ?>"<?= $item[0] === $nuPage['tab'] ? ' aria-current="page"' : '' ?>><?= nu_e($item[1]) ?><?= ($item[0] === 'messages' && $nuUnread) ? '<span class="dot" aria-label="' . (int) $nuUnread . ' unread"></span>' : '' ?></a>
@@ -149,20 +149,20 @@ $bodyClass = [
 <?php
 // Session flash messages (set via addFlash()/flashSuccess()/flashError()) shown as toasts.
 $nuFlashes = [];
-foreach (['flash_alert', 'flash_toast'] as $k) {
-    if (!empty($_SESSION[$k]) && is_array($_SESSION[$k])) {
-        foreach ($_SESSION[$k] as $type => $msgs) {
-            foreach ((array) $msgs as $m) { $nuFlashes[] = [$type, $m]; }
+foreach (['flash_alert', 'flash_toast'] as $nuK) {
+    if (!empty($_SESSION[$nuK]) && is_array($_SESSION[$nuK])) {
+        foreach ($_SESSION[$nuK] as $nuTy => $nuMs) {
+            foreach ((array) $nuMs as $nuM) { $nuFlashes[] = [$nuTy, $nuM]; }
         }
-        unset($_SESSION[$k]);
+        unset($_SESSION[$nuK]);
     }
 }
 if ($nuFlashes): ?>
 <div class="toasts" role="status" aria-live="polite">
-<?php foreach ($nuFlashes as $f):
-    $t = in_array($f[0], ['success', 'danger', 'warning', 'info'], true) ? $f[0] : 'info';
-    $ic = ['success' => 'check-circle-fill', 'danger' => 'x-circle', 'warning' => 'bell', 'info' => 'bell'][$t]; ?>
-  <div class="toast toast--<?= $t ?>"><?= nu_icon($ic) ?><span><?= nu_e($f[1]) ?></span></div>
+<?php foreach ($nuFlashes as $nuF):
+    $nuFt = in_array($nuF[0], ['success', 'danger', 'warning', 'info'], true) ? $nuF[0] : 'info';
+    $nuFi = ['success' => 'check-circle-fill', 'danger' => 'x-circle', 'warning' => 'bell', 'info' => 'bell'][$nuFt]; ?>
+  <div class="toast toast--<?= $nuFt ?>"><?= nu_icon($nuFi) ?><span><?= nu_e($nuF[1]) ?></span></div>
 <?php endforeach; ?>
 </div>
 <?php endif; ?>

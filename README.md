@@ -129,12 +129,21 @@ dispatch, weather, notifications) belongs to Sir Paul and is listed per screen i
 | Basic vs Premium / care plans | `/public/plans.php`, `/public/care_plans.php` |
 | Change appointment | `/public/change_appointment.php` (`?state=on_route`) |
 | Snow event, come later | `/public/snow_event.php` (`?state=forecast/published/pending/confirmed/declined`, `?weather=unavailable`) |
-| Live tracking | `/public/track.php` (`?state=stale`, `?state=completed`) |
+| Live tracking (live data for Snow Removal and Mobile Mechanics) | `/public/track.php?id=` |
 | Activity + notifications | `/public/activity.php`, `?tab=notifications` |
-| Mechanic menu, request, quote | `/public/mechanics.php`, `/public/mechanic_request.php`, `/public/quote.php` |
-| Provider dashboard | `/public/provider_dashboard.php` (provider) |
-| Operations, service settings | `/public/operations.php`, `/public/service_settings.php` (manager / admin) |
+| Mechanic menu, request, quote (live) | `/public/mechanics.php`, `/public/mechanic_request.php`, `/public/quote.php?task=` |
+| Provider dashboard (live) | `/public/provider_dashboard.php` (provider) |
+| Operations (live: vetting, disputes, payouts, audit) | `/public/operations.php` (manager / superadmin) |
+| Service settings | `/public/service_settings.php` (manager / admin) |
 | States, timing and exception reference | `/public/status.php` (public) |
+
+### Bookable services (Snow Removal and Mobile Mechanics)
+
+These two services run on real database tables, with escrow payments (a sandbox provider by default, Stripe test or live mode once keys are supplied),
+photo-gated completion, disputes, vetting and an operations console. The other four services stay on the Coming Soon gate.
+Full description of the tables, state machines, endpoints, payment setup, cron and pending items: **[`docs/BOOKING-BACKEND.md`](docs/BOOKING-BACKEND.md)**.
+Quick start: `mysql ... < database/migrations.sql`, open the site, sign in with a demo account (see the docs), post a snow task.
+Auto-release cron: `*/10 * * * * php scripts/auto_release.php`. Tests: `php tests/stripe_provider_test.php`, `tests/e2e/`.
 
 ---
 

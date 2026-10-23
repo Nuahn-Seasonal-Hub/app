@@ -8,11 +8,16 @@ config/db.php
 # Preview-bypass secret for the public-domain gate (never commit; see docs/UI-DATA-HOOKUP.md)
 config/preview.local.php
 
+# Payment-provider keys (never commit; see docs/BOOKING-BACKEND.md). Env vars work too.
+config/payments.local.php
+config/marketplace.local.php
+
 # SSL certificates
 ssl/
 
 # User-uploaded files (large binary assets)
-uploads/jobs/
+uploads/jobs/*
+!uploads/jobs/.htaccess
 
 # Database dumps at root level
 /*.sql

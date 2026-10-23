@@ -37,6 +37,7 @@ include "../includes/header.php";
 
       <!-- Registration Form -->
       <form action="../actions/register.php" method="POST" class="auth-form" id="registerForm">
+        <?= nu_csrf_field() ?>
         <fieldset class="field" style="border:0;padding:0;margin:0 0 var(--s5)">
           <legend class="label">I want to</legend>
           <div class="roles">

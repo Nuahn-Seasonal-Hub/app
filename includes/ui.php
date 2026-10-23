@@ -180,6 +180,10 @@ function nu_page_config() {
         'public/provider_dashboard.php' => ['title' => 'Today', 'tab' => 'today', 'lean' => true, 'console' => true],
         'public/operations.php'        => ['title' => 'Operations', 'tab' => 'ops', 'lean' => true, 'console' => true],
         'public/service_settings.php'  => ['title' => 'Service settings', 'tab' => 'ops', 'lean' => true, 'console' => true, 'sub' => true],
+        'actions/marketplace.php'      => ['title' => 'Nuahn', 'tab' => '', 'lean' => true, 'sub' => true],
+        'public/pay.php'               => ['title' => 'Secure payment', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
+        'public/contractor_setup.php'  => ['title' => 'Contractor profile', 'tab' => 'profile', 'lean' => true, 'console' => true],
+        'public/updates.php'           => ['title' => 'Updates', 'tab' => 'messages', 'lean' => true],
         'public/status.php'            => ['title' => 'Job states', 'tab' => '', 'lean' => true, 'sub' => true],
         'public/admin/dashboard.php'   => ['title' => 'Admin overview', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/admin/manage_users.php' => ['title' => 'Manage users', 'tab' => 'dash', 'lean' => true, 'sub' => true],
@@ -223,7 +227,7 @@ function nu_nav_items() {
                 ['today', 'Today', $u('public/provider_dashboard.php'), 'calendar-check', 'calendar2-check'],
                 ['route', 'Route', $u('public/provider_route.php'), 'signpost-split', 'signpost-split-fill'],
                 ['jobs', 'Open jobs', $u('public/open_jobs.php'), 'search', 'search'],
-                ['messages', 'Messages', $u('public/messages.php'), 'chat-dots', 'chat-dots-fill'],
+                ['messages', 'Updates', $u('public/updates.php'), 'bell', 'bell-fill'],
                 ['profile', 'Profile', $u('public/profile.php'), 'person', 'person-fill'],
             ];
         case 'client':
@@ -232,7 +236,7 @@ function nu_nav_items() {
                 ['bookings', 'Bookings', $u('public/bookings.php'), 'calendar-check', 'calendar2-check'],
                 ['book', 'Book', $u('public/index.php#services'), 'plus-lg', 'plus-lg', true],
                 ['activity', 'Activity', $u('public/activity.php'), 'activity', 'activity'],
-                ['messages', 'Messages', $u('public/messages.php'), 'chat-dots', 'chat-dots-fill'],
+                ['messages', 'Updates', $u('public/updates.php'), 'bell', 'bell-fill'],
             ];
         case 'manager': case 'admin': case 'superadmin':
             return [
@@ -268,6 +272,17 @@ function nu_auth_aside($headline = 'Every season. Trusted local pros. One hub.',
     echo '<li>' . nu_icon('shield-check') . 'Verified clients and providers</li>';
     echo '<li>' . nu_icon('lightning-charge-fill') . 'Apply and hire in a few taps</li>';
     echo '</ul></aside>';
+}
+
+/** Hidden CSRF token plus the validated post-login destination (?next=) for the sign-in and register forms. */
+function nu_csrf_field($carryNext = true) {
+    if (!function_exists('mk_csrf_field')) require_once __DIR__ . '/marketplace/core.php';
+    $o = mk_csrf_field();
+    if ($carryNext) {
+        $n = mk_safe_next($_POST['next'] ?? ($_GET['next'] ?? ''));
+        if ($n !== '') $o .= '<input type="hidden" name="next" value="' . nu_e($n) . '">';
+    }
+    return $o;
 }
 
 /** Password input with show/hide toggle. */
@@ -566,7 +581,7 @@ function nu_booking_status($s) {
         'completed' => ['Completed', 'navy'], 'disputed' => ['Disputed', 'danger'], 'closed' => ['Closed', ''], 'cancelled' => ['Cancelled', 'danger'],
         'reminder_due' => ['Reminder due', 'blue'], 'skipped' => ['Skipped', ''], 'next' => ['Up next', 'blue'], 'queued' => ['Queued', ''],
         'available' => ['Available', 'success'], 'busy' => ['Busy', 'danger'],
-        'open_for_bids' => ['Open for bids', 'blue'], 'pending_approval' => ['Pending your approval', 'warning'], 'approved' => ['Approved', 'navy'],
+        'awaiting_payment' => ['Awaiting payment', 'warning'], 'open_for_bids' => ['Open for bids', 'blue'], 'pending_approval' => ['Pending approval', 'warning'], 'approved' => ['Approved', 'navy'],
         'funds_held' => ['Confirmed · funds held', 'blue'], 'review' => ['In review', 'warning'], 'open' => ['Open', 'warning'],
     ];
     return $m[$s] ?? [ucfirst(str_replace('_', ' ', (string) $s)), ''];
@@ -575,16 +590,15 @@ function nu_booking_chip($s, $dot = true) {
     [$l, $t] = nu_booking_status($s);
     return '<span class="chip' . ($t ? ' chip--' . $t : '') . ($dot ? ' chip--dot' : '') . '">' . nu_e($l) . '</span>';
 }
-/** Where a booking row opens, by job state (marketplace state machine). */
+/** Where a booking row opens, by job state. $b = a task row (id, status); real task links, no previews. */
 function nu_booking_href($b) {
-    $id = rawurlencode($b['id']);
+    $id = rawurlencode((string) $b['id']);
+    if (!ctype_digit((string) $b['id'])) return nu_url('public/track.php') . '?id=' . $id;
     switch ($b['status']) {
-        case 'open_for_bids': return nu_url('public/offers.php') . '?state=many';
-        case 'quote_pending': return nu_url('public/quote.php');
-        case 'change_requested': return nu_url('public/snow_event.php') . '?state=pending';
+        case 'awaiting_payment': return nu_url('public/pay.php') . '?task=' . $id;
+        case 'open_for_bids': return nu_url('public/offers.php') . '?task=' . $id;
+        case 'quote_pending': return nu_url('public/quote.php') . '?task=' . $id;
         case 'pending_approval': return nu_url('public/approve.php') . '?id=' . $id;
-        case 'approved': case 'completed': return nu_url('public/activity.php');
-        case 'disputed': return nu_url('public/activity.php') . '#feedback';
         default: return nu_url('public/track.php') . '?id=' . $id;
     }
 }
@@ -592,7 +606,7 @@ function nu_booking_href($b) {
 function nu_payment_chip($s) {
     // Marketplace payment states: Unpaid, Authorized (funds held), Captured (paid out), Refunded, Disputed.
     $m = ['unpaid' => ['Unpaid', '', 'credit-card'], 'authorized' => ['Authorized · funds held', 'blue', 'lock-fill'], 'held' => ['Authorized · funds held', 'blue', 'lock-fill'],
-          'paid' => ['Captured · paid out', 'success', 'check-circle-fill'], 'captured' => ['Captured · paid out', 'success', 'check-circle-fill'],
+          'paid' => ['Captured · paid out', 'success', 'check-circle-fill'], 'captured' => ['Captured · payout queued', 'success', 'check-circle-fill'], 'released' => ['Captured · paid out', 'success', 'check-circle-fill'],
           'failed' => ['Payment failed', 'danger', 'exclamation-circle'], 'disputed' => ['Disputed · funds held', 'danger', 'flag-fill'],
           'partially_refunded' => ['Partially refunded', 'warning', 'arrow-repeat'], 'refunded' => ['Refunded', '', 'arrow-repeat']];
     [$l, $t, $ic] = $m[$s] ?? [ucfirst((string) $s), '', 'credit-card'];
@@ -618,7 +632,7 @@ function nu_job_machine($key, $mode = 'bar', $times = []) {
     $keys = array_keys($st);
     $disputed = $key === 'disputed';
     if ($disputed) $key = 'pending_approval';
-    $alias = ['completed' => 'pending_approval', 'quote_pending' => 'open_for_bids', 'awaiting_quote' => 'open_for_bids', 'searching' => 'open_for_bids', 'assigned' => 'confirmed', 'change_requested' => 'confirmed', 'weather_review' => 'confirmed', 'paused' => 'in_progress', 'closed' => 'approved'];
+    $alias = ['awaiting_payment' => 'requested', 'no_provider' => 'open_for_bids', 'cancelled' => 'requested', 'completed' => 'pending_approval', 'quote_pending' => 'open_for_bids', 'awaiting_quote' => 'open_for_bids', 'searching' => 'open_for_bids', 'assigned' => 'confirmed', 'change_requested' => 'confirmed', 'weather_review' => 'confirmed', 'paused' => 'in_progress', 'closed' => 'approved'];
     if (isset($alias[$key])) $key = $alias[$key];
     $at = array_search($key, $keys, true); if ($at === false) $at = 0;
     $labels = $st; if ($disputed) $labels['approved'] = 'Disputed';
@@ -639,7 +653,13 @@ function nu_job_machine($key, $mode = 'bar', $times = []) {
 }
 
 /** Independent contractor lookup (fixtures/contractors.php), or null. */
-function nu_contractor($id) { $all = nu_fixture('contractors'); return $all[$id] ?? null; }
+function nu_contractor($id) {
+    if (ctype_digit((string) $id)) {
+        if (!function_exists('mk_contractor_card')) require_once __DIR__ . '/marketplace/core.php';
+        try { return mk_contractor_card((int) $id); } catch (Throwable $e) { return null; }
+    }
+    $all = nu_fixture('contractors'); return $all[$id] ?? null;
+}
 /** Initials avatar for a contractor (no photo, so nothing to load). */
 function nu_avatar($c, $size = 'md') {
     return '<span class="avt avt--' . nu_e($c['tone'] ?? 'teal') . ' avt--' . nu_e($size) . '" aria-hidden="true">' . nu_e($c['initials']) . '</span>';
@@ -858,46 +878,20 @@ function nu_console_nav($items, $active, $label, $tagline = '') {
 
 /** Contractor console nav shared by provider_dashboard.php and open_jobs.php. */
 function nu_provider_nav() {
-    $m = nu_fixture('marketplace'); $u = function ($p) { return nu_url('public/' . $p); };
+    $u = function ($p) { return nu_url('public/' . $p); };
+    $open = 0; $unread = nu_unread_count(true);
+    try { if (function_exists('mk_board') || @include_once __DIR__ . '/marketplace/bootstrap.php') $open = count(mk_board(mk_uid())); } catch (Throwable $e) {}
     return [
         ['today', 'Today', $u('provider_dashboard.php'), 'calendar-event'],
-        ['open', 'Open jobs', $u('open_jobs.php'), 'megaphone', count($m['open_jobs'])],
+        ['open', 'Open jobs', $u('open_jobs.php'), 'megaphone', $open],
         ['jobs', 'My jobs', $u('provider_home.php'), 'list-ul'],
         ['route', 'Route', $u('provider_route.php'), 'geo-alt'],
-        ['messages', 'Messages', $u('messages.php'), 'chat-square', 2],
+        ['messages', 'Updates', $u('updates.php'), 'bell', $unread],
         ['earnings', 'Earnings', $u('provider_dashboard.php') . '#earnings', 'wallet2'],
+        ['profile', 'My profile', $u('contractor_setup.php'), 'person-vcard'],
         ['availability', 'Availability', $u('provider_dashboard.php') . '#availability', 'calendar2-week'],
         ['support', 'Support', $u('chat.php') . '?thread=support', 'question-circle'],
     ];
-}
-
-/** One "open job" card with Accept and Counter-bid (UI only). $j is a row from fixtures/marketplace.php ['open_jobs']. Behaviour: public/assets/jobs.js */
-function nu_open_job_card($j) {
-    $pct = (int) (nu_fixture('marketplace')['commission_pct'] ?? 12);
-    $roadside = !empty($j['roadside']); $quote = !empty($j['quote']); $budget = (int) $j['budget'];
-    $svc = $j['svc'] === 'snow-removal' ? 'snow' : 'wrench-adjustable';
-    $o = '<article class="oj" data-oj data-id="' . nu_e($j['id']) . '" data-budget="' . $budget . '" data-pct="' . $pct . '" data-kind="' . ($roadside ? 'roadside' : ($quote ? 'quote' : 'bid')) . '" data-svc="' . nu_e($j['svc']) . '">';
-    $o .= '<div class="oj__top"><span class="oj__ic">' . nu_icon($svc) . '</span><div class="oj__t"><h3>' . nu_e($j['title']) . '</h3><p>' . nu_icon('geo-alt') . ' ' . nu_e($j['area']) . ' · ' . nu_e($j['dist']) . '</p></div>';
-    $o .= '<div class="oj__chips">' . ($roadside ? '<span class="chip chip--warning">' . nu_icon('broadcast') . 'Roadside · now</span>' : '') . (!empty($j['boost']) ? '<span class="chip chip--blue">' . nu_icon('rocket-takeoff-fill') . 'Boosted</span>' : '') . ($quote ? '<span class="chip chip--plain">Quote needed</span>' : '') . '</div></div>';
-    $o .= '<p class="oj__m">' . nu_icon('clock') . ' ' . nu_e($j['when']) . ' <span>· posted ' . nu_e($j['posted']) . '</span><span>· ' . (int) $j['bids'] . ' offer' . ((int) $j['bids'] === 1 ? '' : 's') . ' so far</span></p>';
-    $o .= '<p class="oj__s">' . nu_e($j['scope']) . '</p>';
-    if ($quote) {
-        $o .= '<div class="oj__bud"><span><small>Client budget</small><b>Send a quote</b></span><span class="oj__pay">Itemise parts, labour and call-out fee</span></div>';
-        $o .= '<div class="oj__acts"><a class="btn btn-primary btn-sm" href="' . nu_e(nu_url('public/quote.php')) . '?state=draft">' . nu_icon('receipt') . ' Send quote</a><button class="btn btn-ghost btn-sm" type="button" data-oj-skip>Not for me</button></div>';
-    } else {
-        $o .= '<div class="oj__bud"><span><small>' . ($roadside ? 'Offered price' : 'Client target') . '</small><b>$' . $budget . '</b></span><span class="oj__pay">You receive about <b data-oj-pay>$' . number_format($budget * (100 - $pct) / 100, 2) . '</b> after ' . $pct . '% commission</span></div>';
-        $o .= '<div class="oj__acts"><button class="btn btn-primary btn-sm" type="button" data-oj-accept>' . nu_icon('check2') . ' ' . ($roadside ? 'Accept and go' : 'Accept at $' . $budget) . '</button>'
-            . ($roadside ? '' : '<button class="btn btn-outline btn-sm" type="button" data-oj-counter aria-expanded="false">' . nu_icon('arrow-left-right') . ' Counter-bid</button>') . '<button class="btn btn-ghost btn-sm" type="button" data-oj-skip>Not for me</button></div>';
-        if (!$roadside) {
-            $o .= '<form class="oj__cb" data-oj-form hidden><div class="oj__cbrow"><label class="label" for="cb-' . nu_e($j['id']) . '">Your price</label><div class="oj__step"><button type="button" data-oj-step="-5" aria-label="Lower by $5">−</button><span><i>$</i><input class="input" id="cb-' . nu_e($j['id']) . '" type="number" inputmode="numeric" min="10" max="999" value="' . ($budget + 10) . '" data-oj-price></span><button type="button" data-oj-step="5" aria-label="Raise by $5">+</button></div></div>'
-                . '<div class="oj__cbrow"><label class="label" for="cn-' . nu_e($j['id']) . '">Arrival</label><select class="input" id="cn-' . nu_e($j['id']) . '"><option>Within 1 hour</option><option>Within 2 hours</option><option>Tomorrow morning</option></select></div>'
-                . '<div class="oj__cbrow"><label class="label" for="cm-' . nu_e($j['id']) . '">Note to the client</label><input class="input" id="cm-' . nu_e($j['id']) . '" maxlength="120" placeholder="e.g. Ice melt included, equipment on site"></div>'
-                . '<p class="oj__pay">You receive about <b data-oj-cpay>$0.00</b> after ' . $pct . '% commission · <span data-oj-vs></span></p>'
-                . '<div class="oj__acts"><button class="btn btn-primary btn-sm" type="submit">Send offer</button><button class="btn btn-ghost btn-sm" type="button" data-oj-cancel>Cancel</button></div></form>';
-        }
-    }
-    $o .= '<p class="oj__res" data-oj-res role="status" hidden></p></article>';
-    return $o;
 }
 
 /** Vehicle selector: Year, Make, Model, Trim, Engine. Model options depend on the make (data-vehicle JSON; behaviour in public/assets/mech.js). SAMPLE lists from fixtures/mechanic.php. */
@@ -917,26 +911,30 @@ function nu_vehicle_select($name = 'vehicle') {
 
 /** Operations console nav shared by operations.php and service_settings.php. */
 function nu_ops_nav() {
-    $m = nu_fixture('marketplace'); $u = function ($p) { return nu_url('public/' . $p); };
+    $u = function ($p) { return nu_url('public/' . $p); };
+    $c = ['open' => 0, 'vetting' => 0, 'disputes' => 0, 'payouts' => 0];
+    try { if (function_exists('mk_ops_counts') || @include_once __DIR__ . '/marketplace/bootstrap.php') $c = mk_ops_counts(); } catch (Throwable $e) {}
     return [
         ['overview', 'Overview', $u('operations.php'), 'grid-fill'],
-        ['open', 'Open jobs', $u('operations.php') . '?view=open', 'megaphone', count($m['open_jobs'])],
-        ['vetting', 'Vetting queue', $u('operations.php') . '?view=vetting', 'person-vcard', count($m['vetting'])],
-        ['disputes', 'Disputes', $u('operations.php') . '?view=disputes', 'flag-fill', count($m['disputes'])],
+        ['open', 'Open jobs', $u('operations.php') . '?view=open', 'megaphone', $c['open']],
+        ['vetting', 'Vetting queue', $u('operations.php') . '?view=vetting', 'person-vcard', $c['vetting']],
+        ['disputes', 'Disputes', $u('operations.php') . '?view=disputes', 'flag-fill', $c['disputes']],
         ['bookings', 'All jobs', $u('jobs.php'), 'calendar3'],
-        ['payments', 'Payments', $u('operations.php') . '#payments', 'credit-card'],
-        ['weather', 'Weather', $u('operations.php') . '#weather', 'cloud'],
+        ['payments', 'Payments', $u('operations.php') . '?view=payouts', 'credit-card', $c['payouts']],
+        ['audit', 'Audit log', $u('operations.php') . '?view=audit', 'journal-text'],
+        ['snow', 'Snow events', $u('operations.php') . '?view=snow', 'cloud-snow'],
         ['settings', 'Service settings', $u('service_settings.php'), 'gear-fill'],
         ['support', 'Support', $u('chat.php') . '?thread=support', 'question-circle'],
     ];
 }
 
-/** Unread message count for the nav dot (sample data until messages exist). */
-function nu_unread_count() {
-    if (!in_array(nu_role(), ['client', 'provider'], true)) return 0;
-    $n = 0;
-    foreach ((nu_fixture('messages')['threads'] ?? []) as $t) { $n += (int) ($t['unread'] ?? 0); }
-    return $n;
+/** Unread job updates for the nav dot (live notifications). */
+function nu_unread_count($force = false) {
+    if (!$force && !in_array(nu_role(), ['client', 'provider'], true)) return 0;
+    try {
+        if (!function_exists('mk_unread_count')) require_once __DIR__ . '/marketplace/core.php';
+        return mk_unread_count();
+    } catch (Throwable $e) { return 0; }
 }
 
 } // end guard
