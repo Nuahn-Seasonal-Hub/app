@@ -2,9 +2,9 @@
 // UI design & front-end development: Christo Innocent
 //   Email: xristoinno@gmail.com | Phone: +256783335335
 // (Server-side comment only; never output to the browser.)
-// public/mechanics.php: Mobile mechanic service menu (doc2 p16, doc1 p14). Map + location confirmation,
-// six roadside categories and eight planned-maintenance services. Selecting a service opens its own form
-// (mechanic_request.php), never a generic booking form. Manual address works without device location permission.
+// public/mechanics.php: Mobile Mechanics, two pathways. Pathway A (roadside, urgent): six categories, the request is broadcast to nearby
+// approved technicians, no scheduling. Pathway B (scheduled repair): six services, scoped and quoted, approved before work.
+// Selecting a service opens its own form (mechanic_request.php). Manual address works without device location permission.
 // UI ONLY: map is an illustrative inline SVG; availability is SAMPLE DATA from fixtures/mechanic.php.
 // Sir Paul: GET /api/services/mobile-mechanics/categories?lat=&lng= (availability per location), geocoding for the address box.
 require_once("../config/init.php");
@@ -16,6 +16,10 @@ include_once("../includes/header.php");
 <main class="mx" id="mechanics">
   <div class="mx-app">
     <h1 class="mx-title">Mobile Mechanics</h1>
+    <nav class="mx-paths" aria-label="Choose a pathway">
+      <a class="mx-path mx-path--a" href="#roadside"><span class="mx-path__ic"><?= nu_icon('broadcast') ?></span><span><b>Roadside help now</b><small>Broadcast to nearby approved technicians. No scheduling.</small></span><?= nu_icon('chevron-right') ?></a>
+      <a class="mx-path mx-path--b" href="#services"><span class="mx-path__ic"><?= nu_icon('calendar2-check') ?></span><span><b>Scheduled repair</b><small>Describe the job, get an itemised quote, approve, book.</small></span><?= nu_icon('chevron-right') ?></a>
+    </nav>
     <section class="mx-map">
       <svg class="mx-map__svg" viewBox="0 0 400 210" role="img" aria-label="Map of Edmonton with your service location pinned" preserveAspectRatio="xMidYMid slice">
         <rect width="400" height="210" fill="var(--map-bg)"/>
@@ -38,30 +42,30 @@ include_once("../includes/header.php");
     <p class="mx-status" data-loc-status role="status" hidden><?= nu_icon('check-circle-fill') ?> Location confirmed. Showing services with mechanics covering this area.</p>
 
     <section class="mx-sec" id="roadside">
-      <h2>Need roadside help?</h2>
+      <h2><span class="mx-pill mx-pill--a">A</span> Need roadside help?</h2>
       <div class="mx-road">
 <?php foreach ($mech['roadside'] as $k => $r): ?>
-        <a class="mx-road__t" href="<?= nu_e($req . '?svc=' . $k) ?>"><span class="mx-road__ic mx-tone--<?= nu_e($r['tone']) ?>"><?= nu_icon($r['icon']) ?></span><span><?= nu_e($r['name']) ?></span></a>
+        <a class="mx-road__t" href="<?= nu_e($req . '?path=roadside&svc=' . $k) ?>"><span class="mx-road__ic mx-tone--<?= nu_e($r['tone']) ?>"><?= nu_icon($r['icon']) ?></span><span><?= nu_e($r['name']) ?><small><?= nu_e($mech['roadside_est'][$k]) ?></small></span></a>
 <?php endforeach; ?>
       </div>
-      <p class="mx-hint"><?= nu_icon('info-circle') ?> Roadside help is a request. We show <b>Searching</b> until a mechanic accepts; no immediate ETA is guaranteed.</p>
+      <p class="mx-hint"><?= nu_icon('info-circle') ?> Your request goes out to approved technicians near you at once. The first to accept confirms a price and an ETA; funds are held until the job is done. <?= nu_sample_tag('Sample estimates') ?></p>
     </section>
 
     <section class="mx-sec" id="services">
-      <h2>Book vehicle services</h2>
+      <h2><span class="mx-pill">B</span> Schedule a repair</h2>
       <div class="mx-svc">
 <?php foreach ($mech['maintenance'] as $k => $s): ?>
-        <a class="mx-svc__t<?= !empty($s['selected']) ? ' is-sel' : '' ?>" href="<?= nu_e($req . '?svc=' . $k) ?>"><span class="mx-svc__ic"><?= nu_icon($s['icon']) ?></span><span><?= nu_e($s['name']) ?></span><?= !empty($s['selected']) ? '<em>Selected</em>' : '' ?></a>
+        <a class="mx-svc__t<?= !empty($s['selected']) ? ' is-sel' : '' ?>" href="<?= nu_e($req . '?path=repair&svc=' . $k) ?>"><span class="mx-svc__ic"><?= nu_icon($s['icon']) ?></span><span><?= nu_e($s['name']) ?></span><?= !empty($s['selected']) ? '<em>Selected</em>' : '' ?></a>
 <?php endforeach; ?>
       </div>
-      <p class="mx-hint"><?= nu_icon('file-text') ?> Repairs are quoted first: parts, labour and fees are itemised and approved before work begins. <?= nu_sample_tag('Availability varies by location') ?></p>
+      <p class="mx-hint"><?= nu_icon('file-text') ?> Repairs are quoted first: parts, labour, call-out fee and tax are itemised and you approve before any work or payment hold. <?= nu_sample_tag('Availability varies by location') ?></p>
     </section>
   </div>
   <aside class="cp-rules mx-rules">
-    <h3>Roadside categories</h3><p>Flat Tire, Dead Battery, Lockout, Fuel Delivery, Tire Pressure and Towing.</p>
-    <h3>Planned maintenance</h3><p>Oil Change, Battery Replacement, Tire Rotation, Brake Pad Replacement, Fluid Top-Off, Check Engine Light, Full Vehicle Diagnostic, Tire Replacement.</p>
-    <h3>Location and availability</h3><p>A typed address or map pin works without device location. Services are matched to qualified mechanics who cover the area.</p>
-    <h3>Basic / Premium</h3><p>Basic requests one visit. Premium adds provider check-ins and care reminders; roadside help is still an individual request. <a href="<?= nu_e(nu_url('public/plans.php')) ?>">Compare plans</a></p>
+    <h3>How roadside works</h3><p>Pick the problem, confirm where you are and send. Nearby approved technicians see it instantly; the first to accept shows their price and ETA. No appointment needed.</p>
+    <h3>How scheduled repair works</h3><p>Describe the vehicle and symptoms, add photos if you like, and mechanics send itemised quotes. Approve one, choose a window and funds are held.</p>
+    <h3>Extra work on site</h3><p>If the mechanic finds more work, they pause and send a revised quote. Nothing extra happens until you approve it.</p>
+    <h3>Safe payment</h3><p>Funds are held securely until you approve the finished work. Card details never touch Nuahn.</p>
   </aside>
 </main>
 <script>

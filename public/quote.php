@@ -10,9 +10,12 @@
 // UI ONLY: amounts are SAMPLE DATA (fixtures/mechanic.php) and must not ship as business prices.
 // Sir Paul: GET /api/quotes/{id}?version=, POST /api/quotes/{id}/approve {version, window} -> booking,
 // POST /api/quotes/{id}/decline {reason}, POST /api/quotes/{id}/questions {text} (posts to the booking thread),
-// POST /api/payments/intents (hosted, idempotency key). Preview: ?state=approved|declined|expired|revised.
+// POST /api/payments/intents (hosted, idempotency key; authorize and hold, capture on client approval of the work),
+// POST /api/quotes (provider composes: line items by type, call-out fee, taxes by service address province), POST /api/quotes/{id}/amend (on-site revision, pauses the job).
+// Preview: ?state=approved|declined|expired|revised, provider composer ?state=draft.
 require_once("../config/init.php");
-requireLogin('client');
+$draft = ($_GET['state'] ?? '') === 'draft';
+requireLogin($draft ? 'provider' : 'client');
 
 $q = nu_fixture('mechanic')['quote'];
 $state = (string) ($_GET['state'] ?? '');
@@ -20,7 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') { $state = ($_POST['decision'] ?? '')
 $revised = in_array($state, ['revised', 'revised_ok'], true);
 $sum = function ($items) { $s = 0; foreach ($items as $i) { $s += $i[2] * $i[3]; } return $s; };
 $base = $sum($q['items']); $extra = $sum($q['extra']['items']);
-$tax = $q['tax_rate'];
+$tax = array_sum(array_column($q['taxes'], 1));
+$mech = nu_contractor('c-2001');
 $win = (string) ($_POST['window'] ?? $q['windows'][2]);
 include_once("../includes/header.php");
 ?>
@@ -31,12 +35,32 @@ include_once("../includes/header.php");
         <h1>Review mechanic quote</h1>
         <p class="crumbs"><a href="<?= nu_e(nu_url('public/client_home.php')) ?>">Nuahn</a> / <a href="<?= nu_e(nu_url('public/bookings.php')) ?>">My Bookings</a> / <a href="<?= nu_e(nu_url('public/activity.php')) ?>">Activity</a> / <a href="<?= nu_e(nu_url('public/messages.php')) ?>">Messages</a></p>
       </div>
-      <span class="qt-ver"><?= nu_icon('file-earmark-text') ?> <?= nu_e($q['id']) ?> · v<?= $revised ? 2 : 1 ?> <?= nu_booking_chip($state === 'approved' ? 'confirmed' : ($state === 'declined' ? 'cancelled' : ($revised ? ($state === 'revised_ok' ? 'in_progress' : 'paused') : 'quote_pending'))) ?></span>
+      <span class="qt-ver"><?= nu_icon('file-earmark-text') ?> <?= nu_e($q['id']) ?> · v<?= $revised ? 2 : 1 ?> <?= $draft ? nu_booking_chip('quote_pending') : '' ?><?= $draft ? '' : nu_booking_chip($state === 'approved' ? 'confirmed' : ($state === 'declined' ? 'cancelled' : ($revised ? ($state === 'revised_ok' ? 'in_progress' : 'paused') : 'quote_pending'))) ?></span>
     </div>
 
+<?php if ($draft): ?>
+    <form class="ac-box qt-draft" data-draft onsubmit="return false">
+      <div class="qt-scope__top"><h2>Send a quote</h2><span class="qt-exp"><?= nu_icon('clock') ?> Valid for 24 hours</span></div>
+      <p class="qt-veh"><?= nu_icon('car-front-fill') ?> <?= nu_e($q['vehicle']) ?> · <?= nu_e($q['service']) ?> · customer Alice M.</p>
+      <p class="qt-p">Itemise parts, labour and your call-out fee. Taxes are added automatically for the service address. The customer can approve, ask a question or decline. <?= nu_sample_tag('Sample form') ?></p>
+      <div class="qd-rows" data-rows>
+<?php foreach ($q['items'] as $i): ?>
+        <div class="qd-row"><input class="input" value="<?= nu_e($i[0]) ?>" aria-label="Item"><span class="qt-type qt-type--<?= strtolower($i[1]) ?>"><?= nu_e($i[1]) ?></span><input class="input qd-amt" inputmode="decimal" value="<?= number_format($i[2] * $i[3], 2, '.', '') ?>" aria-label="Amount in CAD" data-amt></div>
+<?php endforeach; ?>
+      </div>
+      <button class="btn btn-soft btn-sm" type="button" data-add><?= nu_icon('plus-lg') ?> Add line</button>
+      <dl class="ap-sum qd-sum"><div><dt>Subtotal</dt><dd data-sub></dd></div>
+<?php foreach ($q['taxes'] as $t): ?><div><dt><?= nu_e($t[0]) ?></dt><dd data-tax="<?= (float) $t[1] ?>"></dd></div><?php endforeach; ?>
+        <div class="is-total"><dt>Quote total</dt><dd data-total></dd></div></dl>
+      <label class="label" for="qd-note">Note to the customer <small>(optional)</small></label><textarea class="input" id="qd-note" rows="2" placeholder="Parts brand, what is not included, earliest window"></textarea>
+      <div class="qt-acts"><button class="btn btn-primary" type="button" data-send><?= nu_icon('send') ?> Send quote</button><a class="btn btn-ghost" href="<?= nu_e(nu_url('public/open_jobs.php')) ?>">Back to open jobs</a></div>
+      <p class="ac-ok" data-sent hidden role="status"><?= nu_icon('check-circle-fill') ?> Quote sent. The customer is notified. Nothing is charged until they approve. (Preview)</p>
+    </form>
+<?php else: ?>
 <?php if ($state === 'approved'): ?>
     <section class="ch-result" role="status"><?= nu_icon('check-circle-fill') ?><div><h2>Quote v1 approved · booking confirmed</h2>
-      <p><?= nu_e($q['service']) ?> with <?= nu_e($q['mechanic']) ?>, <b><?= nu_e($win) ?></b>. Approved version and time are recorded. Payment is <b>authorized</b>, not charged; it’s captured after the work is completed.</p>
+      <p><?= nu_e($q['service']) ?> with <?= nu_e($q['mechanic']) ?>, <b><?= nu_e($win) ?></b>. Approved version and time are recorded. Funds are <b>held securely</b> and released only when you approve the finished work.</p>
+      <p class="qt-chips"><?= nu_payment_chip('authorized') ?></p>
       <div class="row-flex"><a class="btn btn-primary btn-sm" href="<?= nu_e(nu_url('public/track.php')) ?>">Visit status</a><a class="btn btn-outline btn-sm" href="<?= nu_e(nu_url('public/change_appointment.php')) ?>?id=MECH-1042">Change appointment</a></div></div></section>
 <?php elseif ($state === 'declined'): ?>
     <section class="ch-result ch-result--declined" role="status"><?= nu_icon('x-circle') ?><div><h2>Quote declined</h2><p>No work will be done and nothing was charged. The mechanic has been told. You can ask for a new quote any time.</p>
@@ -50,7 +74,8 @@ include_once("../includes/header.php");
 
     <section class="ac-box qt-scope">
       <div class="qt-scope__top"><h2><?= nu_e($q['service']) ?></h2><span class="qt-exp"><?= nu_icon('clock') ?> <?= nu_e($q['expires']) ?></span></div>
-      <p class="qt-veh"><?= nu_icon('car-front-fill') ?> <?= nu_e($q['vehicle']) ?> · <?= nu_e($q['mechanic']) ?></p>
+      <p class="qt-veh"><?= nu_icon('car-front-fill') ?> <?= nu_e($q['vehicle']) ?></p>
+      <div class="qt-mech"><?= nu_avatar($mech, 'sm') ?><span><a href="<?= nu_e(nu_url('public/contractor.php')) ?>?id=<?= nu_e($mech['id']) ?>"><b><?= nu_e($mech['name']) ?></b></a><small><?= nu_icon('star-fill') ?> <?= nu_e($mech['rating']) ?> · <?= (int) $mech['jobs'] ?> jobs</small></span><?= nu_badges($mech) ?></div>
       <p class="qt-p"><?= nu_e($q['scope']) ?></p>
       <table class="qt-tbl">
         <thead><tr><th scope="col">Item</th><th scope="col">Amount</th></tr></thead>
@@ -69,7 +94,9 @@ include_once("../includes/header.php");
 <?php endif; ?>
         <tfoot>
           <tr><td>Subtotal</td><td>CAD <?= number_format($base + ($revised ? $extra : 0), 2) ?></td></tr>
-          <tr><td><?= nu_e($q['tax_label']) ?></td><td>CAD <?= number_format(($base + ($revised ? $extra : 0)) * $tax, 2) ?></td></tr>
+<?php foreach ($q['taxes'] as $t): ?>
+          <tr><td><?= nu_e($t[0]) ?></td><td>CAD <?= number_format(($base + ($revised ? $extra : 0)) * $t[1], 2) ?></td></tr>
+<?php endforeach; ?>
           <tr class="is-total"><td>Quote total<?= $revised ? ' (v2)' : '' ?></td><td>CAD <?= number_format(($base + ($revised ? $extra : 0)) * (1 + $tax), 2) ?></td></tr>
         </tfoot>
       </table>
@@ -91,13 +118,11 @@ include_once("../includes/header.php");
 <?php elseif (!in_array($state, ['approved', 'declined', 'expired'], true)): ?>
     <form class="ac-two" method="post" data-quote>
       <section class="ac-box">
-        <h2>Approve or ask</h2>
-        <div class="qt-dec">
-          <label class="qt-opt"><input type="radio" name="decision" value="approve" checked><span><?= nu_icon('check-circle') ?><b>Approve quote</b><small>The approved version (v1) and time are recorded.</small></span></label>
-          <label class="qt-opt"><input type="radio" name="decision" value="ask"><span><?= nu_icon('chat-dots') ?><b>Ask a question</b><small>Goes to your booking thread; the quote stays open.</small></span></label>
-          <label class="qt-opt"><input type="radio" name="decision" value="decline"><span><?= nu_icon('x-circle') ?><b>Decline quote</b><small>No work, no charge.</small></span></label>
-        </div>
-        <div class="qt-ask" data-ask hidden><label class="sr-only" for="qt-q">Your question</label><textarea class="input" id="qt-q" rows="2" placeholder="e.g. Can you check the rear pads too?"></textarea><p class="ac-ok" data-ask-ok hidden><?= nu_icon('check-circle-fill') ?> Question added to your thread (preview).</p></div>
+        <h2>Your decision</h2>
+        <input type="hidden" name="decision" value="approve" data-dec>
+        <div class="qt-btns"><button class="btn btn-primary" type="button" data-d="approve"><?= nu_icon('check-circle') ?> Approve quote</button><button class="btn btn-outline" type="button" data-d="ask"><?= nu_icon('chat-dots') ?> Ask question</button><button class="btn btn-outline qt-no" type="button" data-d="decline"><?= nu_icon('x-circle') ?> Decline</button></div>
+        <div class="qt-ask" data-ask hidden><label class="sr-only" for="qt-q">Your question</label><textarea class="input" id="qt-q" rows="2" placeholder="e.g. Can you check the rear pads too?"></textarea><button class="btn btn-soft btn-sm" type="button" data-ask-send>Send question</button><p class="ac-ok" data-ask-ok hidden><?= nu_icon('check-circle-fill') ?> Question sent to the mechanic. The quote stays open. (Preview)</p></div>
+        <div class="qt-ask" data-decline hidden><p class="qt-mini"><?= nu_icon('info-circle') ?> No work will be done and nothing is charged.</p><button class="btn btn-danger btn-sm" type="submit" name="decision" value="decline">Confirm decline</button></div>
       </section>
       <section class="ac-box" data-win-box>
         <h2>Choose your window</h2>
@@ -109,10 +134,10 @@ include_once("../includes/header.php");
         <p class="qt-mini"><?= nu_icon('info-circle') ?> You can change the appointment later. Visit reminders and live status follow.</p>
       </section>
       <section class="ac-box qt-pay">
-        <h2><?= nu_icon('credit-card') ?> Payment</h2>
-        <div class="qt-card"><span class="qt-card__brand">VISA</span><span>•••• 4242 · exp 08/28</span><button class="linkbtn" type="button">Change</button></div>
-        <p class="qt-mini"><?= nu_icon('shield-lock') ?> Secure hosted card entry. Approving <b>authorizes</b> CAD <?= number_format($base * (1 + $tax), 2) ?>; it’s captured after the work is completed. Payment status is shown separately from the job. Retries never duplicate a charge.</p>
-        <p class="qt-mini"><?= nu_icon('gem') ?> Premium care reminders never charge you by themselves; any plan or visit charge is shown before you confirm.</p>
+        <h2><?= nu_icon('credit-card') ?> Payment <?= nu_payment_chip('unpaid') ?></h2>
+        <div class="qt-card"><span class="qt-card__ic"><?= nu_icon('credit-card-2-front') ?></span><span>Card ending 4242 · exp 08/28</span><button class="linkbtn" type="button">Change</button></div>
+        <?= nu_trust_note('held') ?>
+        <p class="qt-mini"><?= nu_icon('shield-lock') ?> Approving <b>holds</b> CAD <?= number_format($base * (1 + $tax), 2) ?>; it is not charged until you approve the finished work. Payment status is separate from job status. Retries never duplicate a hold.</p>
       </section>
       <div class="qt-submit">
         <button class="btn btn-primary btn-lg" type="submit" data-submit>Approve &amp; book <?= nu_icon('arrow-right') ?></button>
@@ -120,32 +145,48 @@ include_once("../includes/header.php");
       </div>
     </form>
 <?php endif; ?>
-    <p class="ch-demo">Preview states: <a href="?">Quote ready</a> · <a href="?state=approved">Approved</a> · <a href="?state=declined">Declined</a> · <a href="?state=expired">Expired</a> · <a href="?state=revised">Additional work (v2)</a></p>
+<?php endif; /* draft */ ?>
+    <p class="ch-demo">Preview states: <a href="?">Quote ready</a> · <a href="?state=approved">Approved</a> · <a href="?state=declined">Declined</a> · <a href="?state=expired">Expired</a> · <a href="?state=revised">Additional work (v2)</a> · <?= nu_role() === 'provider' ? '<a href="?state=draft">Mechanic: send a quote</a>' : '' ?></p>
   </div>
   <aside class="cp-rules ac-rules">
-    <h3>Real prices only</h3><p>Mockup amounts are not business prices. Record inclusions, exclusions and parts availability.</p>
-    <h3>Reschedule impact</h3><p>If the quote expires or parts / provider change, show the revised scope and price before confirming a new visit.</p>
-    <h3>Secure payments</h3><p>Use hosted / tokenised payment entry. Keep payment status separate from work status. Retry without duplicate charges.</p>
-    <h3>No surprise recurring fees</h3><p>Premium terms must name any plan charge and visit charges. A monthly reminder alone never charges the customer.</p>
+    <h3>Itemised and clear</h3><p>Parts, labour, call-out fee and tax are listed separately, with what is and is not included.</p>
+    <h3>Extra work needs your OK</h3><p>If the mechanic finds more work on site they pause and send a revised quote. Approved work and new work are shown separately.</p>
+    <h3>Funds held securely</h3><p>Funds are held until you approve the finished work. Card details never touch Nuahn.</p>
   </aside>
 </main>
 <script>
 (function () {
   var f = document.querySelector('[data-quote]');
   if (f) {
-    var ask = f.querySelector('[data-ask]'), btn = f.querySelector('[data-submit]'), win = f.querySelector('[data-win-box]');
-    var upd = function () {
-      var d = f.querySelector('input[name=decision]:checked').value;
-      ask.hidden = d !== 'ask'; win.style.opacity = d === 'approve' ? '' : '.5';
-      btn.firstChild.textContent = d === 'approve' ? 'Approve & book ' : d === 'ask' ? 'Send question ' : 'Decline quote ';
+    var ask = f.querySelector('[data-ask]'), dec = f.querySelector('[data-decline]'), btn = f.querySelector('[data-submit]'), win = f.querySelector('[data-win-box]'), hid = f.querySelector('[data-dec]');
+    var set = function (d) {
+      hid.value = d; ask.hidden = d !== 'ask'; dec.hidden = d !== 'decline'; win.style.opacity = d === 'approve' ? '' : '.5';
+      f.querySelectorAll('[data-d]').forEach(function (b) { b.classList.toggle('btn-primary', b.dataset.d === d); b.classList.toggle('btn-outline', b.dataset.d !== d); b.setAttribute('aria-pressed', b.dataset.d === d); });
+      btn.disabled = d !== 'approve';
     };
-    f.addEventListener('change', upd);
-    f.addEventListener('submit', function (e) {
-      if (f.querySelector('input[name=decision]:checked').value === 'ask') { e.preventDefault(); f.querySelector('[data-ask-ok]').hidden = false; }
-    });
+    f.querySelectorAll('[data-d]').forEach(function (b) { b.addEventListener('click', function () { set(b.dataset.d); }); });
+    f.querySelector('[data-ask-send]').addEventListener('click', function () { f.querySelector('[data-ask-ok]').hidden = false; });
+    set('approve');
   }
   var no = document.querySelector('[data-extra-no]');
   if (no) no.addEventListener('click', function () { document.querySelector('[data-extra-msg]').hidden = false; no.closest('form').hidden = true; });
+  var d = document.querySelector('[data-draft]');
+  if (d) {
+    var m = function (n) { return 'CAD ' + n.toFixed(2); };
+    var calc = function () {
+      var t = 0; d.querySelectorAll('[data-amt]').forEach(function (i) { t += parseFloat(i.value) || 0; });
+      d.querySelector('[data-sub]').textContent = m(t); var tot = t;
+      d.querySelectorAll('[data-tax]').forEach(function (x) { var v = t * parseFloat(x.dataset.tax); x.textContent = m(v); tot += v; });
+      d.querySelector('[data-total]').textContent = m(tot);
+    };
+    d.addEventListener('input', calc); calc();
+    d.querySelector('[data-add]').addEventListener('click', function () {
+      var r = document.createElement('div'); r.className = 'qd-row';
+      r.innerHTML = '<input class="input" placeholder="Item" aria-label="Item"><span class="qt-type qt-type--parts">Parts</span><input class="input qd-amt" inputmode="decimal" value="0.00" aria-label="Amount in CAD" data-amt>';
+      d.querySelector('[data-rows]').appendChild(r); calc();
+    });
+    d.querySelector('[data-send]').addEventListener('click', function () { d.querySelector('[data-sent]').hidden = false; });
+  }
 })();
 </script>
 <?php include_once("../includes/footer.php"); ?>
