@@ -311,7 +311,7 @@ Everything below is UI only with sample data. Every fixture screen shows a visib
 
 ## 35. Brand assets
 
-- The logo image is the four-petal mark only (`public/assets/img/logo-72.png` / `.webp` (and the favicon set)); "Nuahn Seasonal Hub" is HTML text (Plus Jakarta Sans 800, tight letter-spacing) coloured by CSS (ink on light, white on dark), so there is no second image to swap for dark mode. Helper: `nu_logo_mark()`. Favicons and the web manifest icons are generated from the same mark.
+- The logo image is the four-petal mark only (`public/assets/img/mark-96.webp` and `mark-256.webp`, with the favicon set beside them); "Nuahn Seasonal Hub" is HTML text (Plus Jakarta Sans 800, tight letter-spacing) coloured by CSS (ink on light, white on dark), so there is no second image to swap for dark mode. Helpers: `nu_logo()` (mark plus text) and `nu_logo_mark()` (mark only). Favicons and the web manifest icons are generated from the same mark.
 
 ## 36. Sign-in return: `?next=`
 
