@@ -236,3 +236,87 @@ Public launch is end of November 2026 with two services live (Winter Snow Remova
 - Both forms are UI only: they validate the email in the browser, show "Thanks, we'll be in touch" and **store nothing**. A no-JS POST shows the same thanks state without saving. The locked-service form carries a "Preview only, nothing is stored" tag.
 - To connect: send `{ email, postal_code (optional), service (slug, or "all" from the splash) }` to a new endpoint, store it with a consent timestamp, and return the same thanks state. The splash forms are `notify-hero` and `notify-cta` in `public/coming_soon.php`; the locked-service form is built by `nu_soon_panel()` in `includes/ui.php`.
 - The splash is self-contained (inline CSS, no app.css) so it stays fast. Its service cards read `status` and `launch` from `fixtures/services.php`, so flipping a service live updates the splash too.
+
+---
+
+# Phase 2: marketplace UI (independent contractors, bidding, escrow states, mobile mechanics)
+
+Everything below is UI only with sample data. Every fixture screen shows a visible "Sample data" tag (`nu_sample_tag()`); remove the tag when a screen reads real data. All amounts, commission %, price ranges, boost tiers and times are invented for the preview and are not business rules. Only the two live services (Winter Snow Removal, Mobile Mechanics) are built; locked services stay "Coming soon".
+
+## 26. Contractor model: `fixtures/contractors.php`, `public/contractor.php?id=`
+
+- Replaces any "team" idea. A contractor is an independent person: `id` (c-1001), `name`, `photo` (optional; initials avatar when empty), `services[]`, `rating`, `reviews`, `jobs`, `response` (median reply time), `since`, `radius_km`, `bio`, `badges{verified, insured, id_checked, certified}` and `area`.
+- Helpers in `includes/ui.php`: `nu_contractor($id)`, `nu_avatar()`, `nu_badges($contractor)`, `nu_rating()`. Use them everywhere a contractor is shown so the badges stay consistent.
+- Endpoint: `GET /api/contractors/{id}` (profile, badges, stats, services, reviews). The profile page is public (no sign-in needed to read). "Message" needs sign-in (see section 36 for `?next=`).
+- Badges must come from the vetting queue results (section 33), never from a self-declared field. Photos: store resized versions and serve AVIF/WebP via `nu_photo()` as for other images.
+- "Member since", "Jobs done", "Replies in" are computed values (count of approved jobs, median first-reply time).
+
+## 27. Post a task and the map: `public/post_task.php` (`?plan=seasonal`, `?svc=`)
+
+- Steps: property (address + map), driveway size (Standard 1-2 cars, Large 3-4 cars, Commercial or custom sqft), walkways and steps, optional ice melt, schedule (on demand, or seasonal plan with a snowfall trigger of 5 cm), target budget with suggested range and "Boost your bid".
+- **Guest exploration.** A visitor can enter an address, pick scope and see the estimated range with no account. The sign-in prompt appears only when pressing "Post task". Today the estimate is computed client-side from `fixtures/marketplace.php`; replace with `GET /api/pricing/snow-estimate?size=&sqft=&walk=&steps=&ice=&plan=` -> `{lo, hi, mid}` and `GET /api/pricing/pickup?budget=&mid=` -> expected pickup tier (drives the "Boost" text). Keep both endpoints public and rate limited.
+- **Post.** `POST /api/tasks` (client only; return 401 for a guest, open sign-in, then retry with the draft kept in `sessionStorage`) -> `{task_id}`, then go to `offers.php?task=`.
+- **Map hook.** `public/assets/map-picker.js` is self-contained (CSS/SVG map, draggable pin, "Use my location", address field) and loads no external scripts. To use Google Maps or Mapbox set `window.NuahnMapProvider = { mount(el, {lat, lng, onMove}) -> {setPosition(lat, lng)}, geocode(text) -> Promise<{lat, lng, label}>, reverse(lat, lng) -> Promise<string> }` before `map-picker.js` loads (the signature is also documented at the top of that file); the picker then calls it instead of the built-in sample map. Load the provider SDK lazily (on first interaction with the map) so the page keeps its mobile speed. Store `lat`, `lng`, formatted address and, for snow, optionally the driveway polygon.
+- Boost tiers (for example $45 to $70) and the suggested range are sample values in `fixtures/marketplace.php`; replace with the pricing service.
+
+## 28. Offers: `public/offers.php?task=&state=`
+
+- States to wire: no offers yet, one offer, many offers, boosted (the segmented control in the UI previews them).
+- Endpoints: `GET /api/tasks/{id}/offers` (poll every 15 s or push), `POST /api/tasks/{id}/offers/{offer_id}/accept` (authorises payment, funds held, NOT captured, job becomes Confirmed), `POST /api/tasks/{id}/boost {budget}`, `POST /api/tasks/{id}/cancel`, `POST /api/threads {contractor_id, task_id}` for Message.
+- An offer is `{contractor_id, price, eta, note, created_at, tags[]}`. The compare checkboxes are client-side only. Sort options: best match, lowest price, fastest, top rated. "Best match" needs a server score (price vs target, ETA, rating).
+
+## 29. Open jobs board (providers): `public/open_jobs.php`, card `nu_open_job_card()`, `public/assets/jobs.js`
+
+- The same card is used on the provider dashboard and the board. Actions: **Accept at the client's price**, **Counter-bid** (price stepper, ETA, optional note) and "Not for me".
+- Endpoints: `GET /api/contractors/me/open-jobs?radius=&service=`, `POST /api/jobs/{id}/accept`, `POST /api/tasks/{id}/offers {price, eta, note}`. Only contractors approved in the vetting queue may see or accept jobs; filter by approved service, distance and online status ("Online" switch: `PUT /api/contractors/me/availability`).
+- Roadside mechanic jobs are broadcast: first accept wins, the others get "no longer available". Use an atomic update on accept.
+- The screen shows "You receive about $X after 12% commission" from a sample rate; compute from the real commission setting (section 32).
+
+## 30. Mobile mechanics: `mechanics.php`, `mechanic_request.php`, `quote.php`
+
+- **Pathway A, roadside** (flat tire, battery boost, lockout, emergency fuel, tire pressure, local towing): no scheduling; the request is broadcast to approved technicians within a radius; first accept confirms price and ETA. Preview states: `mechanic_request.php?path=roadside&svc=&state=broadcast|accepted|no_provider`.
+- **Pathway B, scheduled repair** (oil and filter, brake pads, battery replacement, tire rotation or swap, fluid top-off, check engine diagnostic): vehicle, symptoms, media, location, preferred window; technicians send itemised quotes. Preview: `?path=repair&svc=&state=quote_pending`.
+- Form fields: vehicle (year, make, model, trim, engine; `nu_vehicle_select()` with a sample make/model map; replace with a vehicle data source such as a VIN or year-make-model API), symptom checklist, optional photo/audio/video (roadside: photo and video only), location with map and parking surface, access notes.
+- Endpoints: `POST /api/mechanic-requests {path, service, vehicle{}, symptoms[], details, media[], address, lat, lng, parking, window}`, `GET /api/mechanic-requests/{id}` (poll or SSE for state), `POST /api/mechanic-requests/{id}/cancel`, `POST /api/uploads` (photo, audio, video: type and size limits, virus scan, signed URLs; `public/assets/mech.js` only previews locally).
+- Broadcast: select approved technicians by service, distance and availability; send push/SMS; store each notification so the "6 technicians within 12 km" and "viewing" counts are real. Roadside price: estimate range shown to the client, the technician confirms the final price on accept.
+- **Quote** (`quote.php`): itemised parts + labour + call-out fee + taxes. Taxes come from the service address province: the sample shows GST 5% and PST 0% (not charged in Alberta). Taxes must be calculated by the server by province, not hard-coded. Client actions: Approve quote, Ask question (posts to the thread), Decline (with reason). `POST /api/quotes/{id}/approve|decline|questions`; provider composer: `?state=draft` (provider only) -> `POST /api/quotes`.
+- **On-site revised quote** (`?state=revised`): `POST /api/quotes/{id}/amend` pauses the job and shows a new version; the client sees v1 approved items and the added items and must approve again before work continues. Keep versions immutable.
+
+## 31. Escrow and payment states: `nu_payment_chip()`, `nu_job_machine()`, `nu_trust_note()`
+
+- **Payment status is separate from job status.** Payment: `unpaid`, `authorized` (held), `captured` (paid out), `refunded` (and partially refunded, failed), `disputed`. Job: `requested`, `open_for_bids`, `confirmed` (funds held), `on_the_way`, `arrived`, `in_progress`, `pending_approval` (completed), `approved` or `disputed`; exceptions `cancelled`, `delayed`, `change_requested`, `weather_review`, `no_provider`. Both state lists live in `includes/ui.php` and `public/status.php` (the "Job states and rules" page) so there is one place to keep them in sync.
+- Flow: client accepts an offer or approves a quote -> create a payment intent with manual capture (authorise and hold) via the secure processor -> job Confirmed -> after approval capture the intent and queue the payout. Cancel or refund releases the authorisation.
+- Trust copy: "Funds held securely until you approve the work"; card details are tokenised by the payment processor and never touch Nuahn servers. Use the processor's hosted fields or checkout; the UI shows only a generic padlock and "Card ending 1234" (no brand logos). Add the real processor mark only if its licence allows it.
+- All money fields in the UI are display strings; store amounts as integer cents plus currency (CAD).
+
+## 32. Approve, dispute and payout: `public/approve.php`, provider dashboard payouts
+
+- `approve.php?id=&state=pending|dispute|approved|disputed`: before and after photos (one or more of each), checklist, summary, **Approve and release payment** (optional rating, tip, comment) and **Report a problem** (reason, desired outcome, details, photos). An auto-release rule (sample: 48 h after completion if no action) is shown; confirm with the business before building it.
+- Endpoints: `GET /api/jobs/{id}/completion`, `POST /api/jobs/{id}/approve {rating, tip?, comment?}` (capture then payout), `POST /api/jobs/{id}/dispute {reason, outcome, details, photos[]}` (job and payment -> Disputed, funds stay held, case created in the disputes queue).
+- **Provider side.** `provider_dashboard.php` and `provider_route.php`: the "Submit completion report" button is disabled until at least one before and one after photo are chosen (client-side preview with a file input). The server must enforce the same rule in `POST /api/jobs/{id}/complete` and reject a report without both photo types. Photos need upload, timestamp, optional geotag and EXIF stripping for privacy.
+- **Payout and commission.** Sample: job total, Nuahn commission 12% (a sample, not a business rate), payout, tip and a note that contractors handle their own taxes. Source from a commission setting per service. Payout statuses: pending approval, scheduled, paid. Use the processor's connected-account payouts and keep a ledger table (job, gross, fee, tax, net, payout id).
+
+## 33. Operations: vetting queue, disputes, open jobs: `public/operations.php?view=overview|open|vetting|disputes`
+
+- Dispatch is replaced by vetting and oversight. **Vetting queue**: identity check, insurance document, licence, mechanic certification, each with status (verified, needs review, rejected) and View/Approve/Reject/Request info. Endpoints: `GET /api/admin/applications?status=`, `POST /api/admin/applications/{id}/checks/{check}` `{status, note}`, `POST /api/admin/applications/{id}/decision {approve|reject, note}`. Approval sets the contractor badges and which services they may bid on. Also expiry dates for insurance and licences with reminders.
+- **Disputes queue**: case, job, parties, held amount, evidence (photos, checklist, chat history), outcome buttons (Release to contractor, Refund client, Partial refund, Ask for info). Endpoints: `GET /api/admin/disputes`, `POST /api/admin/disputes/{id}/resolve {outcome, amount, note}` (captures or refunds the held funds and notifies both parties). Keep an audit log.
+- **Open jobs** view is read-only monitoring (filters, search, "Nudge nearby verified contractors" action: `POST /api/admin/tasks/{id}/nudge`).
+- Roles: superadmin and manager see the same queues; limit financial resolution to the roles the business chooses.
+
+## 34. Updated existing screens
+
+- `bookings.php`, `activity.php`, `track.php`, `snow_event.php`, `notifications`, `messages.php`, `change_appointment.php`, `client_home.php`, `index.php`, `plans.php`, `provider_home.php`: contractor wording, payment chip next to job status, the job state machine bar and "needs your attention" items (approve work, new offer). All still read fixtures.
+- Events to push as notifications: new offer, offer accepted, contractor on the way, arrived, completion report submitted (approve now), payment held, payment released, dispute opened or resolved, quote ready, quote revised.
+- Tracking: the live map still uses the fixture location; connect to the contractor location stream only while a job is On the way or In progress.
+
+## 35. Brand assets
+
+- The logo image is the four-petal mark only (`public/assets/img/logo-72.png` / `.webp` (and the favicon set)); "Nuahn Seasonal Hub" is HTML text (Plus Jakarta Sans 800, tight letter-spacing) coloured by CSS (ink on light, white on dark), so there is no second image to swap for dark mode. Helper: `nu_logo_mark()`. Favicons and the web manifest icons are generated from the same mark.
+
+## 36. Sign-in return: `?next=`
+
+- `post_task.php`, `contractor.php` (Message) and `offers.php` send guests to sign in. `login.php` and `register*.php` do not yet honour a `?next=` return path; add a validated same-origin relative `next` and keep the draft task in `sessionStorage` or the session so the guest returns to "Post task" with their scope intact.
+
+## 37. Sample data index
+
+- Fixtures added or reworked: `contractors.php`, `marketplace.php` (tasks, offers, open jobs, vetting, disputes, payout), `mechanic.php` (pathways, vehicles, parking, quotes, taxes), `bookings.php`, `tracking.php`, `visits.php`, `events.php`, `notifications.php`, `messages.php`, `ops.php`, `queue.php`, `proof_of_work.php`, `provider_day.php`. Contractor names in the fixtures are invented.

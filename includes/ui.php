@@ -180,7 +180,7 @@ function nu_page_config() {
         'public/provider_dashboard.php' => ['title' => 'Today', 'tab' => 'today', 'lean' => true, 'console' => true],
         'public/operations.php'        => ['title' => 'Operations', 'tab' => 'ops', 'lean' => true, 'console' => true],
         'public/service_settings.php'  => ['title' => 'Service settings', 'tab' => 'ops', 'lean' => true, 'console' => true, 'sub' => true],
-        'public/status.php'            => ['title' => 'Booking states', 'tab' => '', 'lean' => true, 'sub' => true],
+        'public/status.php'            => ['title' => 'Job states', 'tab' => '', 'lean' => true, 'sub' => true],
         'public/admin/dashboard.php'   => ['title' => 'Admin overview', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/admin/manage_users.php' => ['title' => 'Manage users', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/admin/manage_admins.php' => ['title' => 'Manage staff', 'tab' => 'dash', 'lean' => true, 'sub' => true],
@@ -457,7 +457,10 @@ function nu_service_slug($slug) {
     return $alias[$slug] ?? $slug;
 }
 /** Service page URL (doc2 p2-7: one page per service with the booking form). */
-function nu_book_url($slug) { return nu_url('public/service.php') . '?s=' . rawurlencode(nu_service_slug($slug)); }
+/** The service detail page (about, what is included, direct-price sample). Locked services only have this page. */
+function nu_service_page_url($slug) { return nu_url('public/service.php') . '?s=' . rawurlencode(nu_service_slug($slug)); }
+/** Main "start" link for a service card: live services go straight into the marketplace flow, locked ones to their coming-soon page. */
+function nu_book_url($slug) { return nu_start_url($slug); }
 /**
  * Where a live service's main "start" button goes in the marketplace model: Snow Removal opens the task builder,
  * Mobile Mechanics opens the pathway chooser. Locked services keep the coming-soon service page.
@@ -466,7 +469,7 @@ function nu_start_url($slug) {
     $s = nu_service_slug($slug);
     if ($s === 'snow-removal') return nu_url('public/post_task.php');
     if ($s === 'mobile-mechanics') return nu_url('public/mechanics.php');
-    return nu_book_url($s);
+    return nu_service_page_url($s);
 }
 /** Service record for a slug (aliases resolved), or null. */
 function nu_service($slug) { $all = nu_fixture('services'); return $all[nu_service_slug($slug)] ?? null; }
@@ -572,6 +575,19 @@ function nu_booking_chip($s, $dot = true) {
     [$l, $t] = nu_booking_status($s);
     return '<span class="chip' . ($t ? ' chip--' . $t : '') . ($dot ? ' chip--dot' : '') . '">' . nu_e($l) . '</span>';
 }
+/** Where a booking row opens, by job state (marketplace state machine). */
+function nu_booking_href($b) {
+    $id = rawurlencode($b['id']);
+    switch ($b['status']) {
+        case 'open_for_bids': return nu_url('public/offers.php') . '?state=many';
+        case 'quote_pending': return nu_url('public/quote.php');
+        case 'change_requested': return nu_url('public/snow_event.php') . '?state=pending';
+        case 'pending_approval': return nu_url('public/approve.php') . '?id=' . $id;
+        case 'approved': case 'completed': return nu_url('public/activity.php');
+        case 'disputed': return nu_url('public/activity.php') . '#feedback';
+        default: return nu_url('public/track.php') . '?id=' . $id;
+    }
+}
 /** Payment is a separate state from job progress (doc2 p21). */
 function nu_payment_chip($s) {
     // Marketplace payment states: Unpaid, Authorized (funds held), Captured (paid out), Refunded, Disputed.
@@ -582,6 +598,8 @@ function nu_payment_chip($s) {
     [$l, $t, $ic] = $m[$s] ?? [ucfirst((string) $s), '', 'credit-card'];
     return '<span class="chip chip--pay' . ($t ? ' chip--' . $t : '') . '">' . nu_icon($ic) . nu_e($l) . '</span>';
 }
+/** Plain-text label for a payment state (for lists and aria text). */
+function nu_payment_label($s) { return trim(strip_tags(nu_payment_chip($s))); }
 /** Payment state implied by a job state in the marketplace state machine (they are still stored separately). */
 function nu_job_payment($state) {
     if (in_array($state, ['requested', 'open_for_bids', 'quote_pending', 'searching'], true)) return 'unpaid';
@@ -836,6 +854,81 @@ function nu_console_nav($items, $active, $label, $tagline = '') {
     $o .= '</nav>';
     if ($tagline !== '') $o .= '<div class="console__art" aria-hidden="true"></div><p class="console__tag">' . $tagline . '</p>';
     return $o . '</aside>';
+}
+
+/** Contractor console nav shared by provider_dashboard.php and open_jobs.php. */
+function nu_provider_nav() {
+    $m = nu_fixture('marketplace'); $u = function ($p) { return nu_url('public/' . $p); };
+    return [
+        ['today', 'Today', $u('provider_dashboard.php'), 'calendar-event'],
+        ['open', 'Open jobs', $u('open_jobs.php'), 'megaphone', count($m['open_jobs'])],
+        ['jobs', 'My jobs', $u('provider_home.php'), 'list-ul'],
+        ['route', 'Route', $u('provider_route.php'), 'geo-alt'],
+        ['messages', 'Messages', $u('messages.php'), 'chat-square', 2],
+        ['earnings', 'Earnings', $u('provider_dashboard.php') . '#earnings', 'wallet2'],
+        ['availability', 'Availability', $u('provider_dashboard.php') . '#availability', 'calendar2-week'],
+        ['support', 'Support', $u('chat.php') . '?thread=support', 'question-circle'],
+    ];
+}
+
+/** One "open job" card with Accept and Counter-bid (UI only). $j is a row from fixtures/marketplace.php ['open_jobs']. Behaviour: public/assets/jobs.js */
+function nu_open_job_card($j) {
+    $pct = (int) (nu_fixture('marketplace')['commission_pct'] ?? 12);
+    $roadside = !empty($j['roadside']); $quote = !empty($j['quote']); $budget = (int) $j['budget'];
+    $svc = $j['svc'] === 'snow-removal' ? 'snow' : 'wrench-adjustable';
+    $o = '<article class="oj" data-oj data-id="' . nu_e($j['id']) . '" data-budget="' . $budget . '" data-pct="' . $pct . '" data-kind="' . ($roadside ? 'roadside' : ($quote ? 'quote' : 'bid')) . '" data-svc="' . nu_e($j['svc']) . '">';
+    $o .= '<div class="oj__top"><span class="oj__ic">' . nu_icon($svc) . '</span><div class="oj__t"><h3>' . nu_e($j['title']) . '</h3><p>' . nu_icon('geo-alt') . ' ' . nu_e($j['area']) . ' · ' . nu_e($j['dist']) . '</p></div>';
+    $o .= '<div class="oj__chips">' . ($roadside ? '<span class="chip chip--warning">' . nu_icon('broadcast') . 'Roadside · now</span>' : '') . (!empty($j['boost']) ? '<span class="chip chip--blue">' . nu_icon('rocket-takeoff-fill') . 'Boosted</span>' : '') . ($quote ? '<span class="chip chip--plain">Quote needed</span>' : '') . '</div></div>';
+    $o .= '<p class="oj__m">' . nu_icon('clock') . ' ' . nu_e($j['when']) . ' <span>· posted ' . nu_e($j['posted']) . '</span><span>· ' . (int) $j['bids'] . ' offer' . ((int) $j['bids'] === 1 ? '' : 's') . ' so far</span></p>';
+    $o .= '<p class="oj__s">' . nu_e($j['scope']) . '</p>';
+    if ($quote) {
+        $o .= '<div class="oj__bud"><span><small>Client budget</small><b>Send a quote</b></span><span class="oj__pay">Itemise parts, labour and call-out fee</span></div>';
+        $o .= '<div class="oj__acts"><a class="btn btn-primary btn-sm" href="' . nu_e(nu_url('public/quote.php')) . '?state=draft">' . nu_icon('receipt') . ' Send quote</a><button class="btn btn-ghost btn-sm" type="button" data-oj-skip>Not for me</button></div>';
+    } else {
+        $o .= '<div class="oj__bud"><span><small>' . ($roadside ? 'Offered price' : 'Client target') . '</small><b>$' . $budget . '</b></span><span class="oj__pay">You receive about <b data-oj-pay>$' . number_format($budget * (100 - $pct) / 100, 2) . '</b> after ' . $pct . '% commission</span></div>';
+        $o .= '<div class="oj__acts"><button class="btn btn-primary btn-sm" type="button" data-oj-accept>' . nu_icon('check2') . ' ' . ($roadside ? 'Accept and go' : 'Accept at $' . $budget) . '</button>'
+            . ($roadside ? '' : '<button class="btn btn-outline btn-sm" type="button" data-oj-counter aria-expanded="false">' . nu_icon('arrow-left-right') . ' Counter-bid</button>') . '<button class="btn btn-ghost btn-sm" type="button" data-oj-skip>Not for me</button></div>';
+        if (!$roadside) {
+            $o .= '<form class="oj__cb" data-oj-form hidden><div class="oj__cbrow"><label class="label" for="cb-' . nu_e($j['id']) . '">Your price</label><div class="oj__step"><button type="button" data-oj-step="-5" aria-label="Lower by $5">−</button><span><i>$</i><input class="input" id="cb-' . nu_e($j['id']) . '" type="number" inputmode="numeric" min="10" max="999" value="' . ($budget + 10) . '" data-oj-price></span><button type="button" data-oj-step="5" aria-label="Raise by $5">+</button></div></div>'
+                . '<div class="oj__cbrow"><label class="label" for="cn-' . nu_e($j['id']) . '">Arrival</label><select class="input" id="cn-' . nu_e($j['id']) . '"><option>Within 1 hour</option><option>Within 2 hours</option><option>Tomorrow morning</option></select></div>'
+                . '<div class="oj__cbrow"><label class="label" for="cm-' . nu_e($j['id']) . '">Note to the client</label><input class="input" id="cm-' . nu_e($j['id']) . '" maxlength="120" placeholder="e.g. Ice melt included, equipment on site"></div>'
+                . '<p class="oj__pay">You receive about <b data-oj-cpay>$0.00</b> after ' . $pct . '% commission · <span data-oj-vs></span></p>'
+                . '<div class="oj__acts"><button class="btn btn-primary btn-sm" type="submit">Send offer</button><button class="btn btn-ghost btn-sm" type="button" data-oj-cancel>Cancel</button></div></form>';
+        }
+    }
+    $o .= '<p class="oj__res" data-oj-res role="status" hidden></p></article>';
+    return $o;
+}
+
+/** Vehicle selector: Year, Make, Model, Trim, Engine. Model options depend on the make (data-vehicle JSON; behaviour in public/assets/mech.js). SAMPLE lists from fixtures/mechanic.php. */
+function nu_vehicle_select($name = 'vehicle') {
+    $m = nu_fixture('mechanic'); $n = nu_e($name);
+    $years = array_merge(range(2026, 2005), ['Older']);
+    $sel = function ($key, $label, $ph, $opts, $dis = false) use ($n) {
+        $o = '<label class="vgrid__f" for="' . $n . '-' . $key . '"><span class="label label--sm">' . nu_e($label) . '</span><select class="input" id="' . $n . '-' . $key . '" name="' . $n . '[' . $key . ']" data-v="' . $key . '"' . ($dis ? ' disabled' : '') . '><option value="">' . nu_e($ph) . '</option>';
+        foreach ($opts as $x) $o .= '<option>' . nu_e($x) . '</option>';
+        return $o . '</select></label>';
+    };
+    return '<fieldset class="fset" data-vehicle=\'' . nu_e(json_encode($m['vehicles'])) . '\'><legend class="label">Your vehicle</legend><div class="vgrid vgrid--5">'
+        . $sel('year', 'Year', 'Select', $years) . $sel('make', 'Make', 'Select', array_keys($m['vehicles'])) . $sel('model', 'Model', 'Select make first', [], true)
+        . $sel('trim', 'Trim', 'If known', $m['trims']) . $sel('engine', 'Engine', 'If known', $m['engines'])
+        . '</div></fieldset>';
+}
+
+/** Operations console nav shared by operations.php and service_settings.php. */
+function nu_ops_nav() {
+    $m = nu_fixture('marketplace'); $u = function ($p) { return nu_url('public/' . $p); };
+    return [
+        ['overview', 'Overview', $u('operations.php'), 'grid-fill'],
+        ['open', 'Open jobs', $u('operations.php') . '?view=open', 'megaphone', count($m['open_jobs'])],
+        ['vetting', 'Vetting queue', $u('operations.php') . '?view=vetting', 'person-vcard', count($m['vetting'])],
+        ['disputes', 'Disputes', $u('operations.php') . '?view=disputes', 'flag-fill', count($m['disputes'])],
+        ['bookings', 'All jobs', $u('jobs.php'), 'calendar3'],
+        ['payments', 'Payments', $u('operations.php') . '#payments', 'credit-card'],
+        ['weather', 'Weather', $u('operations.php') . '#weather', 'cloud'],
+        ['settings', 'Service settings', $u('service_settings.php'), 'gear-fill'],
+        ['support', 'Support', $u('chat.php') . '?thread=support', 'question-circle'],
+    ];
 }
 
 /** Unread message count for the nav dot (sample data until messages exist). */
