@@ -1,21 +1,12 @@
 <?php
-// public/provider_home.php
+// public/provider_home.php: contractor "My jobs" home (sample data from fixtures/provider_day.php and fixtures/marketplace.php)
 require_once("../config/init.php");
 
 // Only providers can view this page
 requireLogin('provider');
 include_once("../includes/header.php");
 
-// Read-only figures for the dashboard (display only)
-$uid = $_SESSION['user_id'] ?? 0;
-$appCount   = nu_count($pdo, "SELECT COUNT(*) FROM applications WHERE provider_id = ?", [$uid]);
-$savedCount = nu_count($pdo, "SELECT COUNT(*) FROM saved_jobs WHERE provider_id = ?", [$uid]);
-$openCount  = nu_count($pdo, "SELECT COUNT(*) FROM jobs WHERE status = 'posted'");
-$fresh = [];
-try {
-    $st = $pdo->query("SELECT jobs.*, users.name AS client_name FROM jobs JOIN users ON jobs.client_id = users.id WHERE jobs.status = 'posted' ORDER BY jobs.created_at DESC LIMIT 4");
-    $fresh = $st->fetchAll(PDO::FETCH_ASSOC);
-} catch (Throwable $e) { $fresh = []; }
+$d = nu_fixture('provider_day'); $mk = nu_fixture('marketplace'); $ctr = nu_contractor($d['contractor']); $first = explode(' ', $ctr['name'])[0];
 $hour = (int) date('G');
 $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
 ?>
@@ -23,13 +14,13 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
 <section class="band">
   <div class="wrap band__row">
     <div class="welcome enter">
-      <span class="avatar"><?= nu_e(nu_initials($_SESSION['user_name'] ?? 'P')) ?></span>
+      <span class="avatar"><?= nu_e(nu_initials($ctr['name'])) ?></span>
       <div>
         <p class="welcome__hi"><?= $greet ?>,</p>
-        <h1 style="margin:0">Welcome, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Provider'); ?>!</h1>
+        <h1 style="margin:0">Welcome, <?= nu_e($first) ?>!</h1>
       </div>
     </div>
-    <a class="btn btn-light enter" style="--i:1" href="jobs.php"><?= nu_icon('search') ?> Find jobs</a>
+    <a class="btn btn-light enter" style="--i:1" href="open_jobs.php"><?= nu_icon('megaphone') ?> Open jobs</a>
   </div>
 </section>
 
@@ -45,52 +36,49 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
     </a>
 
     <div class="grid grid-stats">
-        <div class="stat" data-reveal style="--i:0"><span class="stat__icon"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Open jobs</div><div class="stat__value" data-count="<?= $openCount ?>"><?= $openCount ?></div></div></div>
-        <div class="stat" data-reveal style="--i:1"><span class="stat__icon stat__icon--success"><?= nu_icon('clipboard-check-fill') ?></span><div><div class="stat__label">Applications</div><div class="stat__value" data-count="<?= $appCount ?>"><?= $appCount ?></div></div></div>
-        <div class="stat" data-reveal style="--i:2"><span class="stat__icon stat__icon--navy"><?= nu_icon('bookmark-fill') ?></span><div><div class="stat__label">Saved</div><div class="stat__value" data-count="<?= $savedCount ?>"><?= $savedCount ?></div></div></div>
+        <?php $sh = ['open_jobs.php', 'provider_dashboard.php#today-list', 'provider_dashboard.php#job']; $si = ['megaphone', 'clipboard-check-fill', 'hourglass-split']; foreach ($d['stats'] as $i => $st): ?>
+        <a class="stat" href="<?= nu_e($sh[$i]) ?>" data-reveal style="--i:<?= $i ?>;color:inherit"><span class="stat__icon<?= $i === 1 ? ' stat__icon--success' : ($i === 2 ? ' stat__icon--navy' : '') ?>"><?= nu_icon($si[$i]) ?></span><div><div class="stat__label"><?= nu_e($st[2]) ?></div><div class="stat__value"><?= (int) $st[1] ?></div></div></a>
+        <?php endforeach; ?>
     </div>
 
     <div class="section-title"><h2>Quick actions</h2></div>
     <div class="grid grid-2">
-        <a class="tile" href="jobs.php" data-reveal style="--i:0">
-            <span class="tile__icon"><?= nu_icon('search') ?></span>
-            <span><span class="tile__title" style="display:block">Browse Seasonal Jobs</span><span class="tile__text">Find new job listings and apply to opportunities that match your skills.</span></span>
+        <a class="tile" href="open_jobs.php" data-reveal style="--i:0">
+            <span class="tile__icon"><?= nu_icon('megaphone') ?></span>
+            <span><span class="tile__title" style="display:block">Open jobs near you</span><span class="tile__text">Accept at the client’s price or send a counter-bid.</span></span>
             <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
         </a>
-        <a class="tile" href="applications.php" data-reveal style="--i:1">
-            <span class="tile__icon"><?= nu_icon('clipboard-check') ?></span>
-            <span><span class="tile__title" style="display:block">My Applications</span><span class="tile__text">Track the status of jobs you’ve applied for.</span></span>
+        <a class="tile" href="provider_dashboard.php#job" data-reveal style="--i:1">
+            <span class="tile__icon"><?= nu_icon('camera') ?></span>
+            <span><span class="tile__title" style="display:block">Submit a completion report</span><span class="tile__text">Add before and after photos so the client can approve and release payment.</span></span>
             <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
         </a>
-        <a class="tile" href="saved_jobs.php" data-reveal style="--i:2">
-            <span class="tile__icon tile__icon--navy"><?= nu_icon('bookmark') ?></span>
-            <span><span class="tile__title" style="display:block">Saved Jobs</span><span class="tile__text">Review jobs you’ve bookmarked for later.</span></span>
+        <a class="tile" href="provider_dashboard.php#earnings" data-reveal style="--i:2">
+            <span class="tile__icon tile__icon--navy"><?= nu_icon('wallet2') ?></span>
+            <span><span class="tile__title" style="display:block">Earnings and payouts</span><span class="tile__text">See your payout after Nuahn’s commission on each job.</span></span>
             <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
         </a>
-        <a class="tile" href="profile.php" data-reveal style="--i:3">
-            <span class="tile__icon tile__icon--soft"><?= nu_icon('gear') ?></span>
-            <span><span class="tile__title" style="display:block">Profile Settings</span><span class="tile__text">Update your personal details and preferences.</span></span>
+        <a class="tile" href="contractor.php?id=<?= nu_e($ctr['id']) ?>" data-reveal style="--i:3">
+            <span class="tile__icon tile__icon--soft"><?= nu_icon('person-vcard') ?></span>
+            <span><span class="tile__title" style="display:block">Your public profile</span><span class="tile__text">See what clients see: badges, rating and response time.</span></span>
             <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
         </a>
     </div>
 
-    <div class="section-title"><h2>Fresh opportunities</h2><a class="btn btn-ghost btn-sm" href="jobs.php">See all <?= nu_icon('arrow-right') ?></a></div>
-    <?php if (empty($fresh)): ?>
-        <?php nu_empty('inbox', 'No open jobs right now', 'New seasonal jobs are posted all the time. Check back soon.'); ?>
-    <?php else: ?>
+    <div class="section-title"><h2>Open jobs near you</h2><a class="btn btn-ghost btn-sm" href="open_jobs.php">See all <?= nu_icon('arrow-right') ?></a></div>
     <div class="list">
-        <?php foreach ($fresh as $n => $job): ?>
-        <a class="list-row" href="jobs.php#job<?= (int) $job['id'] ?>" data-reveal style="--i:<?= $n ?>">
-            <span class="list-row__icon"><?= nu_e(nu_initials($job['client_name'])) ?></span>
+        <?php foreach (array_slice($mk['open_jobs'], 0, 3) as $n => $job): ?>
+        <a class="list-row" href="open_jobs.php" data-reveal style="--i:<?= $n ?>">
+            <span class="list-row__icon"><?= nu_icon($job['svc'] === 'snow-removal' ? 'snow' : 'wrench-adjustable') ?></span>
             <span class="list-row__main">
                 <span class="list-row__title" style="display:block;color:var(--ink)"><?= nu_e($job['title']) ?></span>
-                <span class="list-row__sub" style="display:block"><?= nu_e($job['client_name']) ?> · <?= nu_e(nu_place($job)) ?></span>
+                <span class="list-row__sub" style="display:block"><?= nu_e($job['area']) ?> · <?= nu_e($job['dist']) ?> · <?= nu_e($job['when']) ?></span>
             </span>
-            <span class="list-row__side"><strong style="color:var(--ink)"><?= nu_money($job['payment_amount']) ?></strong><?= nu_icon('chevron-right', 'muted') ?></span>
+            <span class="list-row__side"><strong style="color:var(--ink)"><?= $job['budget'] ? '$' . (int) $job['budget'] : 'Quote' ?></strong><?= nu_icon('chevron-right', 'muted') ?></span>
         </a>
         <?php endforeach; ?>
     </div>
-    <?php endif; ?>
+    <p class="section-note"><?= nu_sample_tag() ?></p>
 </main>
 
 <?php include "../includes/footer.php"; ?>

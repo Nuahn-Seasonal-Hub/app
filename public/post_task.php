@@ -160,7 +160,8 @@ include_once("../includes/header.php");
       f.steps.checked = !!d.steps; f.ice.checked = !!d.ice; f.loc_address.value = d.addr || ''; f.sqft.value = d.sqft || 2500; boost.value = d.boost || 0; touched = !!d.touched; if (touched) bd.value = d.budget;
     } catch (e) {}
   }
-  load(); render();
+  load(); try { if (new URLSearchParams(location.search).get('plan') === 'seasonal') { var sp = f.querySelector('[name=plan][value=seasonal]'); if (sp) sp.checked = true; } } catch (e) {}
+  render();
   f.addEventListener('change', function (e) { if (e.target === bd) touched = true; render(); });
   f.addEventListener('input', function (e) { if (e.target === bd) touched = true; if (e.target === boost || e.target === bd || e.target.id === 'sqft') render(); });
   f.addEventListener('mp:change', save);

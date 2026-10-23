@@ -151,7 +151,7 @@ $approvalRate = $totalApps > 0 ? round(($approvedApps / $totalApps) * 100) : 0;
 <?php if (isRole('superadmin')): ?>
         <a class="tile" href="admin/manage_admins.php" data-reveal style="--i:5">
             <span class="tile__icon"><?= nu_icon('shield-check') ?></span>
-            <span><span class="tile__title" style="display:block">Manage staff</span><span class="tile__text">Promote managers or add team accounts.</span></span>
+            <span><span class="tile__title" style="display:block">Manage staff</span><span class="tile__text">Promote managers or add staff accounts.</span></span>
             <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
         </a>
 <?php endif; ?>

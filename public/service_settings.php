@@ -16,12 +16,7 @@ $slug = nu_service_slug((string) ($_GET['s'] ?? 'snow-removal'));
 if (!isset($services[$slug])) $slug = 'snow-removal';
 $s = $services[$slug];
 $u = function ($p) { return nu_url('public/' . $p); };
-$nav = [
-  ['overview', 'Overview', $u('operations.php'), 'grid-fill'], ['bookings', 'Bookings', $u('jobs.php'), 'calendar3'],
-  ['dispatch', 'Dispatch', $u('operations.php') . '#queue', 'truck'], ['teams', 'Teams', $u('operations.php') . '#teams', 'people-fill'],
-  ['payments', 'Payments', $u('operations.php') . '#payments', 'credit-card'], ['weather', 'Weather', $u('operations.php') . '#weather', 'cloud'],
-  ['settings', 'Service Settings', $u('service_settings.php'), 'gear-fill'], ['support', 'Support', $u('operations.php') . '?queue=issues#queue', 'question-circle'],
-];
+$nav = nu_ops_nav();
 $types = ['address' => 'Address', 'select' => 'Dropdown', 'checks' => 'Checkboxes', 'radios' => 'Choice', 'cards' => 'Choice cards', 'utility' => 'Water + power', 'vehicle' => 'Vehicle', 'vehicle4' => 'Vehicle', 'text' => 'Text', 'textarea' => 'Long text', 'upload' => 'Photos'];
 include_once("../includes/header.php");
 ?>
@@ -74,8 +69,8 @@ include_once("../includes/header.php");
       </section>
       <section class="op-card">
         <h2 class="op-h2">Equipment &amp; matching</h2>
-        <p class="ss-p"><?= nu_e($new ? 'List equipment a team must carry to be matched.' : $s['provider']) ?></p>
-        <div class="checks"><?php foreach (($slug === 'car-wash' && !$new) ? ['Water tank (provider water)', 'Generator (provider power)', 'Pressure washer'] : ($slug === 'snow-removal' ? ['Plow truck', 'Snow blower', 'Ice melt'] : ['Standard kit', 'Trailer']) as $i => $e): ?><label class="check"><input type="checkbox" checked><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($e) ?></span></label><?php endforeach; ?></div>
+        <p class="ss-p"><?= nu_e($new ? 'List equipment a contractor must carry to be matched.' : $s['provider']) ?></p>
+        <div class="checks"><?php foreach (($slug === 'mobile-mechanics' && !$new) ? ['Diagnostic scanner', 'Tire plug kit', 'Jump pack', 'Basic hand tools'] : ($slug === 'snow-removal' ? ['Plow truck', 'Snow blower', 'Ice melt'] : ['Standard kit', 'Trailer']) as $i => $e): ?><label class="check"><input type="checkbox" checked><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($e) ?></span></label><?php endforeach; ?></div>
       </section>
       <section class="op-card">
         <h2 class="op-h2">Plans</h2>
@@ -85,7 +80,7 @@ include_once("../includes/header.php");
       <section class="op-card">
         <h2 class="op-h2">Weather rules</h2>
         <p class="ss-p"><?= nu_e($new ? 'Describe conditions that pause or move this service.' : $s['weather']) ?></p>
-        <div class="fld-row"><div class="fld"><label class="label" for="ss-wx">When triggered</label><select class="input" id="ss-wx"><option>Flag for dispatch review</option><option>Auto-propose next window</option></select></div><div class="fld"><label class="label" for="ss-wxn">Next update shown</label><select class="input" id="ss-wxn"><option>Every 2 h</option><option>Every 4 h</option></select></div></div>
+        <div class="fld-row"><div class="fld"><label class="label" for="ss-wx">When triggered</label><select class="input" id="ss-wx"><option>Flag for contractor review</option><option>Auto-propose next window</option></select></div><div class="fld"><label class="label" for="ss-wxn">Next update shown</label><select class="input" id="ss-wxn"><option>Every 2 h</option><option>Every 4 h</option></select></div></div>
       </section>
       <section class="op-card">
         <h2 class="op-h2">Evidence checklist</h2>
@@ -94,7 +89,7 @@ include_once("../includes/header.php");
       </section>
       <div class="ss-save ss-wide">
         <button class="btn btn-primary" type="button" data-save>Save as new version</button>
-        <a class="btn btn-outline" href="<?= nu_e($new ? $u('operations.php') : nu_book_url($slug)) ?>"><?= $new ? 'Cancel' : 'View customer page' ?></a>
+        <a class="btn btn-outline" href="<?= nu_e($new ? $u('operations.php') : nu_service_page_url($slug)) ?>"><?= $new ? 'Cancel' : 'View customer page' ?></a>
         <span class="pd-ui" data-ui-out role="status"></span>
         <span class="op-mini">Changes are versioned and logged. Existing bookings keep the terms they were booked under.</span>
       </div>

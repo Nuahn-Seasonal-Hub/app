@@ -67,11 +67,11 @@ return [
         ['id' => 'APP-0405', 'name' => 'Ben Ivanov', 'trade' => 'Mobile Mechanics', 'submitted' => 'Yesterday', 'checks' => ['identity' => 'ok', 'insurance' => 'ok', 'licence' => 'ok', 'cert' => 'ok'], 'note' => 'All checks passed. Ready to approve.'],
     ],
     'disputes' => [
-        ['id' => 'CASE-88', 'job' => 'SNOW-1031', 'service' => 'Winter Snow Removal', 'client' => 'Alice C.', 'contractor' => 'c-1001', 'held' => 120.00, 'reason' => 'Steps were not cleared', 'opened' => 'Today · 8:02 AM', 'status' => 'open'],
+        ['id' => 'CASE-88', 'job' => 'SNOW-1027', 'service' => 'Winter Snow Removal', 'client' => 'Alice C.', 'contractor' => 'c-1003', 'held' => 120.00, 'reason' => 'Steps were not cleared', 'opened' => 'Today · 8:02 AM', 'status' => 'open'],
         ['id' => 'CASE-85', 'job' => 'MECH-1031', 'service' => 'Mobile Mechanics', 'client' => 'P. Wright', 'contractor' => 'c-2003', 'held' => 120.00, 'reason' => 'Work does not match the approved quote', 'opened' => 'Yesterday', 'status' => 'review'],
     ],
 
     // Provider payout sample. Totals are built from these in the UI.
-    'payout' => ['job' => 'SNOW-1031', 'total' => 90.00, 'tip' => 0.00, 'pct' => 12, 'tax_note' => 'Contractors are responsible for their own taxes. GST/PST on the quote is collected and remitted as required.'],
-    'payouts' => [['SNOW-1031', 'Today', 90.00, 'held', 'Releases when the client approves'], ['SNOW-1028', 'Mon', 55.00, 'captured', 'Paid out Tue'], ['MECH-1022', 'Fri', 212.50, 'captured', 'Paid out Mon'], ['SNOW-1019', 'Last week', 45.00, 'refunded', 'Refunded after review']],
+    'payout' => ['job' => 'NSH-1042', 'total' => 48.00, 'tip' => 0.00, 'pct' => 12, 'tax_note' => 'Contractors are responsible for their own taxes. GST/PST on the quote is collected and remitted as required.'],
+    'payouts' => [['NSH-1042', 'Today', 48.00, 'held', 'Releases when the client approves'], ['SNOW-1028', 'Mon', 55.00, 'captured', 'Paid out Tue'], ['MECH-1022', 'Fri', 212.50, 'captured', 'Paid out Mon'], ['SNOW-1019', 'Last week', 45.00, 'refunded', 'Refunded after review']],
 ];
