@@ -57,7 +57,11 @@ $form = function ($id) use ($thanks, $bad) {
 <meta property="og:title" content="Nuahn Seasonal Hub: coming soon">
 <meta property="og:description" content="Trusted local independent pros for Canadian seasonal care. Launching end of November 2026.">
 <meta property="og:type" content="website">
-<link rel="icon" type="image/png" href="<?= nu_asset('public/assets/img/logo-72.png') ?>">
+<link rel="icon" href="<?= nu_asset('public/assets/img/favicon.ico') ?>" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="<?= nu_asset('public/assets/img/favicon-48.png') ?>">
+<link rel="icon" type="image/png" sizes="32x32" href="<?= nu_asset('public/assets/img/favicon-32.png') ?>">
+<link rel="icon" type="image/png" sizes="16x16" href="<?= nu_asset('public/assets/img/favicon-16.png') ?>">
+<link rel="manifest" href="<?= nu_asset('public/assets/manifest.webmanifest') ?>">
 <link rel="apple-touch-icon" href="<?= nu_asset('public/assets/img/icon-180.png') ?>">
 <link rel="preload" href="<?= $u('public/assets/fonts/dmserif-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="<?= $u('public/assets/fonts/jakarta-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
@@ -78,10 +82,7 @@ h1,h2,h3,p{margin:0}
 :focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px var(--teal)}
 .wrap{width:min(1120px,100% - 40px);margin-inline:auto}
 /* logo */
-.logo{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
-.logo__word{display:flex;flex-direction:column;line-height:1}
-.logo__name{font-family:var(--serif);font-size:1.55rem;letter-spacing:.01em;color:#fff}
-.logo__sub{white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--mint);margin-top:3px}
+.brandlink{display:inline-flex;text-decoration:none;color:#fff}.logo{display:inline-flex;align-items:center;gap:.5em}.logo img{display:block;flex:none;height:auto}.logo__text{font-weight:800;letter-spacing:-.025em;line-height:1.1;color:inherit}footer .brandlink{color:var(--ink)}
 /* hero */
 .hero{position:relative;isolation:isolate;color:#fff;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:var(--pine-d);overflow:hidden}
 .hero__bg,.hero__bg img{position:absolute;inset:0;width:100%;height:100%}
@@ -159,7 +160,6 @@ main{position:relative}
 .cta .nf__hint{color:#D5EAE7}
 footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom));color:var(--muted);font-size:.88rem}
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;align-items:center}
-footer .logo{color:var(--pine)}footer .logo__name{color:var(--ink)}footer .logo__sub{color:var(--pine)}
 /* entrance + motion */
 .in{animation:riseT .8s var(--ease) both;animation-delay:calc(var(--d,0) * 110ms)}
 .rv{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease);transition-delay:calc(var(--d,0) * 90ms)}
@@ -185,7 +185,7 @@ footer .logo{color:var(--pine)}footer .logo__name{color:var(--ink)}footer .logo_
 }
 @media (max-width:600px){
   .wrap{width:calc(100% - 32px)}
-  .logo__name{font-size:1.38rem}
+  .bar .logo__text{font-size:15px!important;white-space:nowrap}.bar .logo img{width:36px;height:35px}
   .pill{font-size:.72rem;padding:6px 11px;white-space:nowrap}.pill__l{display:none}.pill__s{display:inline}
   .hero__main{align-items:flex-end;padding:12px 0 84px}
   .hero__bg img{object-position:58% 50%}
@@ -242,7 +242,7 @@ footer .logo{color:var(--pine)}footer .logo__name{color:var(--ink)}footer .logo_
   <div class="snow" aria-hidden="true"></div><div class="snow snow--b" aria-hidden="true"></div>
 
   <div class="wrap bar in">
-    <a class="logo" href="<?= nu_e(nu_url('public/coming_soon.php')) ?>" aria-label="Nuahn Seasonal Hub"><?= nu_logo_mark(38) ?><span class="logo__word"><span class="logo__name">Nuahn</span><span class="logo__sub">Seasonal Hub</span></span></a>
+    <a class="brandlink" href="<?= nu_e(nu_url('public/coming_soon.php')) ?>" aria-label="Nuahn Seasonal Hub"><?= nu_logo(46, 'dark') ?></a>
     <span class="pill"><span class="dot"></span><span>Opening <span class="pill__l">end of November 2026</span><span class="pill__s">Nov 2026</span></span></span>
   </div>
 
@@ -329,7 +329,7 @@ footer .logo{color:var(--pine)}footer .logo__name{color:var(--ink)}footer .logo_
 
 <footer>
   <div class="wrap">
-    <a class="logo" href="<?= nu_e(nu_url('public/coming_soon.php')) ?>" aria-label="Nuahn Seasonal Hub"><?= nu_logo_mark(30) ?><span class="logo__word"><span class="logo__name" style="font-size:1.25rem">Nuahn</span><span class="logo__sub">Seasonal Hub</span></span></a>
+    <a class="brandlink" href="<?= nu_e(nu_url('public/coming_soon.php')) ?>" aria-label="Nuahn Seasonal Hub"><?= nu_logo(34, 'light') ?></a>
     <span>© <?= date('Y') ?> Nuahn Seasonal Hub · Canadian seasonal care</span>
   </div>
 </footer>

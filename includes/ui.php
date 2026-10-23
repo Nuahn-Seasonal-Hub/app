@@ -261,7 +261,7 @@ function nu_auth_head($title, $subtitle, $icon = 'person-circle', $navy = false)
 
 /** Left brand panel of the auth layout. */
 function nu_auth_aside($headline = 'Every season. Trusted local pros. One hub.', $copy = 'A trusted marketplace connecting homeowners with vetted local independent pros. Built for Canadian seasons.') {
-    echo '<aside class="auth__aside"><span class="auth__logo">' . nu_logo(40) . '</span>';
+    echo '<aside class="auth__aside"><span class="auth__logo">' . nu_logo(40, 'dark') . '</span>';
     echo '<h2>' . nu_e($headline) . '</h2><p>' . nu_e($copy) . '</p>';
     echo '<ul class="auth__list">';
     echo '<li>' . nu_icon('geo-alt') . 'Location-based job matching</li>';
@@ -427,20 +427,27 @@ function nu_photo($name, $alt, $opts = []) {
     return $out . '</picture>';
 }
 
-/** Nuahn mark: pine trees + house, drawn as inline SVG (inherits currentColor). */
-function nu_logo_mark($size = 34) {
-    return '<svg class="logo-mark" width="' . (int) $size . '" height="' . (int) $size . '" viewBox="0 0 48 48" aria-hidden="true" focusable="false">'
-        . '<path fill="currentColor" d="M11 6 3.5 19H7l-5 8.5h6.2L4 34h6v6h3v-6h6l-4.2-6.5H21L16 19h3.5Z"/>'
-        . '<path fill="currentColor" opacity=".72" d="M37.5 9 31.8 19h2.7l-3.8 6.6h4.6l-3 5h4.3v4.4h2.4v-4.4h4.3l-3-5h4.6L41 19h2.7Z"/>'
-        . '<path fill="currentColor" d="M24.5 16 13 25.4V42h8.2v-8.2h6.6V42H36V25.4Zm0 3.3 8.3 6.8v12.7H31v-8.2H18v8.2h-1.8V26.1Z"/>'
-        . '<rect x="22.3" y="26" width="4.4" height="3.6" rx=".6" fill="currentColor"/>'
-        . '<path fill="currentColor" d="M2 43.2h44v1.8H2z"/>'
-        . '</svg>';
+/**
+ * Brand mark only (four-petal mark), for compact places such as the mobile bar. $h = display height in px.
+ * One small webp (96 px source, 256 px for high-density), explicit width and height so nothing shifts.
+ */
+function nu_logo_mark($h = 34) {
+    $h = (int) $h; $w = (int) round($h * 256 / 250);
+    return '<img class="logo-mark" src="' . nu_e(nu_asset('public/assets/img/mark-96.webp')) . '" srcset="' . nu_e(nu_asset('public/assets/img/mark-96.webp')) . ' 96w, ' . nu_e(nu_asset('public/assets/img/mark-256.webp')) . ' 256w"'
+        . ' sizes="' . $w . 'px" width="' . $w . '" height="' . $h . '" alt="Nuahn Seasonal Hub" decoding="async">';
 }
 
-/** Full lockup: mark + "Nuahn" serif wordmark + "SEASONAL HUB" small caps. */
-function nu_logo($size = 34) {
-    return '<span class="logo">' . nu_logo_mark($size) . '<span class="logo__word"><span class="logo__name">Nuahn</span><span class="logo__sub">Seasonal Hub</span></span></span>';
+/**
+ * Brand lockup: the four-petal mark (image) beside the words "Nuahn Seasonal Hub" as real text in the page font
+ * (Plus Jakarta Sans 800). $h = mark height in px; the text scales with it. The text follows currentColor: ink on
+ * light surfaces, white inside dark areas (.logo--dark, the footer, sign-in aside, console and the dark theme).
+ * $mode: 'auto' (inherits, theme CSS decides), 'dark' (always white text, for dark teal surfaces) or 'light'.
+ */
+function nu_logo($h = 34, $mode = 'auto') {
+    $h = (int) $h; $w = (int) round($h * 256 / 250); $fs = round($h * 0.52, 1);
+    $m = nu_e(nu_asset('public/assets/img/mark-96.webp')); $m2 = nu_e(nu_asset('public/assets/img/mark-256.webp'));
+    return '<span class="logo logo--' . nu_e($mode) . '"><img class="logo-mark" src="' . $m . '" srcset="' . $m . ' 96w, ' . $m2 . ' 256w" sizes="' . $w . 'px" width="' . $w . '" height="' . $h . '" alt="" decoding="async">'
+        . '<span class="logo__text" style="font-size:' . $fs . 'px">Nuahn Seasonal Hub</span></span>';
 }
 
 /** Legacy (v2) service slugs -> current slugs, so old links keep working. */
@@ -821,7 +828,7 @@ function nu_form_fields($fields, $idp = 'f') {
  * $items = [[key, label, url, icon, badge?], ...]
  */
 function nu_console_nav($items, $active, $label, $tagline = '') {
-    $o = '<aside class="console__side" aria-label="' . nu_e($label) . '"><a class="console__brand" href="' . nu_e(nu_home_url()) . '">' . nu_logo(40) . '</a><nav class="console__nav">';
+    $o = '<aside class="console__side" aria-label="' . nu_e($label) . '"><a class="console__brand" href="' . nu_e(nu_home_url()) . '">' . nu_logo(52, 'dark') . '</a><nav class="console__nav">';
     foreach ($items as $it) {
         $o .= '<a href="' . nu_e($it[2]) . '"' . ($it[0] === $active ? ' aria-current="page"' : '') . '>' . nu_icon($it[3]) . '<span>' . nu_e($it[1]) . '</span>'
             . (!empty($it[4]) ? '<b class="console__badge">' . (int) $it[4] . '</b>' : '') . '</a>';

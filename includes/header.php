@@ -46,7 +46,10 @@ $bodyClass = [
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nuahn">
   <link rel="manifest" href="<?= nu_asset('public/assets/manifest.webmanifest') ?>">
-  <link rel="icon" type="image/png" href="<?= nu_asset('public/assets/img/logo-72.png') ?>">
+  <link rel="icon" href="<?= nu_asset('public/assets/img/favicon.ico') ?>" sizes="any">
+  <link rel="icon" type="image/png" sizes="48x48" href="<?= nu_asset('public/assets/img/favicon-48.png') ?>">
+  <link rel="icon" type="image/png" sizes="32x32" href="<?= nu_asset('public/assets/img/favicon-32.png') ?>">
+  <link rel="icon" type="image/png" sizes="16x16" href="<?= nu_asset('public/assets/img/favicon-16.png') ?>">
   <link rel="apple-touch-icon" href="<?= nu_asset('public/assets/img/icon-180.png') ?>">
   <link rel="preload" href="<?= nu_url('public/assets/fonts/jakarta-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="<?= nu_url('public/assets/fonts/dmserif-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
@@ -91,7 +94,7 @@ $bodyClass = [
 <header class="topnav" id="topnav">
   <div class="wrap topnav__inner">
     <a class="icon-btn appbar-back" href="<?= nu_e(nu_home_url()) ?>" data-back aria-label="Back"><?= nu_icon('chevron-left') ?></a>
-    <a class="brand" href="<?= nu_e($nuLogged ? nu_home_url() : nu_url('public/index.php')) ?>"><?= nu_logo(34) ?></a>
+    <a class="brand" href="<?= nu_e($nuLogged ? nu_home_url() : nu_url('public/index.php')) ?>"><?= nu_logo(36) ?></a>
     <span class="appbar-title"><?= nu_e($nuPage['title']) ?></span>
 
     <nav class="navlinks" aria-label="Main">

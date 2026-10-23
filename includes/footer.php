@@ -14,7 +14,7 @@ $nuNav = nu_nav_items();
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="<?= nu_e(nu_url('public/index.php')) ?>"><?= nu_logo(38) ?></a>
+        <a class="brand" href="<?= nu_e(nu_url('public/index.php')) ?>"><?= nu_logo(40, 'dark') ?></a>
         <p>A trusted marketplace connecting homeowners with vetted local independent pros. Built for Canadian seasons.</p>
       </div>
       <div>
