@@ -171,6 +171,11 @@ function nu_page_config() {
         'public/activity.php'          => ['title' => 'Activity', 'tab' => 'activity', 'lean' => true],
         'public/mechanics.php'         => ['title' => 'Mobile Mechanics', 'tab' => 'book', 'lean' => true, 'sub' => true],
         'public/mechanic_request.php'  => ['title' => 'Mechanic request', 'tab' => 'book', 'lean' => true, 'sub' => true],
+        'public/post_task.php'         => ['title' => 'Post a task', 'tab' => 'book', 'lean' => true, 'sub' => true],
+        'public/offers.php'            => ['title' => 'Review offers', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
+        'public/contractor.php'        => ['title' => 'Contractor profile', 'tab' => '', 'lean' => true, 'sub' => true],
+        'public/approve.php'           => ['title' => 'Review and approve', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
+        'public/open_jobs.php'         => ['title' => 'Open jobs near you', 'tab' => 'jobs', 'lean' => true, 'console' => true],
         'public/quote.php'             => ['title' => 'Review quote', 'tab' => 'bookings', 'lean' => true, 'sub' => true],
         'public/provider_dashboard.php' => ['title' => 'Today', 'tab' => 'today', 'lean' => true, 'console' => true],
         'public/operations.php'        => ['title' => 'Operations', 'tab' => 'ops', 'lean' => true, 'console' => true],
@@ -217,7 +222,7 @@ function nu_nav_items() {
             return [
                 ['today', 'Today', $u('public/provider_dashboard.php'), 'calendar-check', 'calendar2-check'],
                 ['route', 'Route', $u('public/provider_route.php'), 'signpost-split', 'signpost-split-fill'],
-                ['jobs', 'Find jobs', $u('public/provider_home.php'), 'search', 'search'],
+                ['jobs', 'Open jobs', $u('public/open_jobs.php'), 'search', 'search'],
                 ['messages', 'Messages', $u('public/messages.php'), 'chat-dots', 'chat-dots-fill'],
                 ['profile', 'Profile', $u('public/profile.php'), 'person', 'person-fill'],
             ];
@@ -446,6 +451,16 @@ function nu_service_slug($slug) {
 }
 /** Service page URL (doc2 p2-7: one page per service with the booking form). */
 function nu_book_url($slug) { return nu_url('public/service.php') . '?s=' . rawurlencode(nu_service_slug($slug)); }
+/**
+ * Where a live service's main "start" button goes in the marketplace model: Snow Removal opens the task builder,
+ * Mobile Mechanics opens the pathway chooser. Locked services keep the coming-soon service page.
+ */
+function nu_start_url($slug) {
+    $s = nu_service_slug($slug);
+    if ($s === 'snow-removal') return nu_url('public/post_task.php');
+    if ($s === 'mobile-mechanics') return nu_url('public/mechanics.php');
+    return nu_book_url($s);
+}
 /** Service record for a slug (aliases resolved), or null. */
 function nu_service($slug) { $all = nu_fixture('services'); return $all[nu_service_slug($slug)] ?? null; }
 
@@ -541,6 +556,8 @@ function nu_booking_status($s) {
         'completed' => ['Completed', 'navy'], 'disputed' => ['Disputed', 'danger'], 'closed' => ['Closed', ''], 'cancelled' => ['Cancelled', 'danger'],
         'reminder_due' => ['Reminder due', 'blue'], 'skipped' => ['Skipped', ''], 'next' => ['Up next', 'blue'], 'queued' => ['Queued', ''],
         'available' => ['Available', 'success'], 'busy' => ['Busy', 'danger'],
+        'open_for_bids' => ['Open for bids', 'blue'], 'pending_approval' => ['Pending your approval', 'warning'], 'approved' => ['Approved', 'navy'],
+        'funds_held' => ['Confirmed · funds held', 'blue'], 'review' => ['In review', 'warning'], 'open' => ['Open', 'warning'],
     ];
     return $m[$s] ?? [ucfirst(str_replace('_', ' ', (string) $s)), ''];
 }
@@ -550,10 +567,76 @@ function nu_booking_chip($s, $dot = true) {
 }
 /** Payment is a separate state from job progress (doc2 p21). */
 function nu_payment_chip($s) {
-    $m = ['unpaid' => ['Unpaid', ''], 'authorized' => ['Authorized', 'blue'], 'paid' => ['Paid', 'success'], 'failed' => ['Payment failed', 'danger'],
-          'partially_refunded' => ['Partially refunded', 'warning'], 'refunded' => ['Refunded', '']];
-    [$l, $t] = $m[$s] ?? [ucfirst((string) $s), ''];
-    return '<span class="chip chip--pay' . ($t ? ' chip--' . $t : '') . '">' . nu_icon('credit-card') . nu_e($l) . '</span>';
+    // Marketplace payment states: Unpaid, Authorized (funds held), Captured (paid out), Refunded, Disputed.
+    $m = ['unpaid' => ['Unpaid', '', 'credit-card'], 'authorized' => ['Authorized · funds held', 'blue', 'lock-fill'], 'held' => ['Authorized · funds held', 'blue', 'lock-fill'],
+          'paid' => ['Captured · paid out', 'success', 'check-circle-fill'], 'captured' => ['Captured · paid out', 'success', 'check-circle-fill'],
+          'failed' => ['Payment failed', 'danger', 'exclamation-circle'], 'disputed' => ['Disputed · funds held', 'danger', 'flag-fill'],
+          'partially_refunded' => ['Partially refunded', 'warning', 'arrow-repeat'], 'refunded' => ['Refunded', '', 'arrow-repeat']];
+    [$l, $t, $ic] = $m[$s] ?? [ucfirst((string) $s), '', 'credit-card'];
+    return '<span class="chip chip--pay' . ($t ? ' chip--' . $t : '') . '">' . nu_icon($ic) . nu_e($l) . '</span>';
+}
+/** Payment state implied by a job state in the marketplace state machine (they are still stored separately). */
+function nu_job_payment($state) {
+    if (in_array($state, ['requested', 'open_for_bids', 'quote_pending', 'searching'], true)) return 'unpaid';
+    if ($state === 'approved' || $state === 'completed') return 'captured';
+    if ($state === 'disputed') return 'disputed';
+    return 'authorized';
+}
+/**
+ * Job state machine (Requested → Open for bids → Confirmed with funds held → On the way → Arrived → In progress →
+ * Completed, pending approval → Approved or Disputed). $key is a fixtures/marketplace.php 'states' key or 'disputed'.
+ * mode 'bar' = compact 8-segment bar with the current state; mode 'list' = the full timeline. Job status and payment
+ * status stay separate: the payment chip is rendered next to it by the caller.
+ */
+function nu_job_machine($key, $mode = 'bar', $times = []) {
+    $st = nu_fixture('marketplace')['states'];
+    $keys = array_keys($st);
+    $disputed = $key === 'disputed';
+    if ($disputed) $key = 'pending_approval';
+    $alias = ['completed' => 'pending_approval', 'quote_pending' => 'open_for_bids', 'awaiting_quote' => 'open_for_bids', 'searching' => 'open_for_bids', 'assigned' => 'confirmed', 'change_requested' => 'confirmed', 'weather_review' => 'confirmed', 'paused' => 'in_progress', 'closed' => 'approved'];
+    if (isset($alias[$key])) $key = $alias[$key];
+    $at = array_search($key, $keys, true); if ($at === false) $at = 0;
+    $labels = $st; if ($disputed) $labels['approved'] = 'Disputed';
+    $final = $disputed ? ' is-disputed' : '';
+    if ($mode === 'bar') {
+        $o = '<div class="jsm' . $final . '" role="group" aria-label="Job progress"><div class="jsm__bar" aria-hidden="true">';
+        foreach ($keys as $i => $k) $o .= '<i class="' . ($i < $at ? 'is-done' : ($i === $at ? 'is-now' : '')) . '"></i>';
+        $o .= '</div><p class="jsm__now"><b>' . nu_e($disputed ? 'Disputed · under review' : $labels[$key]) . '</b><span>Step ' . ($at + 1) . ' of ' . count($keys) . '</span></p></div>';
+        return $o;
+    }
+    $o = '<ol class="jsm-list' . $final . '" aria-label="Job progress">';
+    foreach ($keys as $i => $k) {
+        $c = $i < $at ? 'is-done' : ($i === $at ? 'is-now' : '');
+        $o .= '<li class="' . $c . '"' . ($i === $at ? ' aria-current="step"' : '') . '><span class="jsm-list__dot">' . ($i <= $at ? nu_icon('check-lg') : '') . '</span><span class="jsm-list__l">' . nu_e($labels[$k]) . '</span>'
+            . (!empty($times[$k]) ? '<small>' . nu_e($times[$k]) . '</small>' : '') . '</li>';
+    }
+    return $o . '</ol>';
+}
+
+/** Independent contractor lookup (fixtures/contractors.php), or null. */
+function nu_contractor($id) { $all = nu_fixture('contractors'); return $all[$id] ?? null; }
+/** Initials avatar for a contractor (no photo, so nothing to load). */
+function nu_avatar($c, $size = 'md') {
+    return '<span class="avt avt--' . nu_e($c['tone'] ?? 'teal') . ' avt--' . nu_e($size) . '" aria-hidden="true">' . nu_e($c['initials']) . '</span>';
+}
+/** Trust badges. $compact = icons + short text only for the first three. */
+function nu_badges($c, $compact = false) {
+    $def = ['verified' => ['Verified', 'patch-check-fill'], 'insured' => ['Insured', 'shield-check'], 'id_checked' => ['ID checked', 'person-vcard'], 'certified' => ['Certified', 'award']];
+    $o = '<span class="bdgs">';
+    foreach ($c['badges'] as $b) { if (!isset($def[$b])) continue; $o .= '<span class="bdg bdg--' . $b . '">' . nu_icon($def[$b][1]) . $def[$b][0] . '</span>'; }
+    return $o . '</span>';
+}
+/** Star rating line, e.g. "★ 4.9 (212)". */
+function nu_rating($c) {
+    return '<span class="rate">' . nu_icon('star-fill') . '<b>' . number_format($c['rating'], 1) . '</b><small>(' . (int) $c['reviews'] . ')</small></span>';
+}
+/** Trust copy about payments. UI copy only: no processor names or logos. */
+function nu_trust_note($variant = 'held') {
+    $t = [
+        'held' => ['Funds held securely until you approve the work', 'Your card details never touch Nuahn. They go straight to our secure payment processor and we only keep a token. You are charged only when you approve the finished job.'],
+        'card' => ['Payment is handled by a secure processor', 'Card details are entered in the processor’s secure form, never on Nuahn’s servers. We store a token, not your card number.'],
+    ][$variant] ?? ['', ''];
+    return '<p class="trust"><span class="trust__ic">' . nu_icon('lock-fill') . '</span><span><b>' . nu_e($t[0]) . '</b><small>' . nu_e($t[1]) . '</small></span></p>';
 }
 
 /**
@@ -572,10 +655,50 @@ function nu_steps($steps, $at, $class = '') {
 }
 
 /**
+ * Property / location picker: address field, "Use my location", and a draggable pin on a self-contained map
+ * (inline SVG, no external scripts or tiles). The pin also moves with the arrow keys.
+ *
+ * HOOK FOR GOOGLE MAPS OR MAPBOX (Sir Paul): define window.NuahnMapProvider BEFORE public/assets/map-picker.js runs:
+ *   { mount(el, {lat, lng, onMove(lat, lng)}) -> {setPosition(lat, lng)},   // draw the real map inside el
+ *     geocode(addressText) -> Promise<{lat, lng, label}>,                     // address box "Find"
+ *     reverse(lat, lng) -> Promise<string> }                                  // pin dropped -> address text
+ * Without it, the built-in static sample map is used. Hidden inputs <name>_lat / <name>_lng carry the pin position.
+ * Never put an API key in this file; read it from server config.
+ */
+function nu_map_picker($o = []) {
+    $o += ['name' => 'loc', 'address' => '', 'lat' => 53.4891, 'lng' => -113.5262, 'label' => 'Service location', 'placeholder' => 'Enter the property address'];
+    $n = nu_e($o['name']);
+    ob_start(); ?>
+<div class="mp" data-map-picker data-lat="<?= (float) $o['lat'] ?>" data-lng="<?= (float) $o['lng'] ?>">
+  <label class="label" for="<?= $n ?>-addr"><?= nu_e($o['label']) ?></label>
+  <div class="mp__row">
+    <span class="mp__in"><?= nu_icon('geo-alt') ?><input class="input" id="<?= $n ?>-addr" name="<?= $n ?>_address" value="<?= nu_e($o['address']) ?>" placeholder="<?= nu_e($o['placeholder']) ?>" autocomplete="street-address" data-mp-addr></span>
+    <button class="btn btn-soft btn-sm" type="button" data-mp-find>Find</button>
+  </div>
+  <div class="mp__map" data-mp-map>
+    <svg class="mp__svg" viewBox="0 0 400 250" role="img" aria-label="Sample map of the neighbourhood. Drag the pin to your property." preserveAspectRatio="none">
+      <rect width="400" height="250" fill="var(--map-bg)"/>
+      <path d="M0 0 H190 C 170 40, 120 52, 70 44 S 10 60, 0 90Z" fill="var(--map-park)" opacity=".7"/>
+      <path d="M300 250 C 310 200, 350 190, 400 196 V250Z" fill="var(--map-park)" opacity=".6"/>
+      <path d="M-10 190 C 80 160, 150 215, 240 170 S 360 120, 410 150" fill="none" stroke="var(--map-water)" stroke-width="12" stroke-linecap="round"/>
+      <g stroke="var(--map-road)" fill="none" stroke-linecap="round"><path stroke-width="8" d="M0 110 H400 M214 0 V250"/><path stroke-width="4" d="M0 52 H400 M0 168 H400 M64 0 V250 M138 0 V250 M292 0 V250 M352 0 V250 M0 210 H400"/><path stroke-width="2" d="M0 80 H400 M0 140 H400 M100 0 V250 M178 0 V250 M254 0 V250 M322 0 V250"/></g>
+      <g fill="#fff" opacity=".8"><rect x="226" y="60" width="22" height="14" rx="2"/><rect x="262" y="60" width="22" height="14" rx="2"/><rect x="226" y="84" width="22" height="14" rx="2"/><rect x="262" y="120" width="22" height="14" rx="2"/><rect x="226" y="120" width="22" height="14" rx="2"/><rect x="150" y="60" width="22" height="14" rx="2"/><rect x="150" y="120" width="22" height="14" rx="2"/><rect x="76" y="120" width="22" height="14" rx="2"/><rect x="76" y="60" width="22" height="14" rx="2"/></g>
+      <g font-family="system-ui, sans-serif" font-size="8" fill="var(--muted)" font-weight="600" letter-spacing=".06em"><text x="220" y="106">MAPLE GROVE DR</text><text x="8" y="106">WHITEMUD DR</text><text x="70" y="48">PARK</text></g>
+    </svg>
+    <button class="mp__pin" type="button" data-mp-pin aria-label="Property pin. Drag it, or use the arrow keys, to move it." style="left:50%;top:50%"><span class="mp__pulse"></span><?= nu_icon('geo-alt-fill') ?></button>
+    <button class="mp__loc" type="button" data-mp-locate><?= nu_icon('crosshair') ?> Use my location</button>
+  </div>
+  <p class="mp__msg" data-mp-msg role="status"><?= nu_icon('pin-map') ?> <span data-mp-text>Drag the pin onto your driveway.</span> <?= nu_sample_tag('Sample map') ?></p>
+  <input type="hidden" name="<?= $n ?>_lat" data-mp-lat value="<?= (float) $o['lat'] ?>"><input type="hidden" name="<?= $n ?>_lng" data-mp-lng value="<?= (float) $o['lng'] ?>">
+</div>
+<?php return ob_get_clean();
+}
+
+/**
  * Lightweight illustrative route map (inline SVG, no tiles). Used on service pages where the mockups show a
  * small trip map. The live map on track.php uses real tiles. $v picks one of three sample routes.
  */
-function nu_mini_map($v = 0, $label = 'Map preview of the team’s route to your home') {
+function nu_mini_map($v = 0, $label = 'Map preview of the contractor’s route to your home') {
     $routes = [
         'M40 132 C 80 132, 96 104, 132 104 S 176 76, 206 76 S 252 60, 268 44',
         'M34 52 L 92 52 L 92 98 L 168 98 L 168 128 L 236 128 L 236 70 L 280 70',
