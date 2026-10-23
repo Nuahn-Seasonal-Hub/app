@@ -2123,8 +2123,9 @@ textarea.input { min-height: 64px; resize: vertical; }
 }
 
 /* ---------- Mobile mechanic menu (doc2 p16) ---------- */
-.mx { max-width: 1120px; margin: 0 auto; padding: var(--s6) max(16px, var(--safe-l)) var(--s12); display: grid; gap: var(--s6); align-items: start; }
+.mx { max-width: 1120px; margin: 0 auto; padding: var(--s6) max(16px, var(--safe-l)) var(--s12); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); align-items: start; }
 .mx-app { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sv-gap); min-width: 0; }
+.mx > * { min-width: 0; }
 .mx-title { font-family: var(--font); font-weight: 800; letter-spacing: -.02em; font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.1rem); margin: 0; text-align: center; }
 .mx-map { position: relative; border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: var(--map-bg); }
 .mx-map__svg { display: block; width: 100%; height: 230px; }
@@ -2137,14 +2138,15 @@ textarea.input { min-height: 64px; resize: vertical; }
 .mx-status { display: flex; gap: 8px; align-items: center; margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--tint); font-size: .86rem; color: var(--teal); font-weight: 650; }
 .mx-sec { padding: 20px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
 .mx-sec h2 { font-family: var(--font); font-weight: 800; font-size: 1.25rem; margin: 0 0 16px; }
-.mx-road { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 8px; }
+.mx-road { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 8px; }
 .mx-road__t { display: grid; justify-items: center; gap: 8px; text-align: center; font-size: .84rem; font-weight: 650; color: var(--ink); text-decoration: none; padding: 6px; border-radius: 14px; }
 .mx-road__t:hover { background: var(--surface-2); }
 .mx-road__ic { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; color: #1c2a2a; box-shadow: inset 0 -3px 0 rgba(0,0,0,.08); }
 .mx-road__ic .ic { width: 28px; height: 28px; }
 .mx-tone--orange { background: #f5a23a; } .mx-tone--red { background: #ef6a5b; color: #fff; } .mx-tone--blue { background: #5aa7e8; color: #fff; }
 .mx-tone--yellow { background: #f6cf47; } .mx-tone--green { background: #7fd3a0; } .mx-tone--purple { background: #9b84e0; color: #fff; }
-.mx-svc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mx-svc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mx-svc__t { min-width: 0; overflow-wrap: anywhere; }
 .mx-svc__t { position: relative; display: flex; gap: 12px; align-items: center; padding: 14px; min-height: 64px; border-radius: 14px; background: var(--tint); color: var(--ink); text-decoration: none; font-size: .86rem; font-weight: 650; border: 2px solid transparent; }
 .mx-svc__t:hover { border-color: var(--blue-100); }
 .mx-svc__t.is-sel { border-color: var(--teal); background: var(--surface); }
@@ -2152,8 +2154,8 @@ textarea.input { min-height: 64px; resize: vertical; }
 .mx-svc__ic { width: 40px; height: 40px; display: grid; place-items: center; color: var(--pine); flex: none; }
 .mx-svc__ic .ic { width: 28px; height: 28px; }
 .mx-hint { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 14px 0 0; font-size: .82rem; color: var(--muted); }
-@media (min-width: 760px) { .mx-road { grid-template-columns: repeat(6, 1fr); } .mx-svc { grid-template-columns: repeat(4, 1fr); } .mx-map__svg { height: 280px; } }
-@media (min-width: 1040px) { .mx { grid-template-columns: 1fr 300px; } .mx-title { text-align: left; } }
+@media (min-width: 760px) { .mx-road { grid-template-columns: repeat(6, minmax(0, 1fr)); } .mx-svc { grid-template-columns: repeat(4, minmax(0, 1fr)); } .mx-map__svg { height: 280px; } }
+@media (min-width: 1040px) { .mx { grid-template-columns: minmax(0, 1fr) 300px; } .mx-title { text-align: left; } }
 @media (max-width: 420px) { .mx-confirm { flex-wrap: wrap; } .mx-confirm .btn { width: 100%; } .mx-map__svg { height: 260px; } }
 
 /* ---------- Mechanic request (doc2 p17) ---------- */
