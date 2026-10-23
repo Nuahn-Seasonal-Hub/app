@@ -30,8 +30,8 @@ $addr = trim((string) ($_GET['address'] ?? ''));
     <img src="<?= nu_e($hp('hero-winter-house-1920.jpg')) ?>" alt="Snowy suburban street with two-storey homes after a fresh snowfall" width="1920" height="800" fetchpriority="high" decoding="async">
   </picture>
   <div class="wrap lhero__in">
-    <h1 class="lhero__title enter">Every season.<br>Every service.<br><em>One hub.</em></h1>
-    <p class="lhero__lead enter" style="--i:1">Home and property services, all in one place.<br>Reliable. Local. Built for Canadian seasons.</p>
+    <h1 class="lhero__title enter">Every season.<br>Trusted local pros.<br><em>One hub.</em></h1>
+    <p class="lhero__lead enter" style="--i:1">A trusted marketplace connecting homeowners with vetted local independent pros.<br>Winter snow removal and mobile mechanics launch first, end of November 2026.</p>
     <form class="addr enter" style="--i:2" action="#services" method="get" role="search">
       <label class="addr__field">
         <?= nu_icon('geo-alt-fill') ?>
@@ -47,27 +47,38 @@ $addr = trim((string) ($_GET['address'] ?? ''));
   <section aria-labelledby="svc-h">
     <div class="lsec-head">
       <h2 id="svc-h" class="serif">Our services</h2>
-      <p class="lsec-head__aside"><?= $addr !== '' ? nu_icon('geo-alt') . ' Available near <strong>' . nu_e($addr) . '</strong>' : 'Local. Experienced. Ready for every season.' ?></p>
+      <p class="lsec-head__aside"><?= $addr !== '' ? nu_icon('geo-alt') . ' Available near <strong>' . nu_e($addr) . '</strong>' : 'Vetted local independent pros. Ready for every season.' ?></p>
     </div>
-<?php $main = array_slice($services, 0, 5, true); $more = array_slice($services, 5, null, true); ?>
-    <div class="svc-grid">
-<?php $i = 0; foreach ($main as $slug => $sv): ?>
-      <article class="svc" data-reveal style="--i:<?= $i++ ?>">
-        <a class="svc__media" href="<?= nu_e(nu_book_url($slug)) ?>" tabindex="-1" aria-hidden="true"><?= nu_photo($sv['photo'], $sv['alt'], ['sizes' => '(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 230px']) ?></a>
+<?php $live = nu_services_by_status('live'); $soon = nu_services_by_status('coming_soon');
+// Live services: snow removal first, then mobile mechanics (launch order)
+uksort($live, function ($x, $y) { $o = ['snow-removal' => 0, 'mobile-mechanics' => 1]; return ($o[$x] ?? 9) <=> ($o[$y] ?? 9); }); ?>
+    <p class="svc-label"><span class="chip chip--blue">Launching first, end of November 2026</span></p>
+    <div class="svc-grid svc-grid--live">
+<?php $i = 0; foreach ($live as $slug => $sv): ?>
+      <article class="svc svc--live" data-reveal style="--i:<?= $i++ ?>">
+        <a class="svc__media" href="<?= nu_e(nu_book_url($slug)) ?>" tabindex="-1" aria-hidden="true"><?= nu_photo($sv['photo'], $sv['alt'], ['sizes' => '(max-width: 640px) 92vw, (max-width: 1100px) 46vw, 560px']) ?></a>
         <div class="svc__body">
           <h3><?= nu_e($sv['name']) ?></h3>
+          <p><?= nu_e($sv['blurb']) ?></p>
           <a class="btn btn-primary btn-sm btn-block" href="<?= nu_e(nu_book_url($slug)) ?>" aria-label="Book <?= nu_e($sv['name']) ?>">Book service <?= nu_icon('arrow-right') ?></a>
         </div>
       </article>
 <?php endforeach; ?>
     </div>
-    <div class="svc-more">
-<?php foreach ($more as $slug => $sv): ?>
-      <a class="svc-wide" href="<?= nu_e(nu_book_url($slug)) ?>" data-reveal>
-        <span class="svc-wide__img"><?= nu_photo($sv['photo'], '', ['sizes' => '140px', 'widths' => [400]]) ?></span>
-        <span class="svc-wide__main"><span class="svc-wide__t"><?= nu_e($sv['name']) ?> <span class="chip chip--plain"><?= nu_e($sv['season']) ?></span></span><span class="svc-wide__s"><?= nu_e($sv['blurb']) ?></span><span class="svc-wide__cta">Book service <?= nu_icon('arrow-right') ?></span></span>
-      </a>
+
+    <p class="svc-label svc-label--soon"><?= nu_soon_chip() ?> <span>More seasonal services are on the way. Tap one to get notified.</span></p>
+    <div class="svc-grid svc-grid--soon">
+<?php $i = 0; foreach ($soon as $slug => $sv): ?>
+      <article class="svc svc--locked" data-reveal style="--i:<?= $i++ ?>">
+        <a class="svc__media" href="<?= nu_e(nu_book_url($slug)) ?>" tabindex="-1" aria-hidden="true"><?= nu_photo($sv['photo'], $sv['alt'], ['sizes' => '(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 230px']) ?><span class="svc__lock"><?= nu_soon_chip() ?></span></a>
+        <div class="svc__body">
+          <h3><?= nu_e($sv['name']) ?></h3>
+          <a class="btn btn-outline btn-sm btn-block" href="<?= nu_e(nu_book_url($slug)) ?>" aria-label="<?= nu_e($sv['name']) ?>: coming soon, get notified">Get notified <?= nu_icon('bell') ?></a>
+        </div>
+      </article>
 <?php endforeach; ?>
+    </div>
+    <div class="svc-more svc-more--one">
       <a class="svc-wide svc-wide--post" href="<?= nu_e($postUrl) ?>" data-reveal>
         <span class="svc-wide__img"><?= nu_photo('other-jobs', '', ['sizes' => '140px', 'widths' => [400]]) ?></span>
         <span class="svc-wide__main"><span class="svc-wide__t">Other jobs</span><span class="svc-wide__s">Need something else? Post any job and get offers from local providers.</span><span class="svc-wide__cta"><?= nu_icon('plus-lg') ?> Post a job</span></span>
@@ -119,7 +130,7 @@ $addr = trim((string) ($_GET['address'] ?? ''));
   </div>
 
   <section class="steps4" id="how" aria-label="How it works">
-<?php foreach ([['search', 'Select a service', 'Choose from seasonal home and property services.'], ['calendar-check', 'Book', 'Pick your address, options and arrival window.'], ['bell', 'Receive updates', 'Live map, arrival alerts and chat with your team.'], ['image', 'View completed work', 'Before/after photos, checklist and invoice.']] as $n => $st): ?>
+<?php foreach ([['search', 'Select a service', 'Choose a seasonal service from a vetted local independent pro.'], ['calendar-check', 'Book', 'Pick your address, options and arrival window.'], ['bell', 'Receive updates', 'Live map, arrival alerts and chat with your team.'], ['image', 'View completed work', 'Before/after photos, checklist and invoice.']] as $n => $st): ?>
     <div class="step4" data-reveal style="--i:<?= $n ?>">
       <span class="step4__ic"><?= nu_icon($st[0]) ?></span>
       <div><div class="step4__t"><?= nu_e($st[1]) ?></div><p><?= nu_e($st[2]) ?></p></div>
@@ -130,7 +141,7 @@ $addr = trim((string) ($_GET['address'] ?? ''));
   <section class="plans" id="plans" aria-labelledby="plans-h">
     <div class="lsec-head lsec-head--center">
       <h2 id="plans-h" class="serif">Basic or Premium: your choice</h2>
-      <p class="muted">Available across Nuahn services. Premium adds provider reminders you confirm, change or skip.</p>
+      <p class="muted">Available on live Nuahn services. Premium adds provider reminders you confirm, change or skip.</p>
     </div>
     <div class="plans__grid">
 <?php foreach ($plans as $key => $pl): ?>
@@ -145,7 +156,7 @@ $addr = trim((string) ($_GET['address'] ?? ''));
           <li><?= nu_icon('check-lg') ?> <?= nu_e($pt) ?></li>
 <?php endforeach; ?>
         </ul>
-        <a class="btn <?= $key === 'premium' ? 'btn-primary' : 'btn-outline' ?> btn-block" href="<?= nu_e($key === 'premium' ? nu_url('public/plans.php') : nu_book_url('garbage-bin-cleaning')) ?>"><?= $key === 'premium' ? 'Set up a care plan' : 'Book a one-time service' ?></a>
+        <a class="btn <?= $key === 'premium' ? 'btn-primary' : 'btn-outline' ?> btn-block" href="<?= nu_e($key === 'premium' ? nu_url('public/plans.php') : nu_book_url('snow-removal')) ?>"><?= $key === 'premium' ? 'Set up a care plan' : 'Book a one-time service' ?></a>
       </article>
 <?php endforeach; ?>
     </div>

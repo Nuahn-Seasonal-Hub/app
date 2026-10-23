@@ -129,8 +129,8 @@ function nu_page_config() {
     $rel = ltrim(substr($script, strlen($root)), '/');
 
     $pages = [
-        'index.php'                    => ['title' => 'Every season. Every service. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
-        'public/index.php'             => ['title' => 'Every season. Every service. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
+        'index.php'                    => ['title' => 'Every season. Trusted local pros. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
+        'public/index.php'             => ['title' => 'Every season. Trusted local pros. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
         'public/auth.php'              => ['title' => 'Welcome', 'tab' => 'login', 'lean' => true],
         'public/login.php'             => ['title' => 'Sign in', 'tab' => 'login', 'lean' => true],
         'public/login_client.php'      => ['title' => 'Client sign in', 'tab' => 'login', 'lean' => true, 'sub' => true],
@@ -255,7 +255,7 @@ function nu_auth_head($title, $subtitle, $icon = 'person-circle', $navy = false)
 }
 
 /** Left brand panel of the auth layout. */
-function nu_auth_aside($headline = 'Every season. Every service. One hub.', $copy = 'Home and property services, all in one place. Reliable. Local. Built for Canadian seasons.') {
+function nu_auth_aside($headline = 'Every season. Trusted local pros. One hub.', $copy = 'A trusted marketplace connecting homeowners with vetted local independent pros. Built for Canadian seasons.') {
     echo '<aside class="auth__aside"><span class="auth__logo">' . nu_logo(40) . '</span>';
     echo '<h2>' . nu_e($headline) . '</h2><p>' . nu_e($copy) . '</p>';
     echo '<ul class="auth__list">';
@@ -448,6 +448,84 @@ function nu_service_slug($slug) {
 function nu_book_url($slug) { return nu_url('public/service.php') . '?s=' . rawurlencode(nu_service_slug($slug)); }
 /** Service record for a slug (aliases resolved), or null. */
 function nu_service($slug) { $all = nu_fixture('services'); return $all[nu_service_slug($slug)] ?? null; }
+
+/** True when a service is bookable ('live'). Unknown slugs count as not live. */
+function nu_service_live($slug) { $sv = nu_service($slug); return $sv !== null && ($sv['status'] ?? 'live') === 'live'; }
+/** Services filtered by status, keeping fixture order: nu_services_by_status('live') | ('coming_soon'). */
+function nu_services_by_status($status) {
+    return array_filter(nu_fixture('services'), function ($sv) use ($status) { return ($sv['status'] ?? 'live') === $status; });
+}
+/** "Coming soon" badge (locked services). */
+function nu_soon_chip($label = 'Coming soon') {
+    return '<span class="chip chip--soon">' . nu_icon('lock-fill') . nu_e($label) . '</span>';
+}
+
+/**
+ * Coming-soon state for a locked service: what to expect + a UI-only "Notify me when it launches" form.
+ * Used by public/service.php and public/book.php (direct hits). Nothing is stored or sent.
+ * Sir Paul: POST /api/notify {email, postal_code, service} when the endpoint exists (docs/UI-DATA-HOOKUP.md).
+ */
+function nu_soon_panel($slug, $sv) {
+    $done = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['notify_email'])
+        && filter_var(trim((string) $_POST['notify_email']), FILTER_VALIDATE_EMAIL);
+    $bad = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['notify_email']) && !$done;
+    $expect = [
+        ['shield-check', 'Vetted local independent pros', 'Every pro on Nuahn is reviewed before they can take jobs in your area.'],
+        ['cash-coin', 'Clear price before you confirm', 'See the price and the arrival window first. Nothing is charged until you confirm.'],
+        ['camera', 'Proof of work', 'Photos and a checklist land in your activity feed when the job is done.'],
+    ];
+    $live = nu_services_by_status('live');
+    ob_start(); ?>
+  <section class="soonp" aria-labelledby="soonp-h">
+    <div class="sv-card soonp__info">
+      <p class="soonp__tag"><?= nu_soon_chip() ?> <span>Not bookable yet</span></p>
+      <h2 id="soonp-h" class="soonp__h">What to expect from <?= nu_e($sv['name']) ?></h2>
+      <p class="soonp__lead"><?= nu_e($sv['blurb']) ?> We are opening Nuahn with <?= nu_e(implode(' and ', array_map(function ($x) { return $x['name']; }, $live))) ?> first. This service follows.</p>
+      <ul class="soonp__list">
+<?php foreach ($expect as $e): ?>
+        <li><span class="soonp__ic"><?= nu_icon($e[0]) ?></span><div><b><?= nu_e($e[1]) ?></b><span><?= nu_e($e[2]) ?></span></div></li>
+<?php endforeach; ?>
+      </ul>
+      <p class="soonp__meta"><?= nu_icon('calendar3') ?> Season: <?= nu_e($sv['season']) ?> <?= nu_sample_tag('Sample details') ?></p>
+    </div>
+    <div class="sv-card soonp__form">
+      <h2 class="soonp__h">Notify me when it launches</h2>
+      <p class="soonp__lead">Leave your email and we will tell you the day <?= nu_e($sv['name']) ?> opens in your area.</p>
+      <form class="soonp-form" method="post" action="#notify" id="notify" novalidate data-notify<?= $done ? ' hidden' : '' ?>>
+        <label class="label" for="soonp-email">Email address</label>
+        <input class="input" id="soonp-email" name="notify_email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+        <label class="label" for="soonp-zip">Postal code <span class="muted">(optional)</span></label>
+        <input class="input" id="soonp-zip" name="notify_postal" type="text" autocomplete="postal-code" placeholder="T5J 0N3" maxlength="7">
+        <p class="soonp-err" role="alert" data-err<?= $bad ? '' : ' hidden' ?>>Please enter a valid email address.</p>
+        <button class="btn btn-primary btn-lg btn-block" type="submit"><?= nu_icon('bell') ?> Notify me when it launches</button>
+        <p class="soonp__fine">We only use this to tell you about the launch. <?= nu_sample_tag('Preview only, nothing is stored') ?></p>
+      </form>
+      <div class="soonp-thanks" role="status" data-thanks<?= $done ? '' : ' hidden' ?>>
+        <span class="soonp-thanks__ic"><?= nu_icon('check-lg') ?></span>
+        <div><b>Thanks, we'll be in touch.</b><span>We will let you know when <?= nu_e($sv['name']) ?> is ready to book.</span></div>
+      </div>
+      <div class="soonp__alt">
+        <p>Need help now? Book one of the services launching first:</p>
+<?php foreach ($live as $ls => $lv): ?>
+        <a class="btn btn-outline btn-sm" href="<?= nu_e(nu_book_url($ls)) ?>"><?= nu_icon($lv['icon']) ?> <?= nu_e($lv['name']) ?></a>
+<?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+  <script>
+  (function () {
+    var f = document.querySelector('[data-notify]'), t = document.querySelector('[data-thanks]'), e = document.querySelector('[data-err]');
+    if (!f) return;
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var v = f.elements.notify_email.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { e.hidden = false; f.elements.notify_email.focus(); f.elements.notify_email.setAttribute('aria-invalid', 'true'); return; }
+      e.hidden = true; f.hidden = true; t.hidden = false; t.setAttribute('tabindex', '-1'); t.focus();
+    });
+  })();
+  </script>
+<?php return ob_get_clean();
+}
 
 /**
  * Shared booking / job status vocabulary (doc1 p8 "State and payment rules", doc2 p21).

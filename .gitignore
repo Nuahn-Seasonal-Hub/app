@@ -5,6 +5,9 @@
 # Sensitive config — copy config/db.example.php and fill in locally
 config/db.php
 
+# Preview-bypass secret for the public-domain gate (never commit; see docs/UI-DATA-HOOKUP.md)
+config/preview.local.php
+
 # SSL certificates
 ssl/
 

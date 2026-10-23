@@ -1,4 +1,6 @@
 <?php
+// Launch gate: public domain shows only the Coming Soon page until launch (includes/gate.php).
+require_once __DIR__ . '/gate.php';
 // UI design & front-end development: Christo Innocent
 //   Email: xristoinno@gmail.com | Phone: +256783335335
 // (Server-side comment only; never output to the browser.)
@@ -36,7 +38,7 @@ $bodyClass = [
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title><?= nu_e($nuPage['title']) ?> · Nuahn Seasonal Hub</title>
-  <meta name="description" content="Every season. Every service. One hub. Home and property services in one place: bin cleaning, mobile mechanics, detailing, snow removal, lawn care and more. Reliable. Local. Built for Canadian seasons.">
+  <meta name="description" content="Every season. One trusted hub. Nuahn is a marketplace connecting homeowners with vetted local independent pros for Canadian seasonal care. Winter snow removal and mobile mechanics launch first, end of November 2026, with more services coming soon.">
   <meta name="theme-color" content="#FFFFFF">
   <meta name="color-scheme" content="light dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -126,8 +128,13 @@ $bodyClass = [
 </header>
 <?php if ($nuRole === 'client' || !$nuLogged): ?>
 <div id="services-menu" class="sheet sheet--services" popover>
-<?php foreach (nu_fixture('services') as $nuSvSlug => $nuSv): ?>
+  <div class="sheet__label">Launching first, end of November</div>
+<?php foreach (nu_services_by_status('live') as $nuSvSlug => $nuSv): ?>
   <a class="menu-item" href="<?= nu_e(nu_book_url($nuSvSlug)) ?>"><?= nu_icon($nuSv['icon']) ?> <span><?= nu_e($nuSv['name']) ?><small><?= nu_e($nuSv['blurb']) ?></small></span></a>
+<?php endforeach; ?>
+  <div class="sheet__label">Coming soon</div>
+<?php foreach (nu_services_by_status('coming_soon') as $nuSvSlug => $nuSv): ?>
+  <a class="menu-item is-soon" href="<?= nu_e(nu_book_url($nuSvSlug)) ?>"><?= nu_icon($nuSv['icon']) ?> <span><?= nu_e($nuSv['name']) ?><small>Not bookable yet. Get notified when it launches.</small></span><?= nu_soon_chip() ?></a>
 <?php endforeach; ?>
   <div class="menu-sep"></div>
   <a class="menu-item" href="<?= nu_e(nu_url('public/mechanics.php')) ?>"><?= nu_icon('tools') ?> <span>Roadside help &amp; repairs<small>Mobile mechanic service menu</small></span></a>

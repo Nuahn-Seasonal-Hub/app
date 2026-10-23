@@ -207,3 +207,32 @@ Lifecycle, exceptions and payment chips, the doc2 p21 rule table (each row links
 | Operations | `public/operations.php` | ops | 19 |
 | Service settings | `public/service_settings.php` | services | 20 |
 | States reference | `public/status.php` | (none) | 21 |
+
+---
+
+# Phase 1: launch gate, coming-soon splash and locked services
+
+Public launch is end of November 2026 with two services live (Winter Snow Removal and Mobile Mechanics). The other four are "Coming soon". All of this is UI only; the sections below say what Sir Paul needs to connect.
+
+## 23. Launch gate: `includes/gate.php`
+
+- **What it does.** On the public hosts (`nuahnseasonalhub.com`, `www.nuahnseasonalhub.com`) every page request except the splash and its assets shows `public/coming_soon.php`. The home URL serves the splash; any other URL answers `302 /`. The full app stays reachable on the Hostinger temporary address (`lightslategrey-guanaco-876409.hostingersite.com`) and on localhost. Every non-public host also gets `X-Robots-Tag: noindex, nofollow`, and the splash adds `<meta name="robots" content="noindex">` only when it is not on the public domain.
+- **Preview bypass.** Open any URL on the public domain with `?preview=<key>`. The gate sets the `nu_preview` cookie (HttpOnly, Secure, SameSite=Lax, 30 days) and from then on that browser sees the full app. A plain-http preview request is redirected to https first so the cookie is never sent in the clear. A wrong key shows the splash. The cookie holds an HMAC of the key, never the key itself.
+- **Where the key lives.** It is never committed. It comes from the `NUAHN_PREVIEW_KEY` environment variable, or from the untracked, gitignored `config/preview.local.php` (copy `config/preview.example.php`). On Hostinger, `deploy.sh` writes `config/preview.local.php` into the build from the file `/workspace/notes/hostinger/preview_key` (mode 600, at least 24 characters), so `rsync --delete` can never remove it. The deploy checks list `/config/preview.local.php` as an expected 403. Rotate the key by replacing that file and redeploying; old cookies stop working.
+- **How it is loaded.** Every entry script (`public/*.php`, `public/admin/index.php`, `public/jobs/index.php`, `actions/*.php`, root `index.php`) does an explicit `require_once` of the gate before any other output, plus `config/init.php` and `includes/header.php` as a second line of defence. The gate is idempotent (`NU_GATE_DONE`) and does nothing under CLI. Docker also sets `auto_prepend_file = /var/www/html/includes/gate.php` in `docker/php-prod.ini`. Hostinger does not use `auto_prepend_file` on purpose: a wrong absolute path would be fatal on every request, so the explicit includes are the mechanism there. `deploy.sh` fails the build if any entry script is missing the gate. **If you add a new entry script, include the gate at the top.**
+- **Opening the site at launch.** Set `NUAHN_GATE_HOSTS` to `-` (real environment variable; if Hostinger cannot set one, change the default host list in `includes/gate.php`) and the gate lets everyone through. To gate other hosts, set it to a comma-separated list of hostnames. With the variable unset, the default is the two public hostnames.
+- **Cache note.** The gate sends `Cache-Control: no-store` on the splash and redirects and `private, no-cache` on gated responses so a CDN does not serve the splash to previewers or the app to visitors. Keep Hostinger's CDN or page cache from caching HTML for the public domain until launch.
+
+## 24. Service status flags: `fixtures/services.php`
+
+- Every service has `'status' => 'live' | 'coming_soon'` and a `'launch'` label. Today `snow-removal` and `mobile-mechanics` are `live`; `garbage-bin-cleaning`, `lawn-mowing`, `fall-cleanup` and `mobile-car-wash-at-home` are `coming_soon`.
+- Helpers in `includes/ui.php`: `nu_service_live($slug)`, `nu_services_by_status('live' | 'coming_soon')` and `nu_soon_chip($label)`. Use these instead of hard-coding slugs when you add anything that lists services.
+- **To launch a service:** flip its `status` to `live` (later, the database column that replaces the fixture). The home cards, services sheet, mobile Book tab, footer links, plans table, client home tiles and the service and booking pages all follow the flag with no other change.
+- **Locked behaviour:** a locked service shows the "Coming soon" badge, is not bookable, and links to `public/service.php?s=<slug>`. That page shows the hero, "What to expect" and a "Notify me when it launches" form instead of the booking form. A direct hit on `public/book.php?service=<locked slug>` (GET or POST) shows the same state. The server must also refuse locked services when real booking creation exists (reject any create call whose service is not `live`).
+- Sample bookings and care plans only use live services so a locked service never looks bookable. The activity, track and status pages and `fixtures/events.php`, `visits.php`, `provider_day.php` and `ops.php` still contain bin, lawn, fall and car wash sample data; it is hidden behind locked services but not yet removed.
+
+## 25. Notify-me forms (splash + locked service pages)
+
+- Both forms are UI only: they validate the email in the browser, show "Thanks, we'll be in touch" and **store nothing**. A no-JS POST shows the same thanks state without saving. The locked-service form carries a "Preview only, nothing is stored" tag.
+- To connect: send `{ email, postal_code (optional), service (slug, or "all" from the splash) }` to a new endpoint, store it with a consent timestamp, and return the same thanks state. The splash forms are `notify-hero` and `notify-cta` in `public/coming_soon.php`; the locked-service form is built by `nu_soon_panel()` in `includes/ui.php`.
+- The splash is self-contained (inline CSS, no app.css) so it stays fast. Its service cards read `status` and `launch` from `fixtures/services.php`, so flipping a service live updates the splash too.

@@ -10,12 +10,13 @@
 // Sir Paul: GET /api/services/{slug}, GET /api/bookings?service=&active=1, POST /api/bookings (review step = public/book.php).
 require_once("../config/init.php");
 
-$slug = nu_service_slug($_GET['s'] ?? $_GET['service'] ?? 'garbage-bin-cleaning');
+$slug = nu_service_slug($_GET['s'] ?? $_GET['service'] ?? 'snow-removal');
 $all = nu_fixture('services');
 if (!isset($all[$slug])) { $slug = array_key_first($all); }
 $sv = $all[$slug];
 $logged = isset($_SESSION['user_id']) && isRole('client');
-$visit = $logged ? (nu_fixture('visits')[$slug] ?? null) : null;
+$locked = !nu_service_live($slug); // coming soon: hero + what to expect + notify form, no booking
+$visit = ($logged && !$locked) ? (nu_fixture('visits')[$slug] ?? null) : null;
 // Premium panel only for an enrolled customer (doc2 p1). ?as=basic previews the Basic customer's view.
 $asBasic = ($_GET['as'] ?? '') === 'basic';
 $premium = $visit && ($visit['plan'] ?? '') === 'premium' && !$asBasic;
@@ -51,6 +52,9 @@ include_once("../includes/header.php");
   <section class="sv-hero">
     <?= nu_photo($sv['hero'], $sv['alt'], ['widths' => [640, 1024, 1600], 'sizes' => '(max-width: 900px) 100vw, 1200px', 'ratio' => 16 / 6, 'eager' => true, 'class' => 'sv-hero__img']) ?>
     <div class="sv-hero__in">
+<?php if ($locked): ?>
+      <p class="sv-soon"><?= nu_soon_chip() ?></p>
+<?php endif; ?>
 <?php if (!empty($sv['eyebrow'])): ?>
       <p class="sv-eyebrow"><?= !empty($sv['eyebrow_icon']) ? nu_icon($sv['eyebrow_icon']) : '' ?><?= nu_e($sv['eyebrow']) ?></p>
 <?php endif; ?>
@@ -70,10 +74,13 @@ include_once("../includes/header.php");
   </section>
 
   <nav class="svc-switch sv-switch" aria-label="Other services">
-<?php foreach ($all as $s2 => $o): ?>
-    <a href="<?= nu_e(nu_book_url($s2)) ?>"<?= $s2 === $slug ? ' aria-current="page"' : '' ?>><?= nu_icon($o['icon']) ?> <?= nu_e($o['short']) ?></a>
+<?php foreach (array_merge(nu_services_by_status('live'), nu_services_by_status('coming_soon')) as $s2 => $o): ?>
+    <a href="<?= nu_e(nu_book_url($s2)) ?>"<?= $s2 === $slug ? ' aria-current="page"' : '' ?><?= nu_service_live($s2) ? '' : ' class="is-soon"' ?>><?= nu_icon(nu_service_live($s2) ? $o['icon'] : 'lock-fill') ?> <?= nu_e($o['short']) ?></a>
 <?php endforeach; ?>
   </nav>
+<?php if ($locked): echo nu_soon_panel($slug, $sv); ?>
+</main>
+<?php include_once("../includes/footer.php"); return; endif; ?>
 
   <div class="sv-grid<?= $visit ? '' : ' sv-grid--guest' ?>">
     <!-- New booking (separate record from the current visit) -->

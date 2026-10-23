@@ -104,7 +104,7 @@ include_once("../includes/header.php");
         <p class="sv-tip"><?= nu_icon('people') ?><span>Available slots depend on team capacity.</span></p>
       </section>
       <div class="cp-rules">
-        <h3>Across all services</h3><p>The same Change appointment flow applies to mechanics, car washing, bins, lawn mowing and snow visits.</p>
+        <h3>Across all services</h3><p>The same Change appointment flow applies to mechanics and snow removal visits, and every service as it launches.</p>
         <h3>Keep the old slot</h3><p>Keep the existing booking until the new slot is reserved and confirmed. If capacity changes, ask for another slot.</p>
         <h3>Explain the impact</h3><p>Show old / new window, changed team, fees if any, and whether this visit or future plan preferences are affected.</p>
         <h3>After confirmation</h3><p>Notify customer and provider, release the old slot, update route / reminders and record the change in Activity.</p>

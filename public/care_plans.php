@@ -30,7 +30,7 @@ include_once("../includes/header.php");
         <p class="cp-meta"><?= nu_icon('envelope-check') ?> Sent <?= nu_e($rem['sent']) ?> by scheduled template · replies go to your <a href="<?= nu_e(nu_url('public/chat.php')) ?>?thread=t4">message thread</a></p>
         <div class="cp-acts" data-reminder-acts>
           <a class="btn btn-primary" href="<?= nu_e(nu_url('public/book.php')) ?>?service=<?= nu_e($rem['service']) ?>&amp;from=reminder">Confirm a visit</a>
-          <a class="btn btn-soft" href="<?= nu_e(nu_url('public/change_appointment.php')) ?>?id=WASH-1048&amp;reminder=1">Change date</a>
+          <a class="btn btn-soft" href="<?= nu_e(nu_url('public/change_appointment.php')) ?>?id=MECH-1042&amp;reminder=1">Change date</a>
           <button class="btn btn-soft" type="button" data-skip>Skip this month</button>
         </div>
         <p class="sv-prem__done" data-skipped hidden><?= nu_icon('check-circle-fill') ?> Skipped for this cycle only. Your plan stays active. <button type="button" class="linkbtn" data-unskip>Undo</button></p>

@@ -65,7 +65,7 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
     <section class="pl-rem ch-home-rem" data-reveal aria-label="Premium reminder">
       <span class="pl-ic"><?= nu_icon($svcs[$rem['service']]['icon']) ?></span>
       <div class="pl-rem__t"><b><?= nu_e($rem['title']) ?></b><span><?= nu_e($rem['provider']) ?>: <?= nu_e($rem['text']) ?></span></div>
-      <div class="pl-rem__a"><a class="btn btn-primary btn-sm" href="book.php?service=<?= nu_e($rem['service']) ?>&amp;from=reminder">Confirm a visit</a><a class="btn btn-outline btn-sm" href="change_appointment.php?id=WASH-1048&amp;reminder=1">Change date</a><a class="btn btn-outline btn-sm" href="care_plans.php">Skip this month</a></div>
+      <div class="pl-rem__a"><a class="btn btn-primary btn-sm" href="book.php?service=<?= nu_e($rem['service']) ?>&amp;from=reminder">Confirm a visit</a><a class="btn btn-outline btn-sm" href="change_appointment.php?id=MECH-1042&amp;reminder=1">Change date</a><a class="btn btn-outline btn-sm" href="care_plans.php">Skip this month</a></div>
     </section>
     <a class="se-wx ch-home-snow" href="snow_event.php" data-reveal><?= nu_icon('cloud-snow') ?><span><b>Snow event confirmed for your area</b> Team A is assigned to #SNOW-1045. Busy? Ask them to come later. <?= nu_icon('arrow-right') ?></span></a>
 <?php endif; ?>
@@ -73,6 +73,23 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
         <div class="stat" data-reveal style="--i:0"><span class="stat__icon"><?= nu_icon('briefcase-fill') ?></span><div><div class="stat__label">Jobs posted</div><div class="stat__value" data-count="<?= $myJobs ?>"><?= $myJobs ?></div></div></div>
         <div class="stat" data-reveal style="--i:1"><span class="stat__icon stat__icon--success"><?= nu_icon('lightning-charge-fill') ?></span><div><div class="stat__label">Open now</div><div class="stat__value" data-count="<?= $myOpen ?>"><?= $myOpen ?></div></div></div>
         <div class="stat" data-reveal style="--i:2"><span class="stat__icon stat__icon--navy"><?= nu_icon('people-fill') ?></span><div><div class="stat__label">Applicants</div><div class="stat__value" data-count="<?= $received ?>"><?= $received ?></div></div></div>
+    </div>
+
+    <div class="section-title"><h2>Book a service</h2></div>
+    <div class="grid grid-2 ch-svcs">
+<?php $ti = 0; foreach (nu_services_by_status('live') as $sl => $sv): ?>
+        <a class="tile" href="<?= nu_e(nu_book_url($sl)) ?>" data-reveal style="--i:<?= $ti++ ?>">
+            <span class="tile__icon"><?= nu_icon($sv['icon']) ?></span>
+            <span><span class="tile__title" style="display:block"><?= nu_e($sv['name']) ?></span><span class="tile__text"><?= nu_e($sv['blurb']) ?></span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+<?php endforeach; foreach (nu_services_by_status('coming_soon') as $sl => $sv): ?>
+        <a class="tile tile--soon" href="<?= nu_e(nu_book_url($sl)) ?>" data-reveal style="--i:<?= $ti++ ?>">
+            <span class="tile__icon tile__icon--soft"><?= nu_icon($sv['icon']) ?></span>
+            <span><span class="tile__title" style="display:block"><?= nu_e($sv['name']) ?> <?= nu_soon_chip() ?></span><span class="tile__text">Not bookable yet. Get notified when it launches.</span></span>
+            <span class="tile__chev"><?= nu_icon('chevron-right') ?></span>
+        </a>
+<?php endforeach; ?>
     </div>
 
     <div class="section-title"><h2>Quick actions</h2></div>

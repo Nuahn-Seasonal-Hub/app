@@ -2,10 +2,13 @@
 // fixtures/services.php: SAMPLE DATA ONLY (UI preview). Sir Paul: replace with GET /api/services
 // (service configuration: forms, price / quote rule, equipment, plan terms, weather rules, checklist).
 // One entry per service page (public/service.php?s=<slug>). The six services follow the client guide (doc2 p1-8).
+// status: 'live' (bookable) | 'coming_soon' (locked: badge, service page with a notify form, no booking). Public launch end of Nov 2026
+//   goes live with snow-removal + mobile-mechanics only. Flip a status to 'live' to open a service.
 // form[] field types: address | select | number | checks | radios | cards | utility | vehicle | text | textarea | upload | window
 //   half => true puts two fields side by side. Values are illustrative; Nuahn configures the real ones.
 return [
     'garbage-bin-cleaning' => [
+        'status' => 'coming_soon', 'launch' => 'Coming soon',
         'name' => 'Garbage Bin Cleaning', 'short' => 'Bins', 'icon' => 'trash', 'code' => 'BIN',
         'photo' => 'garbage-can-cleaning', 'hero' => 'svc-garbage-bin-cleaning', 'alt' => 'Two green wheelie bins beside a white fence',
         'eyebrow' => 'Garbage bin cleaning', 'headline' => 'Clean bins, right at your home', 'lead' => 'A cleaner, fresher home starts at the curb.',
@@ -37,9 +40,10 @@ return [
         'season' => 'All year', 'weather' => 'Frozen taps can affect washing',
     ],
     'mobile-mechanics' => [
+        'status' => 'live', 'launch' => 'End of November 2026',
         'name' => 'Mobile Mechanics', 'short' => 'Mechanic', 'icon' => 'wrench-adjustable', 'code' => 'MECH',
         'photo' => 'mobile-mechanic', 'hero' => 'svc-mobile-mechanics', 'alt' => 'Mechanic working on a car engine',
-        'eyebrow' => 'Mobile mechanics', 'headline' => 'Vehicle care at your location', 'lead' => 'Professional mobile mechanics come to you, at home, at work, or wherever it’s convenient.',
+        'eyebrow' => 'Mobile mechanics', 'headline' => 'Vehicle care at your location', 'lead' => 'Vetted independent mobile mechanics come to you, at home, at work, or wherever it’s convenient.',
         'perks' => [['house', 'Convenient at your location'], ['shield-check', 'Skilled, professional mechanics'], ['gear-fill', 'A wide range of vehicle services']],
         'tagline' => 'Repairs and roadside help where your car is.', 'blurb' => 'Roadside help, maintenance and repairs, quoted before work starts.',
         'price' => 89, 'unit' => 'call-out / diagnostic', 'pricing' => 'quote',
@@ -65,9 +69,10 @@ return [
         'season' => 'All year', 'weather' => 'Snow can alter vehicle access',
     ],
     'snow-removal' => [
+        'status' => 'live', 'launch' => 'End of November 2026',
         'name' => 'Winter Snow Removal', 'short' => 'Snow', 'icon' => 'snow', 'code' => 'SNOW',
         'photo' => 'snow-removal', 'hero' => 'svc-snow-removal', 'alt' => 'Snow plow truck clearing a snowy road',
-        'eyebrow' => 'Winter snow removal', 'headline' => 'Snow cleared at your home, on your schedule.', 'lead' => 'Professional snow removal for a safer, more accessible home during winter.',
+        'eyebrow' => 'Winter snow removal', 'headline' => 'Snow cleared at your home, on your schedule.', 'lead' => 'Vetted local independent pros keep your driveway and walkway clear for a safer, more accessible winter.',
         'perks' => [['snow', 'Winter Snow Removal']],
         'tagline' => 'Driveways, walkways and steps cleared.', 'blurb' => 'Driveway, walkway and steps, with snowfall updates and later-visit requests.',
         'price' => 45, 'unit' => 'per clearing', 'pricing' => 'fixed',
@@ -92,6 +97,7 @@ return [
         'season' => 'Winter', 'weather' => 'Snow events trigger dispatch review',
     ],
     'fall-cleanup' => [
+        'status' => 'coming_soon', 'launch' => 'Coming soon',
         'name' => 'Fall Cleanup', 'short' => 'Fall', 'icon' => 'tree', 'code' => 'FALL',
         'photo' => 'summer-cleanup', 'hero' => 'svc-fall-cleanup', 'alt' => 'Worker raking autumn leaves',
         'eyebrow' => 'Fall cleanup', 'headline' => 'Book your fall cleanup', 'lead' => 'Leaves, yard debris and seasonal cleanup at your home.',
@@ -121,6 +127,7 @@ return [
         'season' => 'Fall', 'weather' => 'Wet leaves and high wind can delay work',
     ],
     'lawn-mowing' => [
+        'status' => 'coming_soon', 'launch' => 'Coming soon',
         'name' => 'Lawn Mowing', 'short' => 'Lawn', 'icon' => 'scissors', 'code' => 'LAWN',
         'photo' => 'lawn-mowing', 'hero' => 'svc-lawn-mowing', 'alt' => 'Lawn mower cutting sunlit green grass',
         'eyebrow' => 'Lawn Mowing', 'eyebrow_icon' => 'tree', 'headline' => 'A cared-for lawn, at your home', 'lead' => 'Professional lawn mowing, edging and clippings removal, so you can enjoy a tidy outdoor space.',
@@ -151,6 +158,7 @@ return [
         'season' => 'Spring – Fall', 'weather' => 'Wet ground can delay mowing',
     ],
     'car-wash' => [
+        'status' => 'coming_soon', 'launch' => 'Coming soon',
         'name' => 'Mobile Car Wash at Home', 'short' => 'Car wash', 'icon' => 'car-front', 'code' => 'WASH',
         'photo' => 'mobile-detailing', 'hero' => 'svc-car-wash', 'alt' => 'Car covered in foam during a driveway wash',
         'eyebrow' => 'Mobile car wash at home', 'headline' => 'We come to your home to wash your car.', 'lead' => 'Professional car care at your doorstep. Convenient. Thorough. Hassle-free.',

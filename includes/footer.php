@@ -15,12 +15,15 @@ $nuNav = nu_nav_items();
     <div class="footer-grid">
       <div>
         <a class="brand" href="<?= nu_e(nu_url('public/index.php')) ?>"><?= nu_logo(38) ?></a>
-        <p>Home and property services, all in one place. Reliable. Local. Built for Canadian seasons.</p>
+        <p>A trusted marketplace connecting homeowners with vetted local independent pros. Built for Canadian seasons.</p>
       </div>
       <div>
         <h2 class="footer-h">Explore</h2>
         <ul>
           <li><a href="<?= nu_e(nu_url('public/index.php#services')) ?>">Our services</a></li>
+<?php foreach (array_merge(nu_services_by_status('live'), nu_services_by_status('coming_soon')) as $nuFsSlug => $nuFsv): ?>
+          <li><a href="<?= nu_e(nu_book_url($nuFsSlug)) ?>"><?= nu_e($nuFsv['name']) ?></a><?= nu_service_live($nuFsSlug) ? '' : ' <span class="foot-soon">Coming soon</span>' ?></li>
+<?php endforeach; ?>
           <li><a href="<?= nu_e(nu_url('public/plans.php')) ?>">Basic &amp; Premium</a></li>
           <li><a href="<?= nu_e(nu_url('public/mechanics.php')) ?>">Roadside help &amp; repairs</a></li>
           <li><a href="<?= nu_e(nu_url('public/index.php#how')) ?>">How it works</a></li>
@@ -44,7 +47,7 @@ $nuNav = nu_nav_items();
     </div>
     <div class="footer-bottom">
       <span>© <?= date('Y') ?> Nuahn Seasonal Hub. All rights reserved.</span>
-      <span>Every season. Every service. One hub.</span>
+      <span>Every season. Trusted local pros. One hub.</span>
     </div>
   </div>
 </footer>
@@ -53,10 +56,11 @@ $nuNav = nu_nav_items();
 <?php foreach ($nuNav as $item):
     $active = $item[0] === $nuPage['tab'];
     $primary = !empty($item[5]); ?>
-  <a class="tab<?= $primary ? ' tab--primary' : '' ?>" href="<?= nu_e($item[2]) ?>"<?= $active ? ' aria-current="page"' : '' ?>>
+<?php $nuTabSheet = ($item[0] === 'book' && nu_role() === 'client'); /* Book tab opens the services sheet (live first, then Coming soon) */ ?>
+  <<?= $nuTabSheet ? 'button type="button" popovertarget="services-menu"' : 'a href="' . nu_e($item[2]) . '"' ?> class="tab<?= $primary ? ' tab--primary' : '' ?>"<?= $active ? ' aria-current="page"' : '' ?>>
     <span class="tab__icon"><?= nu_icon($item[3], 'ic-off') ?><?= nu_icon($item[4], 'ic-on') ?></span>
     <span><?= nu_e($item[1]) ?></span><?php if ($item[0] === 'messages' && nu_unread_count()): ?><span class="tab__dot" aria-label="unread"></span><?php endif; ?>
-  </a>
+  </<?= $nuTabSheet ? 'button' : 'a' ?>>
 <?php endforeach; ?>
 </nav>
 

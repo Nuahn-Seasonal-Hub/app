@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../../includes/gate.php'; ?>
 <td>
   <?php if ($job['latitude'] && $job['longitude']): ?>
     <a href="https://www.google.com/maps?q=<?php echo $job['latitude']; ?>,<?php echo $job['longitude']; ?>" target="_blank">View Location</a>

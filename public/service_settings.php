@@ -12,8 +12,8 @@ requireLogin(['manager', 'admin', 'superadmin']);
 
 $services = nu_fixture('services');
 $new = !empty($_GET['new']);
-$slug = nu_service_slug((string) ($_GET['s'] ?? 'car-wash'));
-if (!isset($services[$slug])) $slug = 'car-wash';
+$slug = nu_service_slug((string) ($_GET['s'] ?? 'snow-removal'));
+if (!isset($services[$slug])) $slug = 'snow-removal';
 $s = $services[$slug];
 $u = function ($p) { return nu_url('public/' . $p); };
 $nav = [

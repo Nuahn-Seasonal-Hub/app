@@ -1,4 +1,6 @@
 <?php
+// Launch gate: public domain shows only the Coming Soon page until launch (includes/gate.php).
+require_once __DIR__ . '/../includes/gate.php';
 require_once "../config/db.php";
 require_once "../includes/flash_helper.php";
 if (session_status() === PHP_SESSION_NONE) { session_start(); }

@@ -14,11 +14,18 @@ include_once("../includes/header.php");
 <main class="pl" id="plans">
   <div class="pl-head">
     <h1>Basic or Premium. Your choice.</h1>
-    <p>Available across Nuahn services. Select a service and see its plan details.</p>
+    <p>Available on live Nuahn services. Select a service and see its plan details.</p>
     <label class="pl-svc"><span class="sr-only">Service</span><select class="input" data-plan-svc>
-<?php foreach ($services as $s => $o): ?>
-      <option value="<?= nu_e($s) ?>"<?= $s === 'car-wash' ? ' selected' : '' ?>><?= nu_e($o['name']) ?></option>
+      <optgroup label="Launching first, end of November">
+<?php foreach (nu_services_by_status('live') as $s => $o): ?>
+        <option value="<?= nu_e($s) ?>"<?= $s === 'snow-removal' ? ' selected' : '' ?>><?= nu_e($o['name']) ?></option>
 <?php endforeach; ?>
+      </optgroup>
+      <optgroup label="Coming soon">
+<?php foreach (nu_services_by_status('coming_soon') as $s => $o): ?>
+        <option value="<?= nu_e($s) ?>" disabled><?= nu_e($o['name']) ?> (coming soon)</option>
+<?php endforeach; ?>
+      </optgroup>
     </select></label>
   </div>
   <div class="pl-grid">
@@ -33,7 +40,7 @@ include_once("../includes/header.php");
         <li><?= nu_icon('check-lg') ?>Message, reschedule and view receipts</li>
         <li><?= nu_icon('check-lg') ?>No ongoing care plan</li>
       </ul>
-      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_book_url('car-wash')) ?>" data-plan-link="basic">Book a one-time service <?= nu_icon('arrow-right') ?></a>
+      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_book_url('snow-removal')) ?>" data-plan-link="basic">Book a one-time service <?= nu_icon('arrow-right') ?></a>
     </section>
     <section class="pl-card pl-card--prem">
       <span class="pl-ic"><?= nu_icon('arrow-repeat') ?></span>
@@ -46,16 +53,16 @@ include_once("../includes/header.php");
         <li><?= nu_icon('check-lg') ?>Manage an ongoing care plan</li>
         <li><?= nu_icon('check-lg') ?>Track every visit and message your team</li>
       </ul>
-      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_book_url('car-wash')) ?>&amp;plan=premium" data-plan-link="premium">Set up a care plan <?= nu_icon('arrow-right') ?></a>
+      <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_book_url('snow-removal')) ?>&amp;plan=premium" data-plan-link="premium">Set up a care plan <?= nu_icon('arrow-right') ?></a>
     </section>
   </div>
 <?php if ($logged): ?>
   <section class="pl-rem" data-reminder>
     <span class="pl-ic"><?= nu_icon('car-front') ?></span>
-    <div class="pl-rem__t"><b>Your monthly car-care reminder</b><span>Would you like to book this month’s car wash?</span></div>
+    <div class="pl-rem__t"><b>Your seasonal vehicle check-in</b><span>Would you like to book a pre-winter vehicle check?</span></div>
     <div class="pl-rem__a" data-reminder-acts>
-      <a class="btn btn-primary" href="<?= nu_e(nu_url('public/book.php')) ?>?service=car-wash&amp;from=reminder">Confirm a visit</a>
-      <a class="btn btn-outline" href="<?= nu_e(nu_url('public/change_appointment.php')) ?>?id=WASH-1048&amp;reminder=1">Change date</a>
+      <a class="btn btn-primary" href="<?= nu_e(nu_url('public/book.php')) ?>?service=mobile-mechanics&amp;from=reminder">Confirm a visit</a>
+      <a class="btn btn-outline" href="<?= nu_e(nu_url('public/change_appointment.php')) ?>?id=MECH-1042&amp;reminder=1">Change date</a>
       <button class="btn btn-outline" type="button" data-skip>Skip this month</button>
     </div>
     <p class="sv-prem__done" data-skipped hidden><?= nu_icon('check-circle-fill') ?> Skipped for this month. <button type="button" class="linkbtn" data-unskip>Undo</button></p>
@@ -78,8 +85,8 @@ include_once("../includes/header.php");
     <div class="table-wrap"><table class="table">
       <thead><tr><th>Service</th><th>Basic</th><th>Premium</th></tr></thead>
       <tbody>
-<?php foreach ($services as $s => $o): [$b, $p] = array_pad(explode(' / ', $o['plans'], 2), 2, ''); ?>
-        <tr><td><a href="<?= nu_e(nu_book_url($s)) ?>"><?= nu_icon($o['icon']) ?> <?= nu_e($o['name']) ?></a></td><td><?= nu_e(ucfirst($b)) ?></td><td><?= nu_e(ucfirst($p)) ?></td></tr>
+<?php foreach (array_merge(nu_services_by_status('live'), nu_services_by_status('coming_soon')) as $s => $o): [$b, $p] = array_pad(explode(' / ', $o['plans'], 2), 2, ''); ?>
+        <tr<?= nu_service_live($s) ? '' : ' class="is-soon"' ?>><td><a href="<?= nu_e(nu_book_url($s)) ?>"><?= nu_icon($o['icon']) ?> <?= nu_e($o['name']) ?></a><?= nu_service_live($s) ? '' : ' ' . nu_soon_chip() ?></td><td><?= nu_e(ucfirst($b)) ?></td><td><?= nu_e(ucfirst($p)) ?></td></tr>
 <?php endforeach; ?>
       </tbody>
     </table></div>

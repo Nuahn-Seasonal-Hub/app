@@ -10,10 +10,16 @@
 // hosted / tokenized payment authorization). See docs/UI-DATA-HOOKUP.md.
 require_once("../config/init.php");
 
-$slug = nu_service_slug($_GET['service'] ?? $_POST['service'] ?? 'garbage-bin-cleaning');
+$slug = nu_service_slug($_GET['service'] ?? $_POST['service'] ?? 'snow-removal');
 $services = nu_fixture('services');
 if (!isset($services[$slug])) { $slug = array_key_first($services); }
 $sv = $services[$slug];
+if (!nu_service_live($slug)) { // Direct hit for a locked service: same coming-soon state as the service page, never a booking
+    include_once("../includes/header.php");
+    echo '<main class="rv soonp-page" id="book"><header class="soonp-head"><h1>' . nu_e($sv['name']) . '</h1>' . nu_soon_chip() . '</header>' . nu_soon_panel($slug, $sv) . '</main>';
+    include_once("../includes/footer.php");
+    return;
+}
 $logged = isset($_SESSION['user_id']);
 $confirmed = $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['confirm'] ?? '') === '1';
 $fromReminder = ($_GET['from'] ?? '') === 'reminder';
