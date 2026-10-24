@@ -18,6 +18,8 @@ $nuLogged = isset($_SESSION['user_id']);
 $nuNav    = nu_nav_items();
 $nuTheme  = (isset($_SESSION['theme']) && $_SESSION['theme'] === 'dark') ? 'dark' : 'light';
 $nuUnread = nu_unread_count();
+$nuSeason = nu_season();
+$nuPal    = nu_season_palette($nuSeason);
 $nuIsTab  = false;
 foreach ($nuNav as $item) { if ($item[0] === $nuPage['tab']) { $nuIsTab = true; } }
 
@@ -33,13 +35,13 @@ $bodyClass = [
     $nuPage['console'] ? 'is-console' : '',
 ];
 ?><!DOCTYPE html>
-<html lang="en" data-theme="<?= $nuTheme ?>" data-bs-theme="<?= $nuTheme ?>">
+<html lang="en" data-season="<?= $nuSeason ?>" data-theme="<?= $nuTheme ?>" data-bs-theme="<?= $nuTheme ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title><?= nu_e($nuPage['title']) ?> · Nuahn Seasonal Hub</title>
   <meta name="description" content="Every season. One trusted hub. Nuahn is a marketplace connecting homeowners with vetted local independent pros for Canadian seasonal care. Winter snow removal and mobile mechanics launch first, end of November 2026, with more services coming soon.">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="<?= $nuPal['brand'] ?>">
   <meta name="color-scheme" content="light dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -52,7 +54,7 @@ $bodyClass = [
   <link rel="icon" type="image/png" sizes="16x16" href="<?= nu_asset('public/assets/img/favicon-16.png') ?>">
   <link rel="apple-touch-icon" href="<?= nu_asset('public/assets/img/icon-180.png') ?>">
   <link rel="preload" href="<?= nu_url('public/assets/fonts/jakarta-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="<?= nu_url('public/assets/fonts/dmserif-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="<?= nu_url('public/assets/fonts/outfit-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
 <?php if (!empty($GLOBALS['nuPreload'])): echo '  ' . $GLOBALS['nuPreload'] . "\n"; endif; ?>
   <script>
     (function (d) {

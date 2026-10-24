@@ -26,6 +26,8 @@ $blurb = [
     'mobile-mechanics' => 'Roadside help, maintenance and repairs at your door. Get a quote from a vetted independent mechanic before any work starts.',
 ];
 $u = function ($p) { return nu_url($p); };
+$season = nu_season();
+$pal = nu_season_palette($season);
 $ph = $u('public/assets/img/photos/');
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
@@ -45,7 +47,7 @@ $form = function ($id) use ($thanks, $bad) {
 </form>
 <?php return ob_get_clean(); };
 ?><!DOCTYPE html>
-<html lang="en-CA">
+<html lang="en-CA" data-season="<?= $season ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -53,7 +55,7 @@ $form = function ($id) use ($thanks, $bad) {
 <meta name="description" content="Nuahn is a trusted marketplace connecting homeowners with vetted local independent pros for Canadian seasonal care. Winter snow removal and mobile mechanics launch first, end of November 2026.">
 <?php if ($noindex): ?><meta name="robots" content="noindex">
 <?php endif; ?>
-<meta name="theme-color" content="#0A4D4A">
+<meta name="theme-color" content="<?= $pal['navy'] ?>">
 <meta property="og:title" content="Nuahn Seasonal Hub: coming soon">
 <meta property="og:description" content="Trusted local independent pros for Canadian seasonal care. Launching end of November 2026.">
 <meta property="og:type" content="website">
@@ -63,14 +65,18 @@ $form = function ($id) use ($thanks, $bad) {
 <link rel="icon" type="image/png" sizes="16x16" href="<?= nu_asset('public/assets/img/favicon-16.png') ?>">
 <link rel="manifest" href="<?= nu_asset('public/assets/manifest.webmanifest') ?>">
 <link rel="apple-touch-icon" href="<?= nu_asset('public/assets/img/icon-180.png') ?>">
-<link rel="preload" href="<?= $u('public/assets/fonts/dmserif-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="<?= $u('public/assets/fonts/outfit-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="<?= $u('public/assets/fonts/jakarta-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"Jakarta";src:url("<?= $u('public/assets/fonts/jakarta-latin.woff2') ?>") format("woff2");font-weight:200 800;font-display:swap}
-@font-face{font-family:"DM Serif Display";src:url("<?= $u('public/assets/fonts/dmserif-latin.woff2') ?>") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Outfit";src:url("<?= $u('public/assets/fonts/outfit-latin.woff2') ?>") format("woff2");font-weight:500 700;font-display:swap}
 @font-face{font-family:"Jakarta Fallback";src:local("Arial");size-adjust:104%;ascent-override:93%;descent-override:22%;line-gap-override:0%}
 :root{--teal:#11706D;--teal-d:#0B5A57;--pine:#0A4D4A;--pine-d:#062A28;--ink:#13201F;--ink2:#36443F;--muted:#5D6B67;--line:#E1E9E6;--bg:#F2F6F5;--tint:#EDF6F4;--tint2:#DCEFEC;--mint:#9FD3CD;
---font:"Jakarta","Jakarta Fallback",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--serif:"DM Serif Display",Georgia,"Times New Roman",serif;--ease:cubic-bezier(.2,.7,.2,1)}
+--font:"Jakarta","Jakarta Fallback",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--serif:"Outfit",system-ui,Arial,sans-serif;--ease:cubic-bezier(.2,.7,.2,1)}
+/* season palette: one brand colour per season, deeper shades of the same hue for text and dark panels */
+:root{--season:<?= $pal['brand'] ?>;--teal:<?= $pal['text'] ?>;--teal-d:<?= $pal['deep'] ?>;--pine:<?= $pal['deep'] ?>;--pine-d:<?= $pal['night'] ?>;--tint:<?= $pal['tint'] ?>;--tint2:<?= $pal['tint2'] ?>;--mint:<?= $pal['soft'] ?>;--night-rgb:<?= implode(',', array_map('hexdec', str_split(ltrim($pal['night'], '#'), 2))) ?>}
+h1,.sec__h,.card__t{font-weight:600!important;letter-spacing:-.015em}
+.nf__btn{background:var(--season)!important;color:#13201F!important}.nf__btn:hover{filter:brightness(.94)}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -88,7 +94,7 @@ h1,h2,h3,p{margin:0}
 .hero__bg,.hero__bg img{position:absolute;inset:0;width:100%;height:100%}
 .hero__bg{z-index:-3}
 .hero__bg img{object-fit:cover;object-position:62% 50%;transform:scale(1.04);animation:kb 22s var(--ease) both alternate infinite}
-.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(6,42,40,.62) 0%,rgba(6,42,40,.38) 36%,rgba(6,42,40,.88) 100%),linear-gradient(90deg,rgba(6,42,40,.6),rgba(6,42,40,0) 72%)}
+.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(var(--night-rgb),.62) 0%,rgba(var(--night-rgb),.38) 36%,rgba(var(--night-rgb),.88) 100%),linear-gradient(90deg,rgba(var(--night-rgb),.6),rgba(var(--night-rgb),0) 72%)}
 .snow{position:absolute;inset:-10% 0 0;z-index:-1;pointer-events:none;opacity:.8;
 background-image:radial-gradient(2px 2px at 20px 30px,#fff,transparent),radial-gradient(2px 2px at 90px 120px,rgba(255,255,255,.85),transparent),radial-gradient(3px 3px at 160px 60px,rgba(255,255,255,.9),transparent),radial-gradient(1.5px 1.5px at 230px 170px,#fff,transparent),radial-gradient(2.5px 2.5px at 300px 20px,rgba(255,255,255,.8),transparent);
 background-size:340px 240px;animation:snow 16s linear infinite}

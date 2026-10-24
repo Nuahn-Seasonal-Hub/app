@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var route = JSON.parse(el.dataset.route), home = JSON.parse(el.dataset.home);
   var map = L.map(el, { zoomControl: false, attributionControl: true, scrollWheelZoom: false }).fitBounds(route, { padding: [36, 36] });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-  L.polyline(route, { color: '#11706D', weight: 4, opacity: .9, dashArray: '2 8', lineCap: 'round' }).addTo(map);
+  L.polyline(route, { color: (getComputedStyle(document.documentElement).getPropertyValue('--teal').trim() || '#11706D'), weight: 4, opacity: .9, dashArray: '2 8', lineCap: 'round' }).addTo(map);
   var hIc = L.divIcon({ className: '', html: '<div class="home-marker"><svg viewBox="0 0 16 16"><path d="M8.7 1.5a1 1 0 0 0-1.4 0L.6 8.1a.5.5 0 0 0 .7.7L2 8.2v5.3A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.2l.6.6a.5.5 0 0 0 .7-.7z"/></svg></div>', iconSize: [30, 30], iconAnchor: [15, 30] });
   L.marker(home, { icon: hIc, keyboard: false }).addTo(map);
   var vIc = L.divIcon({ className: '', html: '<div class="veh-marker' + (el.dataset.stale ? ' is-stale' : '') + '"><svg viewBox="0 0 16 16"><path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h9A1.5 1.5 0 0 1 12 3.5V5h1.02a1.5 1.5 0 0 1 1.17.56l1.48 1.85a1.5 1.5 0 0 1 .33.94V10.5a1.5 1.5 0 0 1-1.5 1.5H14a2 2 0 1 1-4 0H5a2 2 0 1 1-4 0 1 1 0 0 1-1-1zm1.29 7.25a2 2 0 0 1 3.42 0h5.58a2 2 0 0 1 2.71-.73V3.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .29.25zM12 10a2 2 0 0 1 1.73 1h.77a.5.5 0 0 0 .5-.5V8h-3z"/></svg></div>', iconSize: [38, 38], iconAnchor: [19, 19] });

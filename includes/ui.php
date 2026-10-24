@@ -428,6 +428,40 @@ function nu_photo($name, $alt, $opts = []) {
 }
 
 /**
+ * Seasonal theme. Each season has one primary colour from the brand sheet; the whole UI follows it.
+ * Season by date (Alberta, northern hemisphere): Winter Dec-Feb, Spring Mar-May, Summer Jun-Aug, Fall Sep-Nov.
+ * Review override: ?season=winter|spring|summer|fall sets a sticky cookie; ?season=auto clears it. Presentation only.
+ */
+function nu_season() {
+    static $s = null;
+    if ($s !== null) { return $s; }
+    $all = ['winter', 'spring', 'summer', 'fall'];
+    $q = isset($_GET['season']) ? strtolower((string) $_GET['season']) : '';
+    if (in_array($q, $all, true)) {
+        if (!headers_sent()) { setcookie('nu_season', $q, ['expires' => time() + 30 * 86400, 'path' => '/', 'samesite' => 'Lax']); }
+        return $s = $q;
+    }
+    if ($q === 'auto') {
+        if (!headers_sent()) { setcookie('nu_season', '', ['expires' => time() - 3600, 'path' => '/', 'samesite' => 'Lax']); }
+    } elseif (isset($_COOKIE['nu_season']) && in_array($_COOKIE['nu_season'], $all, true)) {
+        return $s = $_COOKIE['nu_season'];
+    }
+    $m = (int) (new DateTime('now', new DateTimeZone('America/Edmonton')))->format('n');
+    return $s = ($m === 12 || $m <= 2) ? 'winter' : ($m <= 5 ? 'spring' : ($m <= 8 ? 'summer' : 'fall'));
+}
+
+/** Season palette: the brand colour plus deeper shades of the same hue, used where text needs contrast. */
+function nu_season_palette($season = null) {
+    $p = [
+        'winter' => ['brand' => '#4FB3E8', 'text' => '#1678AB', 'deep' => '#0F5073', 'navy' => '#08293A', 'night' => '#061C28', 'tint' => '#EDF7FD', 'tint2' => '#DBEFFA', 'soft' => '#8ECEF0'],
+        'spring' => ['brand' => '#6BCB3D', 'text' => '#418022', 'deep' => '#2B5617', 'navy' => '#1A340E', 'night' => '#12240A', 'tint' => '#F3FBEF', 'tint2' => '#E6F6DF', 'soft' => '#B2E49A'],
+        'summer' => ['brand' => '#F0B400', 'text' => '#8F6B00', 'deep' => '#614900', 'navy' => '#3A2E08', 'night' => '#282006', 'tint' => '#FFFAEB', 'tint2' => '#FFF5D6', 'soft' => '#FFDF80'],
+        'fall' => ['brand' => '#F27A1A', 'text' => '#B5560A', 'deep' => '#7B3B07', 'navy' => '#3A1E08', 'night' => '#281506', 'tint' => '#FEF4EC', 'tint2' => '#FDE9D8', 'soft' => '#F8B986'],
+    ];
+    return $p[$season ?: nu_season()];
+}
+
+/**
  * Brand mark only (four-petal mark), for compact places such as the mobile bar. $h = display height in px.
  * One small webp (96 px source, 256 px for high-density), explicit width and height so nothing shifts.
  */
@@ -439,7 +473,7 @@ function nu_logo_mark($h = 34) {
 
 /**
  * Brand lockup: the four-petal mark (image) beside the words "Nuahn Seasonal Hub" as real text in the page font
- * (Plus Jakarta Sans 800). $h = mark height in px; the text scales with it. The text follows currentColor: ink on
+ * (Outfit SemiBold, the brand font). $h = mark height in px; the text scales with it. The text follows currentColor: ink on
  * light surfaces, white inside dark areas (.logo--dark, the footer, sign-in aside, console and the dark theme).
  * $mode: 'auto' (inherits, theme CSS decides), 'dark' (always white text, for dark teal surfaces) or 'light'.
  */
