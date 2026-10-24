@@ -118,7 +118,7 @@ h1 em{font-style:normal;color:var(--mint)}
 .nf__btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:13px;padding:0 20px;height:50px;font:inherit;font-weight:750;font-size:.98rem;color:#fff;background:var(--teal);cursor:pointer;transition:background .2s,transform .2s var(--ease)}
 .nf__btn:hover{background:var(--teal-d)}
 .nf__btn:active{transform:scale(.97)}
-.nf__hint{margin-top:10px;font-size:.84rem;color:#CFE5E2}
+.nf__hint{margin-top:10px;font-size:.84rem;color:rgba(255,255,255,.82)}
 .nf__ok{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border-radius:14px;background:rgba(123,224,160,.16);border:1px solid rgba(123,224,160,.5);color:#fff;font-size:.95rem;animation:rise .5s var(--ease) both}
 .nf__ok[hidden]{display:none}
 .nf__ok .i{color:#7BE0A0;margin-top:3px;font-size:1.2em}
@@ -161,10 +161,10 @@ main{position:relative}
 .trust .i{color:var(--teal);font-size:1.2em}
 .cta{background:linear-gradient(135deg,var(--pine) 0%,var(--teal) 100%);color:#fff;border-radius:28px;padding:clamp(28px,5vw,56px);display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center;position:relative;overflow:hidden}
 .cta .sec__h{color:#fff}
-.cta p.s{margin-top:10px;color:#D5EAE7}
+.cta p.s{margin-top:10px;color:rgba(255,255,255,.85)}
 .cta .nf{margin-top:0;max-width:none}
-.cta .nf__hint{color:#D5EAE7}
-footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom));color:var(--muted);font-size:.88rem}
+.cta .nf__hint{color:rgba(255,255,255,.85)}
+footer{padding:36px 0 calc(36px + env(safe-area-inset-bottom));color:rgba(255,255,255,.78);font-size:.88rem;background:var(--pine-d);border-top:4px solid var(--season)}
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;align-items:center}
 /* entrance + motion */
 .in{animation:riseT .8s var(--ease) both;animation-delay:calc(var(--d,0) * 110ms)}
@@ -335,7 +335,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-bet
 
 <footer>
   <div class="wrap">
-    <a class="brandlink" href="<?= nu_e(nu_url('public/coming_soon.php')) ?>" aria-label="Nuahn Seasonal Hub"><?= nu_logo(34, 'light') ?></a>
+    <a class="brandlink" href="<?= nu_e(nu_url('public/coming_soon.php')) ?>" aria-label="Nuahn Seasonal Hub"><?= nu_logo(34, 'dark') ?></a>
     <span>© <?= date('Y') ?> Nuahn Seasonal Hub · Canadian seasonal care</span>
   </div>
 </footer>

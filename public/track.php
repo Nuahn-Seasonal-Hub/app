@@ -84,7 +84,7 @@ include_once("../includes/header.php");
     <section class="sv-card tk-wx">
       <h2 class="tk-h">Local weather</h2>
       <div class="tk-wx__row"><?= nu_icon('cloud-snow') ?><div><b><?= nu_e($trk['weather']['temp']) ?> · <?= nu_e($trk['weather']['text']) ?></b><span><?= nu_e($trk['weather']['note']) ?></span></div></div>
-      <svg class="tk-wx__art" viewBox="0 0 240 90" aria-hidden="true"><path d="M0 90 C 60 62, 120 70, 240 56 V90Z" fill="#fff" opacity=".9"/><g fill="#2f6f63"><path d="M150 70 l10 -30 l10 30z"/><path d="M168 72 l13 -40 l13 40z"/><path d="M196 66 l9 -26 l9 26z"/><path d="M40 74 l8 -22 l8 22z"/></g><path d="M80 74 v-16 l16 -12 l16 12 v16z" fill="#cfd9dc"/><rect x="92" y="62" width="8" height="12" fill="#7a8a90"/></svg>
+      <svg class="tk-wx__art" viewBox="0 0 240 90" aria-hidden="true"><path d="M0 90 C 60 62, 120 70, 240 56 V90Z" fill="#fff" opacity=".9"/><g fill="var(--pine)"><path d="M150 70 l10 -30 l10 30z"/><path d="M168 72 l13 -40 l13 40z"/><path d="M196 66 l9 -26 l9 26z"/><path d="M40 74 l8 -22 l8 22z"/></g><path d="M80 74 v-16 l16 -12 l16 12 v16z" fill="#cfd9dc"/><rect x="92" y="62" width="8" height="12" fill="#7a8a90"/></svg>
     </section>
 
     <section class="sv-card tk-rep" id="work">
