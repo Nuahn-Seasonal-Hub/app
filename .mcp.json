@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "hostinger": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@hostinger/mcp"
+      ],
+      "env": {}
+    }
+  }
+}
