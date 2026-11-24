@@ -105,6 +105,7 @@ $bodyClass = [
       <a class="navlink" href="<?= nu_e(nu_url('public/activity.php')) ?>"<?= $nuPage['tab'] === 'activity' ? ' aria-current="page"' : '' ?>>Activity</a>
 <?php else: ?>
       <a class="navlink" href="<?= nu_e(nu_url('public/plans.php')) ?>"<?= $nuPage['rel'] === 'public/plans.php' ? ' aria-current="page"' : '' ?>>Plans</a>
+      <a class="navlink" href="<?= nu_e(nu_url('public/provider_onboarding.php')) ?>"<?= $nuPage['rel'] === 'public/provider_onboarding.php' ? ' aria-current="page"' : '' ?>>Become a Pro</a>
 <?php endif; ?>
       <a class="navlink" href="<?= nu_e(nu_url('public/updates.php')) ?>"<?= $nuPage['tab'] === 'messages' ? ' aria-current="page"' : '' ?>>Updates<?= $nuUnread ? '<span class="dot" aria-label="' . (int) $nuUnread . ' unread"></span>' : '' ?></a>
 <?php else: foreach ($nuNav as $item):

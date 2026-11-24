@@ -22,6 +22,15 @@ function mk_media_send($abs, $mime) {
 if (!isset($_SESSION['user_id']) || !mk_ready()) mk_media_404();
 $uid = mk_uid();
 
+if (isset($_GET['selfie'])) {
+    $targetUid = (int) $_GET['selfie'];
+    if ($targetUid <= 0 || ($targetUid !== $uid && !mk_is_staff())) mk_media_404();
+    $st = mk_db()->prepare('SELECT selfie_photo FROM users WHERE id = ?'); $st->execute([$targetUid]);
+    $sp = (string) ($st->fetchColumn() ?: '');
+    if (!preg_match('#^_docs/\d+/[a-f0-9]{32}\.jpg$#', $sp)) mk_media_404();
+    mk_media_send(MK_UPLOAD_DIR . '/' . $sp, 'image/jpeg');
+}
+
 if (isset($_GET['d'])) {
     $st = mk_db()->prepare('SELECT * FROM contractor_documents WHERE id = ?'); $st->execute([(int) $_GET['d']]);
     $d = $st->fetch();

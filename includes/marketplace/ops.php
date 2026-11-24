@@ -34,6 +34,10 @@ function mk_profile_submit($uid) {
     }
     if (in_array('mobile-mechanics', mk_trades($p), true) && $p['chk_licence'] !== 'ok' && $p['chk_licence'] !== 'review') throw new MkError('Mobile mechanics must upload a trade licence or certificate.');
     mk_db()->prepare("UPDATE contractor_profiles SET vetting_status = 'pending', submitted_at = NOW() WHERE user_id = ?")->execute([(int) $uid]);
+    if (is_file(__DIR__ . '/../onboarding.php')) {
+        require_once __DIR__ . '/../onboarding.php';
+        ob_sync_provider_status($uid, 'pending');
+    }
     mk_audit('vetting.submitted', 'user', $uid, '', (int) $uid, 'provider');
     mk_notify_staff(null, 'vetting', 'New contractor application', 'A contractor is waiting in the vetting queue.', nu_url('public/operations.php') . '?view=vetting');
 }
@@ -69,6 +73,10 @@ function mk_vetting_decide($uid, $decision, array $checks, $note) {
     else throw new MkError('Unknown decision.');
     mk_db()->prepare('UPDATE contractor_profiles SET vetting_status = ?, chk_identity = ?, chk_insurance = ?, chk_licence = ?, chk_cert = ?, vet_note = ?, vetted_by = ?, vetted_at = NOW() WHERE user_id = ?')
         ->execute([$status, $set['chk_identity'], $set['chk_insurance'], $set['chk_licence'], $set['chk_cert'], $note, mk_uid(), (int) $uid]);
+    if (is_file(__DIR__ . '/../onboarding.php')) {
+        require_once __DIR__ . '/../onboarding.php';
+        ob_sync_provider_status($uid, $status, $set);
+    }
     mk_audit('vetting.' . $status, 'user', $uid, $note);
     $msg = ['approved' => ['You are approved', 'You can now send offers and quotes on Nuahn jobs.'], 'rejected' => ['Application not approved', $note], 'changes_requested' => ['Changes needed on your application', $note], 'in_review' => ['Your application is in review', 'A reviewer is checking your documents.']][$status];
     mk_notify($uid, null, 'vetting', $msg[0], $msg[1], nu_url('public/contractor_setup.php'));

@@ -1,12 +1,13 @@
 <?php
 // Launch gate: public domain shows only the Coming Soon page until launch (includes/gate.php).
 require_once __DIR__ . '/../includes/gate.php';
-//session_start();
+require_once __DIR__ . '/../includes/marketplace/core.php';
 include "../includes/header.php";
+$next = mk_safe_next($_GET['next'] ?? '');
 ?>
 
 <div class="auth">
-  <?php nu_auth_aside('Join Nuahn in under a minute.', 'Create a free account to post seasonal jobs or find flexible work near you.'); ?>
+  <?php nu_auth_aside('Join Nuahn in under a minute.', 'Create a free account to post seasonal jobs or onboard as a verified local service provider.'); ?>
   <section class="auth__main">
     <div class="auth-card">
       <?php nu_auth_head('Create your account', 'It’s free. Pick how you’ll use Nuahn.', 'stars'); ?>
@@ -35,16 +36,27 @@ include "../includes/header.php";
         <?php endif; ?>
       <?php endif; ?>
 
-      <!-- Registration Form -->
+      <!-- Role switcher: Client quick signup vs 3-step Provider Onboarding Wizard -->
+      <fieldset class="field" style="border:0;padding:0;margin:0 0 var(--s5)">
+        <legend class="label">I want to</legend>
+        <div class="roles">
+          <label class="role-opt"><input type="radio" name="reg_mode" value="client" checked><span><?= nu_icon('briefcase-fill') ?> Hire help</span></label>
+          <label class="role-opt"><input type="radio" name="reg_mode" value="provider"><span><?= nu_icon('person-badge') ?> Work as a provider</span></label>
+        </div>
+      </fieldset>
+
+      <!-- Provider onboarding callout (shown when "Work as a provider" is selected) -->
+      <div id="providerCallout" class="sv-card" hidden style="margin-bottom:var(--s5)">
+        <h2 class="sv-card__h"><?= nu_icon('shield-check') ?> Provider 3-step onboarding</h2>
+        <p class="mk-sub">Providers verify their phone, choose their trades &amp; service city, add a profile photo, optionally link Google reviews, and upload ID/insurance for approval.</p>
+        <a class="btn btn-primary btn-lg btn-block" href="<?= nu_e(nu_url('public/provider_onboarding.php')) ?>">Start provider onboarding <?= nu_icon('arrow-right') ?></a>
+      </div>
+
+      <!-- Client Quick Registration Form -->
       <form action="../actions/register.php" method="POST" class="auth-form" id="registerForm">
         <?= nu_csrf_field() ?>
-        <fieldset class="field" style="border:0;padding:0;margin:0 0 var(--s5)">
-          <legend class="label">I want to</legend>
-          <div class="roles">
-            <label class="role-opt"><input type="radio" name="role" value="client" checked><span><?= nu_icon('briefcase-fill') ?> Hire help</span></label>
-            <label class="role-opt"><input type="radio" name="role" value="provider"><span><?= nu_icon('person-badge') ?> Find work</span></label>
-          </div>
-        </fieldset>
+        <input type="hidden" name="role" value="client">
+        <?php if ($next !== ''): ?><input type="hidden" name="next" value="<?= nu_e($next) ?>"><?php endif; ?>
 
         <label class="field" for="name"><span class="label">Full name</span>
           <span class="input-icon"><?= nu_icon('person') ?><input type="text" class="input" id="name" name="name" placeholder="Jane Doe" autocomplete="name" required></span>
@@ -71,16 +83,32 @@ include "../includes/header.php";
         <?php nu_password_field('confirm_password', 'confirm_password', 'Confirm password', 'new-password'); ?>
         <p id="matchMessage" class="hint" style="margin-top:-12px;min-height:1.2em"></p>
 
-        <button type="submit" class="btn btn-primary btn-lg btn-block">Create account <?= nu_icon('arrow-right') ?></button>
+        <label class="mk-check ob-terms">
+          <input type="checkbox" name="agree_terms" value="1" required>
+          <span>I agree to Nuahn’s Terms &amp; Conditions and Privacy Policy.</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Create client account <?= nu_icon('arrow-right') ?></button>
       </form>
 
-      <p class="auth-alt">Already have an account? <a href="login.php">Sign in</a></p>
+      <p class="auth-alt">Already have an account? <a href="login.php<?= $next !== '' ? '?next=' . rawurlencode($next) : '' ?>">Sign in</a> · <a href="provider_onboarding.php">Become a provider</a></p>
     </div>
   </section>
 </div>
 
 <script>
   (function () {
+    var radios = document.querySelectorAll('input[name="reg_mode"]');
+    var cForm = document.getElementById('registerForm');
+    var pBox  = document.getElementById('providerCallout');
+    radios.forEach(function (r) {
+      r.addEventListener('change', function () {
+        var isProv = r.value === 'provider' && r.checked;
+        cForm.hidden = isProv;
+        pBox.hidden  = !isProv;
+      });
+    });
+
     var pw = document.getElementById('password');
     var cf = document.getElementById('confirm_password');
     var bar = document.getElementById('password-strength');

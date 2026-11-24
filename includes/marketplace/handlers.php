@@ -162,14 +162,14 @@ function mk_h_quote_revise() {
 function mk_h_profile_save() {
     mk_profile_save(mk_uid(), ['trades' => $_POST['trades'] ?? [], 'headline' => mk_in('headline'), 'about' => mk_in('about'), 'equipment' => mk_in('equipment'),
         'base_address' => mk_in('base_address'), 'lat' => mk_in('base_lat'), 'lng' => mk_in('base_lng'), 'radius_km' => mk_in('radius_km')]);
-    return [mk_page('contractor_setup.php'), 'Profile saved.'];
+    return [mk_safe_back(mk_page('contractor_setup.php')), 'Profile saved.'];
 }
 function mk_h_doc_upload() {
     mk_profile_ensure(mk_uid());
     mk_doc_store(mk_uid(), mk_in('kind'), 'doc', mk_in('expires_on') ?: null);
-    return [mk_page('contractor_setup.php'), 'Document uploaded. It is checked when you submit your application.'];
+    return [mk_safe_back(mk_page('contractor_setup.php')), 'Document uploaded. It is checked when you submit your application.'];
 }
-function mk_h_profile_submit() { mk_profile_submit(mk_uid()); return [mk_page('contractor_setup.php'), 'Application submitted. Nuahn will review your documents.']; }
+function mk_h_profile_submit() { mk_profile_submit(mk_uid()); return [mk_safe_back(mk_page('contractor_setup.php')), 'Application submitted. Nuahn will review your documents.']; }
 function mk_h_online_toggle() { mk_profile_online(mk_uid(), mk_in('online') === '1'); return [mk_page('provider_home.php'), mk_in('online') === '1' ? 'You are online for new jobs.' : 'You are offline. No new job alerts.']; }
 
 // ---------- shared ----------

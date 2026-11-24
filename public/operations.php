@@ -116,11 +116,30 @@ include_once("../includes/header.php");
     <section class="op-card" id="vetting">
       <h2 class="op-h2">Applications to review <small>Identity, insurance, licence and mechanic certification</small></h2>
       <div class="vet-list">
-<?php foreach ($queue as $a): $docs = mk_documents($a['user_id']); $isMech = strpos((string) $a['trades'], 'mobile-mechanics') !== false; ?>
+<?php require_once("../includes/onboarding.php"); foreach ($queue as $a): $docs = mk_documents($a['user_id']); $isMech = strpos((string) $a['trades'], 'mobile-mechanics') !== false; $uRow = ob_user_get($a['user_id']); $uPd = ob_prof_data($uRow); ?>
         <article class="vet">
           <header><div><b><?= nu_e($a['name']) ?></b><span>ID <?= (int) $a['user_id'] ?> · <?= nu_e($a['trades']) ?> · <?= $a['waiting_h'] !== null ? (int) $a['waiting_h'] . ' h waiting' : 'draft' ?></span></div><span class="chip chip--warning"><?= nu_e(str_replace('_', ' ', $a['vetting_status'])) ?></span></header>
+          <div class="ob-vet-meta">
+            <span class="chip <?= !empty($uRow['email_verified']) ? 'chip--success' : 'chip--plain' ?>">Email: <?= !empty($uRow['email_verified']) ? 'Verified' : 'Unverified' ?></span>
+            <span class="chip <?= !empty($uRow['phone_verified']) ? 'chip--success' : 'chip--plain' ?>">Phone: <?= !empty($uRow['phone_verified']) ? nu_e($uRow['phone'] ?? 'Verified') : 'Unverified' ?></span>
+            <?php if (!empty($uRow['license_number'])): ?><span class="chip chip--plain">Licence #: <?= nu_e($uRow['license_number']) ?><?= !empty($uRow['issuing_authority']) ? ' (' . nu_e($uRow['issuing_authority']) . ')' : '' ?></span><?php endif; ?>
+            <?php if (!empty($uRow['insurance_number'])): ?><span class="chip chip--plain">Policy #: <?= nu_e($uRow['insurance_number']) ?></span><?php endif; ?>
+            <?php if (!empty($uRow['selfie_photo'])): ?><a class="chip chip--blue" href="<?= nu_e(nu_url('public/media.php?selfie=' . (int) $a['user_id'])) ?>" target="_blank" rel="noopener">View selfie</a><?php endif; ?>
+          </div>
           <?php if (!empty($a['headline'])): ?><p class="vet__note"><?= nu_icon('person') ?><?= nu_e($a['headline']) ?></p><?php endif; ?>
           <?php if ($docs): ?><ul class="mk-docs"><?php foreach ($docs as $dc): ?><li><?= nu_icon('file-earmark-text') ?> <a href="<?= nu_e(nu_url('public/media.php')) ?>?d=<?= (int) $dc['id'] ?>" target="_blank" rel="noopener"><?= nu_e(ucfirst($dc['kind'])) ?></a><small><?= $dc['expires_on'] ? 'expires ' . nu_e($dc['expires_on']) : '' ?></small></li><?php endforeach; ?></ul><?php else: ?><p class="vet__note"><?= nu_icon('exclamation-circle') ?>No documents uploaded yet.</p><?php endif; ?>
+          <?php if (!empty($uPd['google_business_name'])): $grs = (string) ($uPd['google_reviews_status'] ?? 'pending'); ?>
+            <div class="ob-vet-gr">
+              <div><b>Google Business:</b> <?= nu_e($uPd['google_business_name']) ?><?php if (!empty($uPd['google_maps_url'])): ?> · <a href="<?= nu_e($uPd['google_maps_url']) ?>" target="_blank" rel="noopener">Open Maps</a><?php endif; ?> <span class="chip <?= $grs === 'approved' ? 'chip--success' : ($grs === 'rejected' ? 'chip--danger' : 'chip--warning') ?>"><?= nu_e(str_replace('_', ' ', $grs)) ?></span></div>
+              <form action="<?= nu_e(nu_url('actions/onboarding.php')) ?>" method="POST" class="mk-inline">
+                <?= nu_csrf_field() ?>
+                <input type="hidden" name="do" value="google_reviews_decide">
+                <input type="hidden" name="user_id" value="<?= (int) $a['user_id'] ?>">
+                <button class="btn btn-outline btn-sm" name="gr_decision" value="approved" type="submit">Approve reviews</button>
+                <button class="btn btn-ghost btn-sm" name="gr_decision" value="rejected" type="submit">Reject</button>
+              </form>
+            </div>
+          <?php endif; ?>
           <?= mk_form('vetting_decide', ['user_id' => $a['user_id']], 'class="mk-form"', 'operations.php?view=vetting') ?>
             <ul class="vet__checks">
 <?php foreach ($chk as $ck => $cl): ?>

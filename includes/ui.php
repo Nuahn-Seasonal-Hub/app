@@ -141,6 +141,8 @@ function nu_page_config() {
         'public/register.php'          => ['title' => 'Create account', 'tab' => 'join', 'lean' => true],
         'public/register_client.php'   => ['title' => 'Join as a client', 'tab' => 'join', 'lean' => true, 'sub' => true],
         'public/register_provider.php' => ['title' => 'Join as a provider', 'tab' => 'join', 'lean' => true, 'sub' => true],
+        'public/provider_onboarding.php' => ['title' => 'Become a provider', 'tab' => 'join', 'lean' => true],
+        'public/verify_email.php'      => ['title' => 'Verify email', 'tab' => 'login', 'lean' => true, 'sub' => true],
         'public/register_admin.php'    => ['title' => 'Add an admin', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/register_manager.php'  => ['title' => 'Add a manager', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/register_superadmin.php' => ['title' => 'Add a superadmin', 'tab' => 'dash', 'lean' => true, 'sub' => true],

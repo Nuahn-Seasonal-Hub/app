@@ -42,7 +42,7 @@ include_once("../includes/header.php");
     $vetted = mk_is_vetted(mk_uid(), 'mobile-mechanics');
 ?>
 <?php if (!$vetted): ?>
-    <section class="ac-box"><p class="mk-note mk-note--warn"><?= nu_icon('exclamation-circle') ?> <span>Only approved mechanics can send quotes. <a href="<?= nu_e(nu_url('public/contractor_setup.php')) ?>">Check your application status</a>.</span></p></section>
+    <section class="ac-box"><p class="mk-note mk-note--warn"><?= nu_icon('exclamation-circle') ?> <span>Only approved mechanics can send quotes. <a href="<?= nu_e(nu_url('public/contractor_setup.php?tab=licence&need=mobile-mechanics')) ?>">Upload your licence &amp; check status</a>.</span></p></section>
 <?php elseif ($task['status'] !== 'quote_pending'): ?>
     <section class="ac-box"><p class="qt-p">This request is no longer waiting for quotes.</p></section>
 <?php else: ?>
