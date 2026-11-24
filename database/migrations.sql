@@ -43,6 +43,121 @@ PREPARE nuahn_stmt FROM @nuahn_sql;
 EXECUTE nuahn_stmt;
 DEALLOCATE PREPARE nuahn_stmt;
 
+-- Extended user profile, professional credentials, geolocation, and verification fields.
+-- Added idempotently via information_schema so this works on both MySQL 8.x and MariaDB
+-- (and inside Hostinger phpMyAdmin without requiring stored-routine privileges).
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'username') = 0,
+  'ALTER TABLE `users` ADD COLUMN `username` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `lastname`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'professional_data') = 0,
+  'ALTER TABLE `users` ADD COLUMN `professional_data` json DEFAULT NULL AFTER `theme_preference`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'phone') = 0,
+  'ALTER TABLE `users` ADD COLUMN `phone` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `professional_data`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'location') = 0,
+  'ALTER TABLE `users` ADD COLUMN `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `phone`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'profession') = 0,
+  'ALTER TABLE `users` ADD COLUMN `profession` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `location`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'license_number') = 0,
+  'ALTER TABLE `users` ADD COLUMN `license_number` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `profession`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'insurance_number') = 0,
+  'ALTER TABLE `users` ADD COLUMN `insurance_number` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `license_number`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'certification_number') = 0,
+  'ALTER TABLE `users` ADD COLUMN `certification_number` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `insurance_number`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'issuing_authority') = 0,
+  'ALTER TABLE `users` ADD COLUMN `issuing_authority` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `certification_number`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'license_expiry') = 0,
+  'ALTER TABLE `users` ADD COLUMN `license_expiry` date DEFAULT NULL AFTER `issuing_authority`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'years_experience') = 0,
+  'ALTER TABLE `users` ADD COLUMN `years_experience` int DEFAULT NULL AFTER `license_expiry`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'professional_bio') = 0,
+  'ALTER TABLE `users` ADD COLUMN `professional_bio` text COLLATE utf8mb4_unicode_ci AFTER `years_experience`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'verification_status') = 0,
+  'ALTER TABLE `users` ADD COLUMN `verification_status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT ''pending'' AFTER `professional_bio`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'license_document') = 0,
+  'ALTER TABLE `users` ADD COLUMN `license_document` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `verification_status`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'insurance_document') = 0,
+  'ALTER TABLE `users` ADD COLUMN `insurance_document` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `license_document`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'latitude') = 0,
+  'ALTER TABLE `users` ADD COLUMN `latitude` decimal(10,8) DEFAULT NULL AFTER `insurance_document`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'longitude') = 0,
+  'ALTER TABLE `users` ADD COLUMN `longitude` decimal(11,8) DEFAULT NULL AFTER `latitude`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'email_verified') = 0,
+  'ALTER TABLE `users` ADD COLUMN `email_verified` tinyint(1) DEFAULT 0 AFTER `longitude`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'phone_verified') = 0,
+  'ALTER TABLE `users` ADD COLUMN `phone_verified` tinyint(1) DEFAULT 0 AFTER `email_verified`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'provider_status') = 0,
+  'ALTER TABLE `users` ADD COLUMN `provider_status` enum(''pending'',''active'',''suspended'') COLLATE utf8mb4_unicode_ci DEFAULT ''pending'' AFTER `phone_verified`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'identity_verified') = 0,
+  'ALTER TABLE `users` ADD COLUMN `identity_verified` tinyint(1) DEFAULT 0 AFTER `provider_status`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'verification_token') = 0,
+  'ALTER TABLE `users` ADD COLUMN `verification_token` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `identity_verified`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'verification_sent_at') = 0,
+  'ALTER TABLE `users` ADD COLUMN `verification_sent_at` datetime DEFAULT NULL AFTER `verification_token`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'email_verified_at') = 0,
+  'ALTER TABLE `users` ADD COLUMN `email_verified_at` datetime DEFAULT NULL AFTER `verification_sent_at`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'license_photo') = 0,
+  'ALTER TABLE `users` ADD COLUMN `license_photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `email_verified_at`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'selfie_photo') = 0,
+  'ALTER TABLE `users` ADD COLUMN `selfie_photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `license_photo`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'face_verified') = 0,
+  'ALTER TABLE `users` ADD COLUMN `face_verified` enum(''pending'',''verified'',''failed'') COLLATE utf8mb4_unicode_ci DEFAULT ''pending'' AFTER `selfie_photo`', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
+SET @nuahn_sql := IF((SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_status') = 0,
+  'ALTER TABLE `users` ADD KEY `idx_status` (`status`)', 'DO 0');
+PREPARE nuahn_stmt FROM @nuahn_sql; EXECUTE nuahn_stmt; DEALLOCATE PREPARE nuahn_stmt;
+
 -- Demo accounts listed in the README always sign in with password123.
 -- Touches only the password column of these four rows, and only when it differs;
 -- no other users or data are changed. If a demo user changes their password on
