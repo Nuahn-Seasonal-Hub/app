@@ -238,10 +238,10 @@ include_once("../includes/header.php");
       </div>
 
       <ul class="ob-rules">
-        <li><?= nu_icon('check-circle-fill') ?> Accepted Canadian IDs: <b>Driver’s licence, Canadian passport, provincial photo ID, health card, or Certificate of Indian Status</b>.</li>
-        <li><?= nu_icon('check-circle-fill') ?> <b>Name must match your profile name</b> (<?= nu_e($user['name'] ?? '') ?>).</li>
-        <li><?= nu_icon('check-circle-fill') ?> <b>Expired documents are not accepted.</b> You must be authorized to work in Canada.</li>
-        <li><?= nu_icon('shield-lock') ?> Files are stored privately — only Nuahn vetting reviewers can open them.</li>
+        <li><?= nu_icon('check-circle-fill') ?><span>Accepted Canadian IDs: <b>Driver’s licence, Canadian passport, provincial photo ID, health card, or Certificate of Indian Status</b>.</span></li>
+        <li><?= nu_icon('check-circle-fill') ?><span><b>Name must match your profile name</b> (<?= nu_e($user['name'] ?? '') ?>).</span></li>
+        <li><?= nu_icon('check-circle-fill') ?><span><b>Expired documents are not accepted.</b> You must be authorized to work in Canada.</span></li>
+        <li><?= nu_icon('shield-lock') ?><span>Files are stored privately — only Nuahn vetting reviewers can open them.</span></li>
       </ul>
 
 <?php if (!$locked && $status !== 'approved'): ?>
