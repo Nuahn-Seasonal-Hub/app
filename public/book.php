@@ -79,8 +79,8 @@ include_once("../includes/header.php");
       <a class="btn btn-primary" href="<?= nu_e(nu_service_page_url($slug)) ?>">Back to <?= nu_e($sv['name']) ?></a>
       <a class="btn btn-outline" href="<?= nu_e(nu_url('public/bookings.php')) ?>">My bookings</a>
 <?php else: ?>
-      <a class="btn btn-primary" href="<?= nu_e(nu_url('public/login_client.php')) ?>">Sign in</a>
-      <a class="btn btn-outline" href="<?= nu_e(nu_url('public/register_client.php')) ?>">Create account</a>
+      <a class="btn btn-primary" href="<?= nu_e(nu_url('public/register.php')) ?>">Create account</a>
+      <a class="btn btn-outline" href="<?= nu_e(nu_url('public/login.php')) ?>">Sign in</a>
 <?php endif; ?>
     </div>
   </section>

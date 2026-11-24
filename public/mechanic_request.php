@@ -149,21 +149,72 @@ include_once("../includes/header.php");
 <?php endif; ?>
     <h3>Funds held securely</h3><p>Payment is held by a secure processor and released only after you approve the finished work. Card details never touch Nuahn.</p>
   </aside>
+  <dialog class="msheet" id="mrSignSheet" aria-labelledby="mrSignT">
+    <div class="msheet__in">
+      <button class="msheet__x" type="button" data-close aria-label="Close"><?= nu_icon('x-lg') ?></button>
+      <span class="msheet__ic"><?= nu_icon('person-circle') ?></span>
+      <h2 id="mrSignT">Finish sending your mechanic request</h2>
+      <p>Your vehicle, symptoms and location are saved. Create a free client account or sign in and you’ll come straight back to send it in one tap.</p>
+      <div class="msheet__sum"><span><?= nu_e($name) ?></span><b><?= $road ? 'Roadside alert' : 'Itemised quotes' ?></b></div>
+      <a class="btn btn-primary btn-block" href="<?= nu_e(nu_url('public/register.php')) ?>?next=<?= $nextUrl ?>">Create free account <?= nu_icon('arrow-right') ?></a>
+      <a class="btn btn-outline btn-block" href="<?= nu_e(nu_url('public/login.php')) ?>?next=<?= $nextUrl ?>">Already have an account? Sign in</a>
+      <p class="msheet__fine"><?= nu_icon('lock-fill') ?> <?= $road ? 'Cancel any time before a technician accepts.' : 'Nothing is booked or charged until you approve a quote.' ?></p>
+    </div>
+  </dialog>
 </main>
 <script src="<?= nu_e(nu_asset('public/assets/map-picker.js')) ?>" defer></script>
 <script src="<?= nu_e(nu_asset('public/assets/mech.js')) ?>" defer></script>
-<?php if ($state === '' && !$isClient && $role === ''): ?>
+<?php if ($state === ''): ?>
 <script>
 (function () {
-  var f = document.querySelector('[data-mr]'); if (!f) return; var key = f.dataset.draft, login = <?= json_encode(nu_url('public/login.php') . '?next=' . $nextUrl) ?>;
+  var f = document.querySelector('[data-mr]'); if (!f) return;
+  var key = f.dataset.draft, isGuest = f.dataset.guest === '1';
+  var sheet = document.getElementById('mrSignSheet');
   function fields() { return Array.prototype.filter.call(f.elements, function (e) { return e.name && e.type !== 'file' && e.type !== 'hidden' && e.type !== 'submit'; }); }
-  f.addEventListener('submit', function (e) {
-    e.preventDefault(); var d = [];
-    fields().forEach(function (el) { if ((el.type === 'checkbox' || el.type === 'radio')) d.push([el.name, el.value, el.checked]); else d.push([el.name, null, el.value]); });
-    try { sessionStorage.setItem(key, JSON.stringify(d)); } catch (x) {} location.href = login;
+
+  // Restore saved draft when returning from signup or sign-in (?draft=1)
+  window.addEventListener('load', function () {
+    try {
+      var qs = new URLSearchParams(location.search);
+      var preAddr = qs.get('address');
+      if (preAddr && f.mr_loc_address && !f.mr_loc_address.value) f.mr_loc_address.value = preAddr;
+      var d = JSON.parse(sessionStorage.getItem(key) || 'null');
+      if (!d || qs.get('draft') !== '1') return;
+      fields().forEach(function (el) {
+        d.forEach(function (r) {
+          if (r[0] !== el.name) return;
+          if (el.type === 'checkbox' || el.type === 'radio') { if (el.value === r[1]) el.checked = r[2]; }
+          else el.value = r[2];
+        });
+      });
+      if (!isGuest) {
+        var note = document.createElement('div');
+        note.className = 'alert alert-success';
+        note.setAttribute('role', 'status');
+        note.textContent = 'Welcome back! Your mechanic request draft is restored — review and tap the button below to send.';
+        f.parentNode.insertBefore(note, f);
+        sessionStorage.removeItem(key);
+      }
+    } catch (x) {}
   });
-  window.addEventListener('load', function () { try { var d = JSON.parse(sessionStorage.getItem(key) || 'null'); if (!d || !/draft=1/.test(location.search)) return;
-    fields().forEach(function (el) { d.forEach(function (r) { if (r[0] !== el.name) return; if (el.type === 'checkbox' || el.type === 'radio') { if (el.value === r[1]) el.checked = r[2]; } else el.value = r[2]; }); }); sessionStorage.removeItem(key); } catch (x) {} });
+
+  if (isGuest) {
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var d = [];
+      fields().forEach(function (el) {
+        if (el.type === 'checkbox' || el.type === 'radio') d.push([el.name, el.value, el.checked]);
+        else d.push([el.name, null, el.value]);
+      });
+      try { sessionStorage.setItem(key, JSON.stringify(d)); } catch (x) {}
+      if (sheet && sheet.showModal) sheet.showModal();
+      else if (sheet) sheet.setAttribute('open', '');
+    });
+    if (sheet) {
+      sheet.querySelector('[data-close]').addEventListener('click', function () { sheet.close ? sheet.close() : sheet.removeAttribute('open'); });
+      sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.close(); });
+    }
+  }
 })();
 </script>
 <?php endif; ?>

@@ -17,8 +17,9 @@ $next = null;
 foreach (nu_fixture('bookings') as $b) { if ($b['id'] === 'NSH-1042') { $next = $b; break; } }
 $nextSvc = $next ? ($services[$next['service']] ?? null) : null;
 $isClient = isRole('client');
-$postUrl = $isClient ? nu_url('public/jobs.php#post') : nu_url('public/register_client.php');
+$postUrl = $isClient ? nu_url('public/jobs.php#post') : nu_url('public/register.php?next=' . rawurlencode('public/jobs.php#post'));
 $addr = trim((string) ($_GET['address'] ?? ''));
+$addrQs = $addr !== '' ? '?address=' . rawurlencode($addr) : '';
 ?>
 
 <section class="lhero">
@@ -54,13 +55,18 @@ $addr = trim((string) ($_GET['address'] ?? ''));
 uksort($live, function ($x, $y) { $o = ['snow-removal' => 0, 'mobile-mechanics' => 1]; return ($o[$x] ?? 9) <=> ($o[$y] ?? 9); }); ?>
     <p class="svc-label"><span class="chip chip--blue">Launching first, end of November 2026</span></p>
     <div class="svc-grid svc-grid--live">
-<?php $i = 0; foreach ($live as $slug => $sv): ?>
+<?php $i = 0; foreach ($live as $slug => $sv):
+    $svcHref = nu_book_url($slug);
+    if ($addrQs !== '' && $slug === 'snow-removal') {
+        $svcHref .= (strpos($svcHref, '?') === false ? '?' : '&') . 'address=' . rawurlencode($addr);
+    }
+?>
       <article class="svc svc--live" data-reveal style="--i:<?= $i++ ?>">
-        <a class="svc__media" href="<?= nu_e(nu_book_url($slug)) ?>" tabindex="-1" aria-hidden="true"><?= nu_photo($sv['photo'], $sv['alt'], ['sizes' => '(max-width: 640px) 92vw, (max-width: 1100px) 46vw, 560px']) ?></a>
+        <a class="svc__media" href="<?= nu_e($svcHref) ?>" tabindex="-1" aria-hidden="true"><?= nu_photo($sv['photo'], $sv['alt'], ['sizes' => '(max-width: 640px) 92vw, (max-width: 1100px) 46vw, 560px']) ?></a>
         <div class="svc__body">
           <h3><?= nu_e($sv['name']) ?></h3>
           <p><?= nu_e($sv['blurb']) ?></p>
-          <a class="btn btn-primary btn-sm btn-block" href="<?= nu_e(nu_book_url($slug)) ?>" aria-label="<?= nu_e($sv['name']) ?>: <?= $slug === 'snow-removal' ? 'post a task' : 'get a mechanic' ?>"><?= $slug === 'snow-removal' ? 'Post a task' : 'Get a mechanic' ?> <?= nu_icon('arrow-right') ?></a>
+          <a class="btn btn-primary btn-sm btn-block" href="<?= nu_e($svcHref) ?>" aria-label="<?= nu_e($sv['name']) ?>: <?= $slug === 'snow-removal' ? 'post a task' : 'get a mechanic' ?>"><?= $slug === 'snow-removal' ? 'Post a task' : 'Get a mechanic' ?> <?= nu_icon('arrow-right') ?></a>
         </div>
       </article>
 <?php endforeach; ?>
@@ -101,7 +107,7 @@ uksort($live, function ($x, $y) { $o = ['snow-removal' => 0, 'mobile-mechanics' 
           </div>
         </div>
       </div>
-      <a class="wx__link" href="<?= nu_e($isClient ? nu_url('public/calendar.php') : nu_url('public/login_client.php')) ?>">View forecast <?= nu_icon('arrow-right') ?></a>
+      <a class="wx__link" href="<?= nu_e($isClient ? nu_url('public/calendar.php') : nu_url('public/login.php?next=' . rawurlencode('public/calendar.php'))) ?>">View forecast <?= nu_icon('arrow-right') ?></a>
       <svg class="wx__art" viewBox="0 0 220 110" aria-hidden="true"><g fill="currentColor"><path d="M40 20 22 52h8L16 76h10L8 104h64L54 76h10L50 52h8Z"/><path d="M96 34 82 60h6L76 80h8L70 104h52l-14-24h8L94 60h6Z" opacity=".7"/><path d="M160 8 138 48h10l-18 30h12l-22 30h80l-22-30h12l-18-30h10Z"/><path d="M196 40 184 62h5l-10 17h7l-12 25h44l-12-25h7l-10-17h5Z" opacity=".6"/></g></svg>
     </section>
 

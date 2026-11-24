@@ -530,3 +530,49 @@ function ob_verification_summary($user, $profile) {
         'pct'            => $requiredTotal > 0 ? (int) round(($requiredDone / $requiredTotal) * 100) : 100,
     ];
 }
+
+/** Validate and normalize a 6-character Canadian postal code (returns e.g. "T5J 0N3" or '' if empty). */
+function ob_postal_normalize($raw) {
+    $clean = strtoupper(preg_replace('/\s+/', '', trim((string) $raw)));
+    if ($clean === '') return '';
+    if (!preg_match('/^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z]\d[ABCEGHJ-NPRSTV-Z]\d$/', $clean)) {
+        throw new MkError('Enter a valid 6-character Canadian postal code (e.g. T5J 0N3).');
+    }
+    return substr($clean, 0, 3) . ' ' . substr($clean, 3, 3);
+}
+
+/** True when a client signed up via SMS OTP without providing a real email address yet. */
+function ob_is_placeholder_email($email) {
+    return (bool) preg_match('/^phone_\d+@phone\.nuahn\.local$/i', trim((string) $email));
+}
+
+/**
+ * Compute progressive non-blocking verification state for a client/customer account.
+ * Mirrors UrbanTasker's non-blocking pending status labels while keeping task posting frictionless.
+ */
+function ob_client_verification_status($user) {
+    $email = trim((string) ($user['email'] ?? ''));
+    $hasRealEmail = $email !== '' && !ob_is_placeholder_email($email);
+    $emailOk = $hasRealEmail && !empty($user['email_verified']);
+    $phoneOk = !empty($user['phone_verified']) && trim((string) ($user['phone'] ?? '')) !== '';
+    $pendingCount = ($emailOk ? 0 : 1) + ($phoneOk ? 0 : 1);
+
+    if (!$emailOk && !$phoneOk) {
+        $label = $hasRealEmail ? 'Email and phone verification pending' : 'Add your email & verify phone (optional)';
+    } elseif (!$emailOk) {
+        $label = $hasRealEmail ? 'Email verification pending' : 'Add an email address for receipts';
+    } elseif (!$phoneOk) {
+        $label = 'Phone verification pending (optional)';
+    } else {
+        $label = '';
+    }
+
+    return [
+        'has_real_email' => $hasRealEmail,
+        'email_ok'       => $emailOk,
+        'phone_ok'       => $phoneOk,
+        'pending_count'  => $pendingCount,
+        'label'          => $label,
+    ];
+}
+

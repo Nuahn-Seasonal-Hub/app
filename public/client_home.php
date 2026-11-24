@@ -9,9 +9,13 @@ require_once("../config/init.php"); // handles session, db, auth, flash helpers
 requireLogin('client');
 
 require_once("../includes/marketplace/view.php");
+require_once("../includes/onboarding.php");
+ob_ensure_users_schema();
 include "../includes/header.php";
 
 $uid = mk_uid();
+$me = ob_user_get($uid);
+$ver = ob_client_verification_status($me);
 $active = mk_client_tasks($uid, false);
 $allCount = count($active) + count(mk_client_tasks($uid, true));
 $myOpen = 0; $received = 0; $attn = [];
@@ -51,6 +55,39 @@ $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good ev
     <?php if(isset($_GET['success']) && $_GET['success'] === 'profile_updated'): ?>
         <div class="alert alert-success"><?= nu_icon('check-circle-fill') ?> Your profile has been updated successfully.</div>
     <?php endif; ?>
+
+<?php if ($ver['pending_count'] > 0): ?>
+    <section class="card cl-verify" data-reveal aria-label="Account verification">
+      <div class="cl-verify__top">
+        <div>
+          <h2 class="cl-verify__h"><?= nu_icon('shield-check') ?> <?= nu_e($ver['label']) ?></h2>
+          <p class="mk-sub">You can post tasks right away. Confirming your contact details speeds up contractor responses and unlocks SMS offer alerts.</p>
+        </div>
+        <div class="cl-verify__chips">
+          <span class="chip <?= $ver['email_ok'] ? 'chip--success' : 'chip--warning' ?>"><?= $ver['email_ok'] ? 'Email verified' : ($ver['has_real_email'] ? 'Email pending' : 'No email yet') ?></span>
+          <span class="chip <?= $ver['phone_ok'] ? 'chip--success' : 'chip--soft' ?>"><?= $ver['phone_ok'] ? 'Phone verified' : 'Phone optional' ?></span>
+        </div>
+      </div>
+      <div class="cl-verify__acts">
+<?php if (!$ver['email_ok'] && $ver['has_real_email']): ?>
+        <form action="<?= nu_e(nu_url('actions/onboarding.php')) ?>" method="POST" class="d-inline">
+          <?= nu_csrf_field() ?>
+          <input type="hidden" name="do" value="resend_email">
+          <input type="hidden" name="back" value="public/client_home.php">
+          <button type="submit" class="btn btn-outline btn-sm"><?= nu_icon('envelope') ?> Resend verification email</button>
+        </form>
+<?php elseif (!$ver['has_real_email']): ?>
+        <a class="btn btn-outline btn-sm" href="profile.php#verification"><?= nu_icon('envelope') ?> Add email address</a>
+<?php endif; ?>
+<?php if (!$ver['phone_ok']): ?>
+        <a class="btn btn-soft btn-sm" href="profile.php#verification"><?= nu_icon('phone') ?> Verify phone (optional)</a>
+<?php endif; ?>
+<?php if (!$ver['email_ok'] && !empty($_SESSION['ob_last_verify_link'])): ?>
+        <a class="btn btn-primary btn-sm" href="<?= nu_e($_SESSION['ob_last_verify_link']) ?>"><?= nu_icon('check-circle-fill') ?> Beta: verify email now</a>
+<?php endif; ?>
+      </div>
+    </section>
+<?php endif; ?>
 
 <?php $svcs = nu_fixture('services'); ?>
 <?php if ($attn): ?>

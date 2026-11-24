@@ -34,11 +34,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $hashed = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
+    $parts = preg_split('/\s+/', trim((string) ($_POST['name'] ?? '')), 2);
+    $first = $parts[0] ?? $name;
+    $last  = $parts[1] ?? null;
+
+    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, firstname, lastname) VALUES (?, ?, ?, ?, ?, ?)");
     try {
-        $stmt->execute([$name, $email, $hashed, $role]);
+        $stmt->execute([$name, $email, $hashed, $role, $first, $last]);
+        $uid = (int) $pdo->lastInsertId();
+        require_once __DIR__ . '/../includes/onboarding.php';
+        ob_ensure_users_schema();
+        ob_email_send_verification($uid);
+
+        session_regenerate_id(true);
+        $_SESSION['user_id']   = $uid;
+        $_SESSION['role']      = $role;
+        $_SESSION['theme']     = 'light';
+        $_SESSION['user_name'] = $name;
+
         $next = mk_safe_next($_POST['next'] ?? '');
-        header("Location: ../public/login.php?success=registered" . ($next !== '' ? '&next=' . rawurlencode($next) : ''));
+        if ($next !== '') {
+            $target = strpos($next, 'public/') === 0 ? '../' . $next : '../public/' . $next;
+            header("Location: " . $target);
+            exit;
+        }
+        header("Location: ../public/" . ($role === 'provider' ? 'provider_onboarding.php?step=2' : 'client_home.php'));
     } catch (Exception $e) {
         header("Location: ../public/register.php?error=email_taken");
     }
