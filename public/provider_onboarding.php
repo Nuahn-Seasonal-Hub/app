@@ -4,6 +4,7 @@
 // followed by the 5-tab Verification Hub (public/contractor_setup.php).
 require_once __DIR__ . '/../config/init.php';
 require_once __DIR__ . '/../includes/onboarding.php';
+ob_ensure_users_schema();
 
 $step = (int) ($_GET['step'] ?? 1);
 if (!in_array($step, [1, 2, 3], true)) $step = 1;

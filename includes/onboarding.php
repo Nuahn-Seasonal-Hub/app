@@ -21,9 +21,9 @@ function ob_sms_live() {
 }
 
 /** Return the set of columns currently present on the `users` table (safe even before migrations run). */
-function ob_user_cols() {
+function ob_user_cols($refresh = false) {
     static $cols = null;
-    if ($cols !== null) return $cols;
+    if ($cols !== null && !$refresh) return $cols;
     try {
         $cols = array_flip(mk_db()->query('SHOW COLUMNS FROM `users`')->fetchAll(PDO::FETCH_COLUMN));
     } catch (Throwable $e) {
@@ -34,6 +34,114 @@ function ob_user_cols() {
 
 function ob_user_has($col) {
     return isset(ob_user_cols()[$col]);
+}
+
+/**
+ * Idempotently ensure all 27 extended profile/credential/verification columns and idx_status
+ * exist on `users`. No-ops immediately once all columns are present. Never drops or modifies data.
+ */
+function ob_ensure_users_schema() {
+    static $ran = false;
+    if ($ran) return ['added' => 0, 'errors' => []];
+    $ran = true;
+
+    $cols = ob_user_cols();
+    if (!$cols) return ['added' => 0, 'errors' => ['Could not inspect users table']];
+
+    $defs = [
+        'username'             => "varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `lastname`",
+        'professional_data'    => "json DEFAULT NULL AFTER `theme_preference`",
+        'phone'                => "varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `professional_data`",
+        'location'             => "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `phone`",
+        'profession'           => "varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `location`",
+        'license_number'       => "varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `profession`",
+        'insurance_number'     => "varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `license_number`",
+        'certification_number' => "varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `insurance_number`",
+        'issuing_authority'    => "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `certification_number`",
+        'license_expiry'       => "date DEFAULT NULL AFTER `issuing_authority`",
+        'years_experience'     => "int DEFAULT NULL AFTER `license_expiry`",
+        'professional_bio'     => "text COLLATE utf8mb4_unicode_ci AFTER `years_experience`",
+        'verification_status'  => "varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'pending' AFTER `professional_bio`",
+        'license_document'     => "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `verification_status`",
+        'insurance_document'   => "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `license_document`",
+        'latitude'             => "decimal(10,8) DEFAULT NULL AFTER `insurance_document`",
+        'longitude'            => "decimal(11,8) DEFAULT NULL AFTER `latitude`",
+        'email_verified'       => "tinyint(1) DEFAULT 0 AFTER `longitude`",
+        'phone_verified'       => "tinyint(1) DEFAULT 0 AFTER `email_verified`",
+        'provider_status'      => "enum('pending','active','suspended') COLLATE utf8mb4_unicode_ci DEFAULT 'pending' AFTER `phone_verified`",
+        'identity_verified'    => "tinyint(1) DEFAULT 0 AFTER `provider_status`",
+        'verification_token'   => "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `identity_verified`",
+        'verification_sent_at' => "datetime DEFAULT NULL AFTER `verification_token`",
+        'email_verified_at'    => "datetime DEFAULT NULL AFTER `verification_sent_at`",
+        'license_photo'        => "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `email_verified_at`",
+        'selfie_photo'         => "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER `license_photo`",
+        'face_verified'        => "enum('pending','verified','failed') COLLATE utf8mb4_unicode_ci DEFAULT 'pending' AFTER `selfie_photo`",
+    ];
+
+    $db = mk_db();
+    $added = 0;
+    $errors = [];
+
+    foreach ($defs as $col => $ddl) {
+        if (isset($cols[$col])) continue;
+        try {
+            $db->exec("ALTER TABLE `users` ADD COLUMN `$col` $ddl");
+            $cols[$col] = true;
+            $added++;
+        } catch (Throwable $e) {
+            // Fallback without AFTER clause if a predecessor column is absent
+            $plain = preg_replace('/\s+AFTER\s+`[^`]+`$/i', '', $ddl);
+            try {
+                $db->exec("ALTER TABLE `users` ADD COLUMN `$col` $plain");
+                $cols[$col] = true;
+                $added++;
+            } catch (Throwable $e2) {
+                $errors[] = $col . ': ' . $e2->getMessage();
+                error_log('ob_ensure_users_schema ' . $col . ': ' . $e2->getMessage());
+            }
+        }
+    }
+
+    // Ensure idx_status index exists on users(status)
+    try {
+        $hasIdx = (int) $db->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_status'")->fetchColumn();
+        if ($hasIdx === 0) {
+            $db->exec("ALTER TABLE `users` ADD KEY `idx_status` (`status`)");
+        }
+    } catch (Throwable $e) {
+        error_log('ob_ensure_users_schema idx_status: ' . $e->getMessage());
+    }
+
+    if ($added > 0) ob_user_cols(true);
+    return ['added' => $added, 'errors' => $errors];
+}
+
+/** Run the idempotent database/migrations.sql file using the active PDO connection (staff-only). */
+function ob_run_migrations_file() {
+    $res = ob_ensure_users_schema();
+    $path = __DIR__ . '/../database/migrations.sql';
+    if (!is_file($path)) throw new MkError('database/migrations.sql not found.');
+    $sql = (string) file_get_contents($path);
+    $db = mk_db();
+    // Split on semicolon + newline outside quotes (migrations.sql uses standard semicolons, no DELIMITER)
+    $lines = preg_split('/\R/', $sql);
+    $buf = '';
+    $ran = 0;
+    foreach ($lines as $line) {
+        $trim = trim($line);
+        if ($trim === '' || strpos($trim, '--') === 0) continue;
+        $buf .= $line . "\n";
+        if (substr($trim, -1) === ';') {
+            $stmt = trim($buf);
+            $buf = '';
+            if ($stmt !== '' && $stmt !== ';') {
+                $db->exec($stmt);
+                $ran++;
+            }
+        }
+    }
+    ob_user_cols(true);
+    return ['users_columns_added' => $res['added'], 'statements_run' => $ran, 'errors' => $res['errors']];
 }
 
 /** Fetch full user row by id. */

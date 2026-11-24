@@ -9,6 +9,7 @@ require_once("../config/init.php");
 requireLogin('provider');
 require_once("../includes/marketplace/view.php");
 require_once("../includes/onboarding.php");
+ob_ensure_users_schema();
 
 $uid    = mk_uid();
 $user   = ob_user_get($uid);

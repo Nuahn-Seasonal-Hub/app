@@ -9,7 +9,14 @@
 require_once("../config/init.php");
 requireLogin(['manager', 'superadmin', 'admin']);
 require_once("../includes/marketplace/view.php");
-if (!mk_ready()) { include_once("../includes/header.php"); echo '<main class="screen"><div class="sv-card"><h1>Marketplace tables are not installed</h1><p>Run database/migrations.sql.</p></div></main>'; include_once("../includes/footer.php"); exit; }
+if (!mk_ready()) {
+    include_once("../includes/header.php");
+    echo '<main class="screen"><div class="sv-card"><h1>Marketplace tables are not installed</h1><p>Click below to apply <code>database/migrations.sql</code> safely to this database.</p>'
+       . '<form action="' . nu_e(nu_url('actions/onboarding.php')) . '" method="POST">' . nu_csrf_field()
+       . '<input type="hidden" name="do" value="run_migrations"><button class="btn btn-primary" type="submit">Apply database migrations now</button></form></div></main>';
+    include_once("../includes/footer.php");
+    exit;
+}
 
 $view = (string) ($_GET['view'] ?? 'overview');
 if (!in_array($view, ['overview', 'open', 'vetting', 'disputes', 'payouts', 'snow', 'audit'], true)) $view = 'overview';

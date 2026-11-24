@@ -330,6 +330,17 @@ try {
             ob_redirect('public/operations.php?view=vetting');
         }
 
+        // ---------- 13. Operations Staff: Run idempotent database/migrations.sql ----------
+        case 'run_migrations': {
+            if (!isset($_SESSION['user_id']) || !mk_is_staff()) {
+                http_response_code(403);
+                exit('Forbidden');
+            }
+            $r = ob_run_migrations_file();
+            flashSuccess('Database migrations applied (' . (int) $r['users_columns_added'] . ' new user columns added, ' . (int) $r['statements_run'] . ' statements verified).');
+            ob_redirect('public/operations.php');
+        }
+
         default:
             throw new MkError('Unknown onboarding action.', 404);
     }
