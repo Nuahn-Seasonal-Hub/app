@@ -10,6 +10,20 @@ $nuNav = nu_nav_items();
 ?>
 </div><!-- /.app-main -->
 
+<?php if (!empty($nuPage['minimal_footer'])): ?>
+<footer class="site-footer site-footer--minimal">
+  <div class="wrap">
+    <div class="footer-bottom footer-bottom--minimal">
+      <span>© <?= date('Y') ?> Nuahn Seasonal Hub. All rights reserved.</span>
+      <span class="footer-min-links">
+        <a href="<?= nu_e(nu_url('public/index.php')) ?>">Home</a>
+        <a href="<?= nu_e(nu_url('public/plans.php')) ?>">Plans</a>
+        <a href="<?= nu_e(nu_url('public/login.php')) ?>">Sign in</a>
+      </span>
+    </div>
+  </div>
+</footer>
+<?php else: ?>
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-grid">
@@ -51,6 +65,7 @@ $nuNav = nu_nav_items();
     </div>
   </div>
 </footer>
+<?php endif; ?>
 
 <nav class="tabbar" aria-label="Primary">
 <?php foreach ($nuNav as $item):

@@ -131,18 +131,18 @@ function nu_page_config() {
     $pages = [
         'index.php'                    => ['title' => 'Every season. Trusted local pros. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
         'public/index.php'             => ['title' => 'Every season. Trusted local pros. One hub.', 'tab' => 'home', 'lean' => true, 'landing' => true],
-        'public/auth.php'              => ['title' => 'Welcome', 'tab' => 'login', 'lean' => true],
-        'public/login.php'             => ['title' => 'Sign in', 'tab' => 'login', 'lean' => true],
-        'public/login_client.php'      => ['title' => 'Client sign in', 'tab' => 'login', 'lean' => true, 'sub' => true],
-        'public/login_provider.php'    => ['title' => 'Provider sign in', 'tab' => 'login', 'lean' => true, 'sub' => true],
-        'public/login_admin.php'       => ['title' => 'Team sign in', 'tab' => 'login', 'lean' => true, 'sub' => true],
-        'public/login_manager.php'     => ['title' => 'Manager sign in', 'tab' => 'login', 'lean' => true, 'sub' => true],
-        'public/login_superadmin.php'  => ['title' => 'Superadmin sign in', 'tab' => 'login', 'lean' => true, 'sub' => true],
-        'public/register.php'          => ['title' => 'Create account', 'tab' => 'join', 'lean' => true],
-        'public/register_client.php'   => ['title' => 'Join as a client', 'tab' => 'join', 'lean' => true, 'sub' => true],
-        'public/register_provider.php' => ['title' => 'Join as a provider', 'tab' => 'join', 'lean' => true, 'sub' => true],
-        'public/provider_onboarding.php' => ['title' => 'Become a provider', 'tab' => 'join', 'lean' => true],
-        'public/verify_email.php'      => ['title' => 'Verify email', 'tab' => 'login', 'lean' => true, 'sub' => true],
+        'public/auth.php'              => ['title' => 'Welcome', 'tab' => 'login', 'lean' => true, 'minimal_footer' => true],
+        'public/login.php'             => ['title' => 'Sign in', 'tab' => 'login', 'lean' => true, 'minimal_footer' => true],
+        'public/login_client.php'      => ['title' => 'Client sign in', 'tab' => 'login', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
+        'public/login_provider.php'    => ['title' => 'Provider sign in', 'tab' => 'login', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
+        'public/login_admin.php'       => ['title' => 'Team sign in', 'tab' => 'login', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
+        'public/login_manager.php'     => ['title' => 'Manager sign in', 'tab' => 'login', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
+        'public/login_superadmin.php'  => ['title' => 'Superadmin sign in', 'tab' => 'login', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
+        'public/register.php'          => ['title' => 'Create account', 'tab' => 'join', 'lean' => true, 'minimal_footer' => true],
+        'public/register_client.php'   => ['title' => 'Join as a client', 'tab' => 'join', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
+        'public/register_provider.php' => ['title' => 'Join as a provider', 'tab' => 'join', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
+        'public/provider_onboarding.php' => ['title' => 'Become a provider', 'tab' => 'join', 'lean' => true, 'minimal_footer' => true],
+        'public/verify_email.php'      => ['title' => 'Verify email', 'tab' => 'login', 'lean' => true, 'sub' => true, 'minimal_footer' => true],
         'public/register_admin.php'    => ['title' => 'Add an admin', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/register_manager.php'  => ['title' => 'Add a manager', 'tab' => 'dash', 'lean' => true, 'sub' => true],
         'public/register_superadmin.php' => ['title' => 'Add a superadmin', 'tab' => 'dash', 'lean' => true, 'sub' => true],
@@ -214,7 +214,7 @@ function nu_page_config() {
             'bsjs'  => (strpos($src, 'data-bs-') !== false || strpos($src, 'bootstrap.') !== false),
         ];
     }
-    $cfg += ['console' => false, 'lean' => false, 'map' => false, 'cluster' => false, 'chart' => false, 'icons' => false, 'bsjs' => false, 'sub' => false, 'landing' => false, 'tab' => ''];
+    $cfg += ['console' => false, 'lean' => false, 'map' => false, 'cluster' => false, 'chart' => false, 'icons' => false, 'bsjs' => false, 'sub' => false, 'landing' => false, 'minimal_footer' => false, 'tab' => ''];
     $cfg['rel'] = $rel;
     $cfg['slug'] = preg_replace('/[^a-z0-9]+/', '-', strtolower(str_replace('.php', '', $rel)));
     return $cfg;

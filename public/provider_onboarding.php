@@ -1,7 +1,7 @@
 <?php
 // public/provider_onboarding.php
-// 3-step provider onboarding wizard (Account & Phone OTP -> Profile Picture & Links -> Google Reviews)
-// followed by the 5-tab Verification Hub (public/contractor_setup.php).
+// 3-step provider signup wizard (1. Services & Area -> 2. Account Details -> 3. Verify Phone),
+// followed after account creation by Profile Picture & Links, Google Reviews, and the 5-tab Verification Hub.
 require_once __DIR__ . '/../config/init.php';
 require_once __DIR__ . '/../includes/onboarding.php';
 ob_ensure_users_schema();
@@ -9,13 +9,13 @@ ob_ensure_users_schema();
 $step = (int) ($_GET['step'] ?? 1);
 if (!in_array($step, [1, 2, 3], true)) $step = 1;
 
-// If already logged in as a provider and visiting step 1, jump straight to step 2
+// If already logged in as a provider and visiting step 1, jump straight to post-signup step 2
 if (isset($_SESSION['user_id']) && nu_role() === 'provider' && $step === 1) {
     $step = 2;
 }
 // Steps 2 and 3 require an authenticated provider session
 if ($step > 1 && (!isset($_SESSION['user_id']) || nu_role() !== 'provider')) {
-    flashError('Complete Step 1 to create your provider account first.');
+    flashError('Complete signup first to continue setting up your provider profile.');
     header('Location: ' . nu_url('public/provider_onboarding.php?step=1'));
     exit;
 }
@@ -28,12 +28,6 @@ $services = ob_provider_services();
 $cities   = ob_canadian_cities();
 $placesKey = ob_cfg('google_places_key', '');
 
-$steps = [
-    1 => 'Sign up as a Provider',
-    2 => 'Profile Picture & Links',
-    3 => 'Google Reviews',
-];
-
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -45,107 +39,142 @@ include_once __DIR__ . '/../includes/header.php';
 
   <section class="auth__main">
     <div class="auth-card auth-card--wide">
-      <!-- 3-Step Progress Stepper -->
-      <ol class="ob-stepper" aria-label="Provider onboarding steps">
-<?php foreach ($steps as $n => $label):
-        $cls = $n < $step ? 'is-done' : ($n === $step ? 'is-active' : '');
-?>
-        <li class="<?= $cls ?>"<?= $n === $step ? ' aria-current="step"' : '' ?>>
-          <span class="ob-stepper__dot"><?= $n < $step ? nu_icon('check2') : $n ?></span>
-          <span class="ob-stepper__lbl"><?= nu_e($label) ?></span>
-        </li>
-<?php endforeach; ?>
-      </ol>
 
 <?php if ($step === 1): ?>
-      <?php nu_auth_head('Sign up as a provider', 'Tell us what you do, where you work, and verify your phone.', 'person-badge', true); ?>
+      <!-- 3-Step Signup Stepper -->
+      <ol class="ob-stepper" id="signupStepper" aria-label="Provider signup steps">
+        <li class="is-active" data-s="1" aria-current="step">
+          <span class="ob-stepper__dot">1</span>
+          <span class="ob-stepper__lbl">Services &amp; Area</span>
+        </li>
+        <li data-s="2">
+          <span class="ob-stepper__dot">2</span>
+          <span class="ob-stepper__lbl">Account Details</span>
+        </li>
+        <li data-s="3">
+          <span class="ob-stepper__dot">3</span>
+          <span class="ob-stepper__lbl">Verify Phone</span>
+        </li>
+      </ol>
 
-      <form action="<?= nu_e(nu_url('actions/onboarding.php')) ?>" method="POST" class="auth-form" id="provStep1Form">
+      <?php nu_auth_head('Sign up as a provider', 'Three quick steps to create and verify your provider account.', 'person-badge', true); ?>
+
+      <form action="<?= nu_e(nu_url('actions/onboarding.php')) ?>" method="POST" class="auth-form" id="provStep1Form" novalidate>
         <?= nu_csrf_field() ?>
         <input type="hidden" name="do" value="provider_step1">
         <input type="hidden" name="back" value="public/provider_onboarding.php?step=1">
 
-        <label class="field" for="p-name">
-          <span class="label">Full legal name *</span>
-          <span class="input-icon"><?= nu_icon('person') ?><input type="text" class="input" id="p-name" name="name" placeholder="Must match your Government ID" autocomplete="name" required></span>
-        </label>
+        <p class="ob-step-err" id="obStepErr" role="alert" aria-live="polite"></p>
 
-        <fieldset class="field ob-fieldset">
-          <legend class="label">Services you provide * <small class="ob-sub-inline">(pick at least one)</small></legend>
-          <div class="ob-chips">
+        <!-- SUB-STEP 1: Name, Services & City -->
+        <div class="ob-step-pane" data-pane="1">
+          <label class="field" for="p-name">
+            <span class="label">Full legal name *</span>
+            <span class="input-icon"><?= nu_icon('person') ?><input type="text" class="input" id="p-name" name="name" placeholder="Must match your Government ID" autocomplete="name" required></span>
+          </label>
+
+          <fieldset class="field ob-fieldset">
+            <legend class="label">Services you provide * <small class="ob-sub-inline">(pick at least one)</small></legend>
+            <div class="ob-chips">
 <?php foreach ($services as $slug => $svc): ?>
-            <label class="ob-chip-opt">
-              <input type="checkbox" name="services[]" value="<?= nu_e($slug) ?>">
-              <span>
-                <?= nu_e($svc['name']) ?>
-                <?php if ($svc['licensed']): ?><em class="ob-tag">Licence required</em><?php endif; ?>
-                <?php if (!$svc['live']): ?><em class="ob-tag ob-tag--muted">Soon</em><?php endif; ?>
-              </span>
-            </label>
+              <label class="ob-chip-opt">
+                <input type="checkbox" name="services[]" value="<?= nu_e($slug) ?>">
+                <span>
+                  <?= nu_e($svc['name']) ?>
+                  <?php if ($svc['licensed']): ?><em class="ob-tag">Licence required</em><?php endif; ?>
+                  <?php if (!$svc['live']): ?><em class="ob-tag ob-tag--muted">Soon</em><?php endif; ?>
+                </span>
+              </label>
 <?php endforeach; ?>
-          </div>
-        </fieldset>
+            </div>
+          </fieldset>
 
-        <label class="field" for="p-city">
-          <span class="label">Primary city you operate in *</span>
-          <span class="input-icon"><?= nu_icon('geo-alt') ?><input type="text" class="input" id="p-city" name="primary_city" list="nu-ca-cities" placeholder="e.g. Edmonton, AB" required></span>
-          <datalist id="nu-ca-cities">
+          <label class="field" for="p-city">
+            <span class="label">Primary city you operate in *</span>
+            <span class="input-icon"><?= nu_icon('geo-alt') ?><input type="text" class="input" id="p-city" name="primary_city" list="nu-ca-cities" placeholder="e.g. Edmonton, AB" required></span>
+            <datalist id="nu-ca-cities">
 <?php foreach ($cities as $c): ?>
-            <option value="<?= nu_e($c) ?>">
+              <option value="<?= nu_e($c) ?>">
 <?php endforeach; ?>
-          </datalist>
-        </label>
+            </datalist>
+          </label>
 
-        <label class="field" for="p-areas">
-          <span class="label">Additional service areas <small class="ob-sub-inline">(optional)</small></span>
-          <input type="text" class="input" id="p-areas" name="service_areas" placeholder="e.g. St. Albert, Sherwood Park, Leduc">
-        </label>
+          <label class="field" for="p-areas">
+            <span class="label">Additional service areas <small class="ob-sub-inline">(optional)</small></span>
+            <input type="text" class="input" id="p-areas" name="service_areas" placeholder="e.g. St. Albert, Sherwood Park, Leduc">
+          </label>
 
-        <label class="field" for="p-email">
-          <span class="label">Email address *</span>
-          <span class="input-icon"><?= nu_icon('envelope') ?><input type="email" class="input" id="p-email" name="email" placeholder="you@business.ca" autocomplete="email" required></span>
-        </label>
-
-        <div class="field">
-          <?php nu_password_field('password', 'p-password', 'Password *', 'new-password', 'aria-describedby="pw-reqs"'); ?>
-          <div class="meter" aria-hidden="true" style="margin-top:-10px"><span id="password-strength"></span></div>
-          <ul class="reqs" id="pw-reqs">
-            <li id="req-length">8+ characters</li>
-            <li id="req-upper">Uppercase</li>
-            <li id="req-lower">Lowercase</li>
-            <li id="req-number">Number</li>
-            <li id="req-symbol">Symbol</li>
-          </ul>
+          <div class="ob-step-nav">
+            <button type="button" class="btn btn-primary btn-lg" data-next="2">Continue <?= nu_icon('arrow-right') ?></button>
+          </div>
         </div>
 
-        <div class="field">
-          <span class="label">Phone number &amp; SMS verification *</span>
-          <div class="ob-phone-row">
-            <select class="input ob-cc" name="phone_code" id="p-cc" aria-label="Country code">
-              <option value="+1" selected>+1 (CA/US)</option>
-            </select>
-            <input type="tel" class="input" id="p-phone" name="phone" placeholder="780 555 1234" maxlength="16" autocomplete="tel-national" required>
+        <!-- SUB-STEP 2: Email & Password -->
+        <div class="ob-step-pane" data-pane="2" hidden>
+          <label class="field" for="p-email">
+            <span class="label">Email address *</span>
+            <span class="input-icon"><?= nu_icon('envelope') ?><input type="email" class="input" id="p-email" name="email" placeholder="you@business.ca" autocomplete="email" required></span>
+          </label>
+
+          <div class="field">
+            <?php nu_password_field('password', 'p-password', 'Password *', 'new-password', 'aria-describedby="pw-reqs"'); ?>
+            <div class="meter" aria-hidden="true" style="margin-top:-10px"><span id="password-strength"></span></div>
+            <ul class="reqs" id="pw-reqs">
+              <li id="req-length">8+ characters</li>
+              <li id="req-upper">Uppercase</li>
+              <li id="req-lower">Lowercase</li>
+              <li id="req-number">Number</li>
+              <li id="req-symbol">Symbol</li>
+            </ul>
           </div>
-          <div class="ob-otp-row">
-            <input type="text" class="input" id="p-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="Enter 6-digit OTP code" required>
-            <button type="button" class="btn btn-outline" id="p-get-code">Get Code</button>
+
+          <div class="ob-step-nav">
+            <button type="button" class="btn btn-outline btn-lg" data-prev="1">Back</button>
+            <button type="button" class="btn btn-primary btn-lg" data-next="3">Continue <?= nu_icon('arrow-right') ?></button>
           </div>
-          <p class="hint" id="p-otp-status" aria-live="polite"></p>
         </div>
 
-        <label class="mk-check ob-terms">
-          <input type="checkbox" name="agree_terms" id="p-terms" value="1" required>
-          <span>I confirm I am authorized to work in Canada and agree to Nuahn’s Terms &amp; Conditions.</span>
-        </label>
+        <!-- SUB-STEP 3: Phone SMS OTP & Terms -->
+        <div class="ob-step-pane" data-pane="3" hidden>
+          <div class="field">
+            <span class="label">Phone number &amp; SMS verification *</span>
+            <div class="ob-phone-row">
+              <select class="input ob-cc" name="phone_code" id="p-cc" aria-label="Country code">
+                <option value="+1" selected>+1</option>
+              </select>
+              <input type="tel" class="input" id="p-phone" name="phone" placeholder="780 555 1234" maxlength="16" autocomplete="tel-national" required>
+            </div>
+            <div class="ob-otp-row">
+              <input type="text" class="input" id="p-otp" name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="Enter 6-digit OTP code" required>
+              <button type="button" class="btn btn-outline" id="p-get-code">Get Code</button>
+            </div>
+            <p class="hint" id="p-otp-status" aria-live="polite"></p>
+          </div>
 
-        <button type="submit" class="btn btn-primary btn-lg btn-block" id="p-submit" disabled>
-          Create provider account <?= nu_icon('arrow-right') ?>
-        </button>
+          <label class="mk-check ob-terms">
+            <input type="checkbox" name="agree_terms" id="p-terms" value="1" required>
+            <span>I confirm I am authorized to work in Canada and agree to Nuahn’s Terms &amp; Conditions.</span>
+          </label>
+
+          <div class="ob-step-nav">
+            <button type="button" class="btn btn-outline btn-lg" data-prev="2">Back</button>
+            <button type="submit" class="btn btn-primary btn-lg" id="p-submit" disabled>
+              Create provider account <?= nu_icon('arrow-right') ?>
+            </button>
+          </div>
+        </div>
       </form>
 
       <p class="auth-alt">Looking to hire instead? <a href="<?= nu_e(nu_url('public/register.php')) ?>">Client sign up</a> · Already registered? <a href="<?= nu_e(nu_url('public/login.php')) ?>">Sign in</a></p>
 
 <?php elseif ($step === 2): ?>
+      <!-- Post-Signup Onboarding Stepper -->
+      <ol class="ob-stepper" aria-label="Profile onboarding steps">
+        <li class="is-done"><span class="ob-stepper__dot"><?= nu_icon('check2') ?></span><span class="ob-stepper__lbl">Account Created</span></li>
+        <li class="is-active" aria-current="step"><span class="ob-stepper__dot">2</span><span class="ob-stepper__lbl">Profile Picture &amp; Links</span></li>
+        <li><span class="ob-stepper__dot">3</span><span class="ob-stepper__lbl">Google Reviews</span></li>
+      </ol>
+
       <?php nu_auth_head('Add your photo & links', 'A clear headshot and your online profiles help homeowners trust and pick you faster.', 'camera', true); ?>
 
       <form action="<?= nu_e(nu_url('actions/onboarding.php')) ?>" method="POST" enctype="multipart/form-data" class="auth-form">
@@ -223,6 +252,12 @@ include_once __DIR__ . '/../includes/header.php';
       </form>
 
 <?php else: // Step 3: Google Reviews ?>
+      <ol class="ob-stepper" aria-label="Profile onboarding steps">
+        <li class="is-done"><span class="ob-stepper__dot"><?= nu_icon('check2') ?></span><span class="ob-stepper__lbl">Account Created</span></li>
+        <li class="is-done"><span class="ob-stepper__dot"><?= nu_icon('check2') ?></span><span class="ob-stepper__lbl">Profile Picture &amp; Links</span></li>
+        <li class="is-active" aria-current="step"><span class="ob-stepper__dot">3</span><span class="ob-stepper__lbl">Google Reviews</span></li>
+      </ol>
+
       <?php nu_auth_head('Bring your Google reviews', 'Link your Google Business Profile to display verified client trust on Nuahn.', 'star-fill', true); ?>
 
       <div class="mk-note" style="margin-bottom:var(--s5)">
@@ -262,26 +297,83 @@ include_once __DIR__ . '/../includes/header.php';
 
 <script>
 (function () {
-  // Step 1: password strength + inline SMS OTP + submit readiness
   var form1 = document.getElementById('provStep1Form');
   if (form1) {
-    var pw = document.getElementById('p-password');
-    var bar = document.getElementById('password-strength');
-    var rules = [
+    var cur = 1;
+    var errBox = document.getElementById('obStepErr');
+    var panes  = form1.querySelectorAll('.ob-step-pane');
+    var steps  = document.querySelectorAll('#signupStepper li');
+    var pw     = document.getElementById('p-password');
+    var bar    = document.getElementById('password-strength');
+    var rules  = [
       ['req-length', function (v) { return v.length >= 8; }],
       ['req-upper',  function (v) { return /[A-Z]/.test(v); }],
       ['req-lower',  function (v) { return /[a-z]/.test(v); }],
       ['req-number', function (v) { return /[0-9]/.test(v); }],
       ['req-symbol', function (v) { return /[^A-Za-z0-9]/.test(v); }]
     ];
-    if (pw && bar) {
-      pw.addEventListener('input', function () {
-        var v = pw.value, s = 0;
-        rules.forEach(function (r) { var ok = r[1](v); if (ok) s++; document.getElementById(r[0]).classList.toggle('ok', ok); });
+
+    function pwScore(v) {
+      var s = 0;
+      rules.forEach(function (r) { var ok = r[1](v); if (ok) s++; var el = document.getElementById(r[0]); if (el) el.classList.toggle('ok', ok); });
+      if (bar) {
         bar.style.width = (s * 20) + '%';
         bar.style.background = s <= 2 ? 'var(--danger)' : (s <= 4 ? 'var(--warning)' : 'var(--success)');
-      });
+      }
+      return s;
     }
+    if (pw) pw.addEventListener('input', function () { pwScore(pw.value); });
+
+    function showErr(msg) { errBox.textContent = msg || ''; }
+
+    function validatePane(n) {
+      showErr('');
+      if (n === 1) {
+        var nm = document.getElementById('p-name').value.trim();
+        var checked = form1.querySelectorAll('input[name="services[]"]:checked').length;
+        var city = document.getElementById('p-city').value.trim();
+        if (nm.length < 2) { showErr('Enter your full legal name (must match your Government ID).'); document.getElementById('p-name').focus(); return false; }
+        if (checked < 1) { showErr('Select at least one service you provide.'); return false; }
+        if (city.length < 2) { showErr('Enter the primary city you operate in.'); document.getElementById('p-city').focus(); return false; }
+      }
+      if (n === 2) {
+        var em = document.getElementById('p-email').value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { showErr('Enter a valid email address.'); document.getElementById('p-email').focus(); return false; }
+        if (pwScore(pw.value) < 5) { showErr('Password must meet all 5 requirements below.'); pw.focus(); return false; }
+      }
+      return true;
+    }
+
+    function goPane(target) {
+      cur = target;
+      panes.forEach(function (p) { p.hidden = Number(p.getAttribute('data-pane')) !== cur; });
+      steps.forEach(function (li) {
+        var n = Number(li.getAttribute('data-s'));
+        li.classList.toggle('is-active', n === cur);
+        li.classList.toggle('is-done', n < cur);
+        if (n === cur) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+        var dot = li.querySelector('.ob-stepper__dot');
+        if (dot) dot.textContent = n < cur ? '✓' : String(n);
+      });
+      showErr('');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    form1.querySelectorAll('[data-next]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var nxt = Number(b.getAttribute('data-next'));
+        if (validatePane(cur)) goPane(nxt);
+      });
+    });
+    form1.querySelectorAll('[data-prev]').forEach(function (b) {
+      b.addEventListener('click', function () { goPane(Number(b.getAttribute('data-prev'))); });
+    });
+    form1.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && cur < 3 && e.target.tagName === 'INPUT') {
+        e.preventDefault();
+        if (validatePane(cur)) goPane(cur + 1);
+      }
+    });
 
     var otpBtn = document.getElementById('p-get-code');
     var otpIn  = document.getElementById('p-otp');
@@ -351,16 +443,13 @@ include_once __DIR__ . '/../includes/header.php';
     });
   }
 
-  // Step 2: instant profile image preview
   var avIn = document.getElementById('ob-avatar-input');
   var avBox = document.getElementById('ob-avatar-box');
   if (avIn && avBox) {
     avIn.addEventListener('change', function () {
       if (!avIn.files || !avIn.files[0]) return;
       var reader = new FileReader();
-      reader.onload = function (e) {
-        avBox.innerHTML = '<img src="' + e.target.result + '" alt="Profile preview">';
-      };
+      reader.onload = function (e) { avBox.innerHTML = '<img src="' + e.target.result + '" alt="Profile preview">'; };
       reader.readAsDataURL(avIn.files[0]);
     });
   }
