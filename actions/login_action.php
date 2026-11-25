@@ -15,7 +15,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // If role is passed (client/provider forms), enforce it
     $role = $_POST['role'] ?? null;
 
-    if ($role) {
+    if ($role === 'admin') {
+        // users.role stores Admin sign-ups as 'manager' (ENUM has superadmin, manager, client, provider)
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND role IN ('admin', 'manager')");
+        $stmt->execute([$email]);
+    } elseif ($role) {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND role = ?");
         $stmt->execute([$email, $role]);
     } else {
@@ -27,6 +31,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password'])) {
+        if (($user['status'] ?? 'active') === 'suspended') {
+            flashError("Your account has been suspended. Please contact support.");
+            header("Location: ../public/login.php?error=suspended");
+            exit;
+        }
         // Regenerate session ID to prevent fixation
         session_regenerate_id(true);
 

@@ -300,6 +300,7 @@ function nu_password_field($name, $id, $label, $autocomplete = 'current-password
 function nu_login_form($action, $btnLabel = 'Sign in') {
     $act = $action === null ? '' : ' action="' . nu_e($action) . '"';
     echo '<form method="POST"' . $act . ' class="auth-form">';
+    echo nu_csrf_field();
     echo '<label class="field" for="email"><span class="label">Email address</span><span class="input-icon">' . nu_icon('envelope');
     echo '<input type="email" name="email" id="email" class="input" placeholder="you@example.com" autocomplete="email" required autofocus></span></label>';
     nu_password_field('password', 'password', 'Password');
@@ -310,6 +311,7 @@ function nu_login_form($action, $btnLabel = 'Sign in') {
 /** Name/email/password form used by the per-role register pages. */
 function nu_register_form($btnLabel = 'Create account') {
     echo '<form method="POST" class="auth-form">';
+    echo nu_csrf_field(false);
     echo '<label class="field" for="name"><span class="label">Full name</span><span class="input-icon">' . nu_icon('person');
     echo '<input type="text" name="name" id="name" class="input" placeholder="Jane Doe" autocomplete="name" required></span></label>';
     echo '<label class="field" for="email"><span class="label">Email address</span><span class="input-icon">' . nu_icon('envelope');

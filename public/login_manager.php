@@ -1,27 +1,42 @@
 <?php
+// public/login_manager.php
 require_once("../config/init.php");
-include_once("../includes/header.php");
+require_once __DIR__ . '/../includes/marketplace/core.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
+    if (!mk_csrf_ok()) {
+        flashError("Your session expired. Please try signing in again.");
+        header("Location: login_manager.php?error=invalid");
+        exit;
+    }
+    $email    = trim((string) ($_POST['email'] ?? ''));
+    $password = (string) ($_POST['password'] ?? '');
 
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND role = 'manager'");
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND role IN ('manager', 'admin')");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password'])) {
+        if (($user['status'] ?? 'active') === 'suspended') {
+            flashError("Your account has been suspended. Please contact support.");
+            header("Location: login_manager.php?error=suspended");
+            exit;
+        }
+        session_regenerate_id(true);
         $_SESSION['user_id']   = $user['id'];
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['role']      = $user['role'];
+        $_SESSION['theme']     = $user['theme_preference'] ?? 'light';
         header("Location: dashboard.php");
         exit;
     } else {
         flashError("Invalid manager credentials.");
-        header("Location: login_manager.php");
+        header("Location: login_manager.php?error=invalid");
         exit;
     }
 }
+
+include_once("../includes/header.php");
 ?>
 
 <div class="auth">
@@ -32,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php nu_login_form(null); ?>
       <div class="divider">Other sign-in options</div>
       <div class="role-links"><a class="btn btn-outline btn-sm" href="login_admin.php">Team</a><a class="btn btn-outline btn-sm" href="login.php">All roles</a></div>
-      
     </div>
   </section>
 </div>
