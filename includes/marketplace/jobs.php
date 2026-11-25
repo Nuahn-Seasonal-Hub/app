@@ -107,6 +107,7 @@ function mk_task_create_mech($clientId, array $in) {
 
 /** Vetted contractors for a task's service, nearest first, within radius. @return array [[user_id, name, km|null, ...]] */
 function mk_nearby_contractors(array $t, $limit = 10, $maxKm = null) {
+    if (!mk_ready()) return [];
     $st = mk_db()->prepare("SELECT p.*, u.name FROM contractor_profiles p JOIN users u ON u.id = p.user_id WHERE p.vetting_status = 'approved' AND FIND_IN_SET(?, p.trades) > 0 AND p.is_online = 1 AND p.user_id <> ?");
     $st->execute([$t['service'], (int) $t['client_id']]);
     $out = [];
@@ -139,6 +140,7 @@ function mk_broadcast($taskId) {
 // ---------- the board (contractor view) ----------
 /** Open jobs a vetted contractor can respond to, nearest/boosted first. Exact addresses are NOT included. */
 function mk_board($uid, $service = null) {
+    if (!mk_ready()) return [];
     $p = mk_profile($uid);
     if (!$p || $p['vetting_status'] !== 'approved') return [];
     $trades = mk_trades($p);
@@ -169,6 +171,7 @@ function mk_board($uid, $service = null) {
 
 // ---------- offers ----------
 function mk_offers($taskId) {
+    if (!mk_ready()) return [];
     $st = mk_db()->prepare("SELECT o.*, TIMESTAMPDIFF(SECOND, o.created_at, NOW()) AS age_s FROM task_offers o WHERE o.task_id = ? AND o.status IN ('sent','accepted') ORDER BY o.amount, o.id");
     $st->execute([(int) $taskId]);
     return $st->fetchAll();
@@ -545,6 +548,7 @@ function mk_cron_run() {
 // ---------- lists for the client / contractor dashboards ----------
 /** A client's own tasks. $past = finished (approved/cancelled) vs active. */
 function mk_client_tasks($clientId, $past = false, $limit = 100) {
+    if (!mk_ready()) return [];
     $ops = $past ? "IN ('approved','cancelled')" : "NOT IN ('approved','cancelled')";
     $st = mk_db()->prepare(MK_TASK_SELECT . "WHERE t.client_id = ? AND t.status $ops ORDER BY t.id DESC LIMIT " . (int) $limit);
     $st->execute([(int) $clientId]);
@@ -557,6 +561,7 @@ function mk_client_tasks($clientId, $past = false, $limit = 100) {
 }
 /** A contractor's assigned jobs, active first. */
 function mk_contractor_tasks($uid, $past = false, $limit = 100) {
+    if (!mk_ready()) return [];
     $ops = $past ? "IN ('approved','cancelled')" : "NOT IN ('approved','cancelled')";
     $st = mk_db()->prepare(MK_TASK_SELECT . "WHERE t.contractor_id = ? AND t.status $ops ORDER BY t.id DESC LIMIT " . (int) $limit);
     $st->execute([(int) $uid]);
@@ -564,6 +569,7 @@ function mk_contractor_tasks($uid, $past = false, $limit = 100) {
 }
 /** A contractor's pending offers/quotes on jobs they do not hold yet. */
 function mk_contractor_pending($uid) {
+    if (!mk_ready()) return [];
     $st = mk_db()->prepare("SELECT t.id, t.title, t.service, t.mode, t.status, o.kind, o.amount, o.status AS offer_status FROM task_offers o JOIN tasks t ON t.id = o.task_id
         WHERE o.contractor_id = ? AND o.status = 'sent' AND t.status IN ('open_for_bids','quote_pending','searching') ORDER BY o.id DESC LIMIT 50");
     $st->execute([(int) $uid]);
@@ -572,6 +578,7 @@ function mk_contractor_pending($uid) {
 
 /** Contractor earnings summary + recent payment rows. Payout is on the pre-tax amount after commission. */
 function mk_contractor_earnings($uid) {
+    if (!mk_ready()) return ['sum' => ['held' => 0, 'pending' => 0, 'paid' => 0], 'rows' => []];
     $db = mk_db();
     $s = $db->prepare("SELECT
         COALESCE(SUM(CASE WHEN state = 'authorized' THEN payout_amount END), 0) AS held,

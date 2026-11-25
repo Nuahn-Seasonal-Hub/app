@@ -8,9 +8,16 @@ require_once("../config/init.php");
 requireLogin(['client', 'provider', 'manager', 'superadmin', 'admin']);
 require_once("../includes/marketplace/view.php");
 $uid = mk_uid();
-$st = mk_db()->prepare('SELECT *, TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_s FROM job_notifications WHERE user_id = ? ORDER BY id DESC LIMIT 60');
-$st->execute([$uid]);
-$rows = $st->fetchAll();
+$rows = [];
+if (mk_ready()) {
+    try {
+        $st = mk_db()->prepare('SELECT *, TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_s FROM job_notifications WHERE user_id = ? ORDER BY id DESC LIMIT 60');
+        $st->execute([$uid]);
+        $rows = $st->fetchAll();
+    } catch (Throwable $e) {
+        error_log('updates query: ' . $e->getMessage());
+    }
+}
 $unread = 0; foreach ($rows as $r) if (!$r['read_at']) $unread++;
 $icons = ['offer' => 'megaphone', 'accepted' => 'check-circle-fill', 'payment' => 'credit-card', 'message' => 'chat-dots', 'quote' => 'receipt', 'submitted' => 'clipboard-check',
           'approved' => 'check2-circle', 'dispute' => 'exclamation-triangle', 'vetting' => 'shield-check', 'job' => 'briefcase', 'status' => 'clock'];

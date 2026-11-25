@@ -12,6 +12,12 @@ require_once("../includes/onboarding.php");
 ob_ensure_users_schema();
 
 $uid    = mk_uid();
+if (!mk_ready()) {
+    include_once("../includes/header.php");
+    echo '<main class="screen"><div class="sv-card"><h1>Verification hub is being set up</h1><p>Please refresh in a moment or ask an administrator to finish installing the marketplace tables.</p><p><a class="btn btn-primary" href="' . nu_e(nu_url('public/provider_home.php')) . '">Back to home</a></p></div></main>';
+    include_once("../includes/footer.php");
+    exit;
+}
 $user   = ob_user_get($uid);
 $p      = mk_profile_ensure($uid);
 $docs   = mk_documents($uid);

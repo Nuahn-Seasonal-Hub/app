@@ -11,13 +11,13 @@ requireLogin('client');
 require_once("../includes/marketplace/view.php");
 require_once("../includes/onboarding.php");
 ob_ensure_users_schema();
-include "../includes/header.php";
+$mkReady = mk_ready();
 
 $uid = mk_uid();
 $me = ob_user_get($uid);
 $ver = ob_client_verification_status($me);
-$active = mk_client_tasks($uid, false);
-$allCount = count($active) + count(mk_client_tasks($uid, true));
+$active = $mkReady ? mk_client_tasks($uid, false) : [];
+$allCount = $mkReady ? (count($active) + count(mk_client_tasks($uid, true))) : 0;
 $myOpen = 0; $received = 0; $attn = [];
 foreach ($active as $t) {
     if (in_array($t['status'], ['open_for_bids', 'quote_pending', 'searching'], true)) $myOpen++;
@@ -29,9 +29,19 @@ foreach ($active as $t) {
     elseif ($t['status'] === 'paused') $attn[] = ['exclamation-triangle', 'Extra work needs your approval', $t['title'], nu_url('public/track.php') . '?id=' . (int) $t['id'] . '#revision'];
 }
 $next = null; foreach ($active as $t) { if (in_array($t['status'], ['confirmed', 'on_the_way', 'arrived', 'in_progress'], true)) { $next = $t; break; } }
-$nst = mk_db()->prepare('SELECT title, type FROM job_notifications WHERE user_id = ? ORDER BY id DESC LIMIT 3'); $nst->execute([$uid]); $notes = $nst->fetchAll();
+$notes = [];
+if ($mkReady) {
+    try {
+        $nst = mk_db()->prepare('SELECT title, type FROM job_notifications WHERE user_id = ? ORDER BY id DESC LIMIT 3');
+        $nst->execute([$uid]);
+        $notes = $nst->fetchAll();
+    } catch (Throwable $e) {
+        error_log('client_home notifications: ' . $e->getMessage());
+    }
+}
 $hour = (int) date('G');
 $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
+include "../includes/header.php";
 ?>
 
 <section class="band">

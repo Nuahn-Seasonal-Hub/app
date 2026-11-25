@@ -20,11 +20,57 @@ function mk_role() { return (string) ($_SESSION['role'] ?? ''); }
 function mk_is_staff() { return in_array(mk_role(), ['superadmin', 'manager', 'admin'], true); }
 function mk_ip() { return substr((string) ($_SERVER['REMOTE_ADDR'] ?? 'cli'), 0, 45); }
 
-/** True once database/migrations.sql has created the booking tables (pages show a clear message otherwise). */
-function mk_ready() {
+/**
+ * Idempotently create any missing marketplace/ops tables from database/migrations.sql.
+ * Only executes CREATE TABLE IF NOT EXISTS DDL blocks (never seeds demo rows or modifies existing data).
+ * Safe on shared hosts (e.g. Hostinger) where Git deploys code without running docker-entrypoint.sh.
+ */
+function mk_ensure_schema() {
+    static $attempted = false;
+    if ($attempted) return;
+    $attempted = true;
+    try {
+        $db = mk_db();
+        if (!$db || $db->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') return;
+        $path = __DIR__ . '/../../database/migrations.sql';
+        if (!is_file($path)) return;
+        $sql = (string) file_get_contents($path);
+        if (preg_match_all('/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+`[^`]+`[\s\S]*?;/i', $sql, $m)) {
+            foreach ($m[0] as $ddl) {
+                try {
+                    $db->exec($ddl);
+                } catch (Throwable $e) {
+                    error_log('mk_ensure_schema: ' . $e->getMessage());
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('mk_ensure_schema fatal: ' . $e->getMessage());
+    }
+}
+
+/** True once the marketplace booking tables exist (auto-installs missing tables on MySQL/MariaDB). */
+function mk_ready($reset = false) {
     static $ok = null;
-    if ($ok === null) {
-        try { mk_db()->query('SELECT 1 FROM tasks LIMIT 1'); $ok = true; } catch (Throwable $e) { $ok = false; }
+    if ($reset) $ok = null;
+    if ($ok !== null) return $ok;
+    $probe = static function () {
+        $db = mk_db();
+        if (!$db) return false;
+        foreach (['tasks', 'task_offers', 'payments', 'job_notifications', 'contractor_profiles', 'mk_audit_log'] as $tbl) {
+            $db->query("SELECT 1 FROM `$tbl` LIMIT 1");
+        }
+        return true;
+    };
+    try {
+        $ok = $probe();
+    } catch (Throwable $e) {
+        mk_ensure_schema();
+        try {
+            $ok = $probe();
+        } catch (Throwable $e2) {
+            $ok = false;
+        }
     }
     return $ok;
 }
@@ -168,6 +214,7 @@ const MK_TASK_SELECT = "SELECT t.*, TIMESTAMPDIFF(SECOND, t.created_at, NOW()) A
     FROM tasks t JOIN users uc ON uc.id = t.client_id LEFT JOIN users uk ON uk.id = t.contractor_id LEFT JOIN payments p ON p.task_id = t.id ";
 
 function mk_task($id) {
+    if (!mk_ready()) return null;
     $st = mk_db()->prepare(MK_TASK_SELECT . 'WHERE t.id = ?');
     $st->execute([(int) $id]);
     $r = $st->fetch();
@@ -205,11 +252,13 @@ function mk_require_task($id, array $relations = null) {
 
 // ---------- contractor profile + vetting ----------
 function mk_profile($uid) {
+    if (!mk_ready()) return null;
     $st = mk_db()->prepare('SELECT * FROM contractor_profiles WHERE user_id = ?');
     $st->execute([(int) $uid]);
     return $st->fetch() ?: null;
 }
 function mk_profile_ensure($uid) {
+    if (!mk_ready()) return null;
     $p = mk_profile($uid);
     if ($p) return $p;
     mk_db()->prepare("INSERT IGNORE INTO contractor_profiles (user_id, trades, vetting_status) VALUES (?, '', 'draft')")->execute([(int) $uid]);
@@ -235,6 +284,7 @@ function mk_initials($name) {
 }
 /** Contractor card in the shape nu_contractor() returns for fixture contractors, built from live rows. */
 function mk_contractor_card($uid) {
+    if (!mk_ready()) return null;
     $st = mk_db()->prepare('SELECT u.id, u.name, p.* FROM users u LEFT JOIN contractor_profiles p ON p.user_id = u.id WHERE u.id = ?');
     $st->execute([(int) $uid]);
     $r = $st->fetch();

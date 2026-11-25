@@ -547,87 +547,87 @@ UNION ALL SELECT @chris, 'snow-removal', 'pending', 'review', 'review', 'na', 'n
 INSERT INTO `tasks` (`service`, `mode`, `category`, `title`, `client_id`, `address`, `lat`, `lng`, `details`, `notes`, `target_budget`, `status`, `payment_status`, `is_demo`, `created_at`)
 SELECT 'snow-removal', 'on_demand', 'snow', 'Snow clearing · Standard driveway + walkway', @alice, '112 Maple Crescent, Edmonton AB', 53.5420, -113.5100,
   '{"size":"standard","sqft":null,"walk":"front","steps":true,"ice":true,"plan":"demand","estimate":[75,105]}', 'Gate on the left side stays shut please.', 85.00, 'open_for_bids', 'unpaid', 1, DATE_SUB(NOW(), INTERVAL 40 MINUTE) FROM DUAL WHERE @seeded = 0 AND @alice IS NOT NULL;
-SET @t1 := LAST_INSERT_ID();
+SET @t1 := IF(@seeded = 0 AND @alice IS NOT NULL, LAST_INSERT_ID(), 0);
 INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `eta_minutes`, `status`)
-SELECT @t1, @jordan, 'accept', 85.00, 'I can be there within the hour with the truck.', 45, 'sent' FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL
-UNION ALL SELECT @t1, @priya, 'counter', 95.00, 'Includes hand-shovelling the steps and salting the walkway.', 90, 'sent' FROM DUAL WHERE @seeded = 0 AND @priya IS NOT NULL;
+SELECT @t1, @jordan, 'accept', 85.00, 'I can be there within the hour with the truck.', 45, 'sent' FROM DUAL WHERE @t1 > 0 AND @jordan IS NOT NULL
+UNION ALL SELECT @t1, @priya, 'counter', 95.00, 'Includes hand-shovelling the steps and salting the walkway.', 90, 'sent' FROM DUAL WHERE @t1 > 0 AND @priya IS NOT NULL;
 
 -- 2) Alice, snow, confirmed (escrow held).
 INSERT INTO `tasks` (`service`, `mode`, `category`, `title`, `client_id`, `contractor_id`, `address`, `lat`, `lng`, `details`, `target_budget`, `agreed_amount`, `tax_amount`, `status`, `payment_status`, `window_label`, `accepted_at`, `is_demo`, `created_at`)
 SELECT 'snow-removal', 'on_demand', 'snow', 'Snow clearing · Long driveway', @alice, @jordan, '112 Maple Crescent, Edmonton AB', 53.5420, -113.5100,
-  '{"size":"large","sqft":null,"walk":"none","steps":false,"ice":false,"plan":"demand","estimate":[95,135]}', 110.00, 110.00, 5.50, 'confirmed', 'authorized', 'Tomorrow morning', DATE_SUB(NOW(), INTERVAL 3 HOUR), 1, DATE_SUB(NOW(), INTERVAL 5 HOUR) FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
-SET @t2 := LAST_INSERT_ID();
-INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t2, @jordan, 'accept', 110.00, 'Happy to do it at your price.', 'accepted' FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
-UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t2 LIMIT 1) WHERE `id` = @t2 AND @seeded = 0;
+  '{"size":"large","sqft":null,"walk":"none","steps":false,"ice":false,"plan":"demand","estimate":[95,135]}', 110.00, 110.00, 5.50, 'confirmed', 'authorized', 'Tomorrow morning', DATE_SUB(NOW(), INTERVAL 3 HOUR), 1, DATE_SUB(NOW(), INTERVAL 5 HOUR) FROM DUAL WHERE @seeded = 0 AND @alice IS NOT NULL AND @jordan IS NOT NULL;
+SET @t2 := IF(@seeded = 0 AND @alice IS NOT NULL AND @jordan IS NOT NULL, LAST_INSERT_ID(), 0);
+INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t2, @jordan, 'accept', 110.00, 'Happy to do it at your price.', 'accepted' FROM DUAL WHERE @t2 > 0;
+UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t2 LIMIT 1) WHERE `id` = @t2 AND @t2 > 0;
 INSERT INTO `payments` (`task_id`, `client_id`, `contractor_id`, `provider`, `state`, `subtotal`, `tax`, `total`, `processor_ref`, `authorized_at`)
-SELECT @t2, @alice, @jordan, 'sandbox', 'authorized', 110.00, 5.50, 115.50, 'sbx_auth_demo0002', NOW() FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
+SELECT @t2, @alice, @jordan, 'sandbox', 'authorized', 110.00, 5.50, 115.50, 'sbx_auth_demo0002', NOW() FROM DUAL WHERE @t2 > 0;
 
 -- 3) Alice, snow, completed and waiting for approval (photos on file, 30 h left before auto-release).
 INSERT INTO `tasks` (`service`, `mode`, `category`, `title`, `client_id`, `contractor_id`, `address`, `lat`, `lng`, `details`, `target_budget`, `agreed_amount`, `tax_amount`, `status`, `payment_status`, `window_label`, `accepted_at`, `started_at`, `arrived_at`, `submitted_at`, `auto_release_at`, `completion_note`, `checklist`, `is_demo`, `created_at`)
 SELECT 'snow-removal', 'on_demand', 'snow', 'Snow clearing · Standard driveway + steps', @alice, @dana, '14 Birch Lane, Edmonton AB', 53.5230, -113.4700,
   '{"size":"standard","sqft":null,"walk":"front","steps":true,"ice":true,"plan":"demand","estimate":[85,115]}', 90.00, 90.00, 4.50, 'pending_approval', 'authorized', 'This morning', DATE_SUB(NOW(), INTERVAL 20 HOUR), DATE_SUB(NOW(), INTERVAL 18 HOUR), DATE_SUB(NOW(), INTERVAL 18 HOUR), DATE_SUB(NOW(), INTERVAL 18 HOUR), DATE_ADD(NOW(), INTERVAL 30 HOUR),
-  'Cleared to the pavement edge and salted the steps. Gate left closed.', '["Driveway cleared to the surface","Walkway and steps cleared","Ice melt applied to the steps","Snow piled away from the garage door"]', 1, DATE_SUB(NOW(), INTERVAL 22 HOUR) FROM DUAL WHERE @seeded = 0 AND @dana IS NOT NULL;
-SET @t3 := LAST_INSERT_ID();
-INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t3, @dana, 'accept', 90.00, '', 'accepted' FROM DUAL WHERE @seeded = 0 AND @dana IS NOT NULL;
-UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t3 LIMIT 1) WHERE `id` = @t3 AND @seeded = 0;
+  'Cleared to the pavement edge and salted the steps. Gate left closed.', '["Driveway cleared to the surface","Walkway and steps cleared","Ice melt applied to the steps","Snow piled away from the garage door"]', 1, DATE_SUB(NOW(), INTERVAL 22 HOUR) FROM DUAL WHERE @seeded = 0 AND @alice IS NOT NULL AND @dana IS NOT NULL;
+SET @t3 := IF(@seeded = 0 AND @alice IS NOT NULL AND @dana IS NOT NULL, LAST_INSERT_ID(), 0);
+INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t3, @dana, 'accept', 90.00, '', 'accepted' FROM DUAL WHERE @t3 > 0;
+UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t3 LIMIT 1) WHERE `id` = @t3 AND @t3 > 0;
 INSERT INTO `payments` (`task_id`, `client_id`, `contractor_id`, `provider`, `state`, `subtotal`, `tax`, `total`, `processor_ref`, `authorized_at`)
-SELECT @t3, @alice, @dana, 'sandbox', 'authorized', 90.00, 4.50, 94.50, 'sbx_auth_demo0003', DATE_SUB(NOW(), INTERVAL 20 HOUR) FROM DUAL WHERE @seeded = 0 AND @dana IS NOT NULL;
+SELECT @t3, @alice, @dana, 'sandbox', 'authorized', 90.00, 4.50, 94.50, 'sbx_auth_demo0003', DATE_SUB(NOW(), INTERVAL 20 HOUR) FROM DUAL WHERE @t3 > 0;
 INSERT INTO `job_photos` (`task_id`, `user_id`, `kind`, `storage`, `path`, `mime`, `bytes`, `width`, `height`)
-SELECT @t3, @dana, 'before', 'asset', 'work-before-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @seeded = 0 AND @dana IS NOT NULL
-UNION ALL SELECT @t3, @dana, 'after', 'asset', 'work-after-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @seeded = 0 AND @dana IS NOT NULL;
+SELECT @t3, @dana, 'before', 'asset', 'work-before-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @t3 > 0
+UNION ALL SELECT @t3, @dana, 'after', 'asset', 'work-after-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @t3 > 0;
 
 -- 4) Alice, snow, approved and paid out (12% commission), with a review.
 INSERT INTO `tasks` (`service`, `mode`, `category`, `title`, `client_id`, `contractor_id`, `address`, `lat`, `lng`, `details`, `target_budget`, `agreed_amount`, `tax_amount`, `status`, `payment_status`, `window_label`, `accepted_at`, `submitted_at`, `approved_at`, `completion_note`, `is_demo`, `created_at`)
 SELECT 'snow-removal', 'on_demand', 'snow', 'Snow clearing · Standard driveway', @alice, @jordan, '112 Maple Crescent, Edmonton AB', 53.5420, -113.5100,
-  '{"size":"standard","sqft":null,"walk":"none","steps":false,"ice":false,"plan":"demand","estimate":[65,95]}', 80.00, 80.00, 4.00, 'approved', 'released', 'Saturday', DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY), 'All clear.', 1, DATE_SUB(NOW(), INTERVAL 7 DAY) FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
-SET @t4 := LAST_INSERT_ID();
-INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t4, @jordan, 'accept', 80.00, '', 'accepted' FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
-UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t4 LIMIT 1) WHERE `id` = @t4 AND @seeded = 0;
+  '{"size":"standard","sqft":null,"walk":"none","steps":false,"ice":false,"plan":"demand","estimate":[65,95]}', 80.00, 80.00, 4.00, 'approved', 'released', 'Saturday', DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY), 'All clear.', 1, DATE_SUB(NOW(), INTERVAL 7 DAY) FROM DUAL WHERE @seeded = 0 AND @alice IS NOT NULL AND @jordan IS NOT NULL;
+SET @t4 := IF(@seeded = 0 AND @alice IS NOT NULL AND @jordan IS NOT NULL, LAST_INSERT_ID(), 0);
+INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t4, @jordan, 'accept', 80.00, '', 'accepted' FROM DUAL WHERE @t4 > 0;
+UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t4 LIMIT 1) WHERE `id` = @t4 AND @t4 > 0;
 INSERT INTO `payments` (`task_id`, `client_id`, `contractor_id`, `provider`, `state`, `subtotal`, `tax`, `total`, `commission_pct`, `commission`, `payout_amount`, `captured_amount`, `processor_ref`, `payout_status`, `payout_ref`, `authorized_at`, `captured_at`, `released_at`)
-SELECT @t4, @alice, @jordan, 'sandbox', 'released', 80.00, 4.00, 84.00, 12.00, 9.60, 70.40, 84.00, 'sbx_cap_demo0004', 'paid', 'sbx_payout_demo0004', DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY) FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
+SELECT @t4, @alice, @jordan, 'sandbox', 'released', 80.00, 4.00, 84.00, 12.00, 9.60, 70.40, 84.00, 'sbx_cap_demo0004', 'paid', 'sbx_payout_demo0004', DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY) FROM DUAL WHERE @t4 > 0;
 INSERT INTO `job_photos` (`task_id`, `user_id`, `kind`, `storage`, `path`, `mime`, `bytes`, `width`, `height`)
-SELECT @t4, @jordan, 'before', 'asset', 'work-before-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL
-UNION ALL SELECT @t4, @jordan, 'after', 'asset', 'work-after-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
+SELECT @t4, @jordan, 'before', 'asset', 'work-before-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @t4 > 0
+UNION ALL SELECT @t4, @jordan, 'after', 'asset', 'work-after-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @t4 > 0;
 INSERT INTO `reviews` (`task_id`, `client_id`, `contractor_id`, `rating`, `comment`)
-SELECT @t4, @alice, @jordan, 5, 'On time, clean edges, and he cleared the steps without being asked.' FROM DUAL WHERE @seeded = 0 AND @jordan IS NOT NULL;
+SELECT @t4, @alice, @jordan, 5, 'On time, clean edges, and he cleared the steps without being asked.' FROM DUAL WHERE @t4 > 0;
 
 -- 5) Paul, roadside battery, searching for a technician (hold placed, search window left open for the demo).
 INSERT INTO `tasks` (`service`, `mode`, `category`, `title`, `client_id`, `address`, `lat`, `lng`, `details`, `target_budget`, `status`, `payment_status`, `search_expires_at`, `is_demo`, `created_at`)
 SELECT 'mobile-mechanics', 'roadside', 'battery', 'Jump start or battery · 2018 Honda Civic', @paul, 'Whyte Ave & 104 St, Edmonton AB', 53.5190, -113.5030,
   '{"vehicle":{"year":"2018","make":"Honda","model":"Civic","trim":"","engine":""},"extras":{}}', 98.00, 'searching', 'authorized', DATE_ADD(NOW(), INTERVAL 30 DAY), 1, DATE_SUB(NOW(), INTERVAL 3 MINUTE) FROM DUAL WHERE @seeded = 0 AND @paul IS NOT NULL;
-SET @t5 := LAST_INSERT_ID();
+SET @t5 := IF(@seeded = 0 AND @paul IS NOT NULL, LAST_INSERT_ID(), 0);
 INSERT INTO `payments` (`task_id`, `client_id`, `provider`, `state`, `subtotal`, `tax`, `total`, `processor_ref`, `authorized_at`)
-SELECT @t5, @paul, 'sandbox', 'authorized', 98.00, 4.90, 102.90, 'sbx_auth_demo0005', NOW() FROM DUAL WHERE @seeded = 0 AND @paul IS NOT NULL;
+SELECT @t5, @paul, 'sandbox', 'authorized', 98.00, 4.90, 102.90, 'sbx_auth_demo0005', NOW() FROM DUAL WHERE @t5 > 0;
 
 -- 6) Paul, scheduled brake repair, one itemised quote waiting (parts + labour + call-out fee + GST).
 INSERT INTO `tasks` (`service`, `mode`, `category`, `title`, `client_id`, `address`, `lat`, `lng`, `details`, `notes`, `status`, `payment_status`, `window_label`, `is_demo`, `created_at`)
 SELECT 'mobile-mechanics', 'scheduled', 'brakes', 'Brake pads and rotors · 2016 Toyota RAV4', @paul, '88 Ravine Drive, Edmonton AB', 53.5700, -113.4400,
   '{"vehicle":{"year":"2016","make":"Toyota","model":"RAV4","trim":"LE","engine":"2.5L"},"extras":{"window":"Weekday mornings"}}', 'Squealing when braking, mostly the front.', 'quote_pending', 'unpaid', 'Weekday mornings', 1, DATE_SUB(NOW(), INTERVAL 2 HOUR) FROM DUAL WHERE @seeded = 0 AND @paul IS NOT NULL;
-SET @t6 := LAST_INSERT_ID();
-INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t6, @marcus, 'quote', 372.00, 'Front pads and rotors, same-day if parts are in stock.', 'sent' FROM DUAL WHERE @seeded = 0 AND @marcus IS NOT NULL;
+SET @t6 := IF(@seeded = 0 AND @paul IS NOT NULL, LAST_INSERT_ID(), 0);
+INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t6, @marcus, 'quote', 372.00, 'Front pads and rotors, same-day if parts are in stock.', 'sent' FROM DUAL WHERE @t6 > 0 AND @marcus IS NOT NULL;
 INSERT INTO `quotes` (`task_id`, `offer_id`, `contractor_id`, `version`, `kind`, `status`, `scope`, `includes_text`, `excludes_text`, `windows`, `subtotal`, `gst`, `pst`, `total`, `expires_at`)
-SELECT @t6, (SELECT `id` FROM `task_offers` WHERE `task_id` = @t6 LIMIT 1), @marcus, 1, 'initial', 'sent', 'Replace front brake pads and rotors, inspect calipers and brake fluid.', 'Parts, labour, brake clean, test drive', 'Caliper replacement, brake fluid flush', 'Tomorrow 9am to 11am|Tomorrow 1pm to 3pm|Saturday 10am to 12pm', 372.00, 18.60, 0.00, 390.60, DATE_ADD(NOW(), INTERVAL 22 HOUR) FROM DUAL WHERE @seeded = 0 AND @marcus IS NOT NULL;
-SET @q6 := LAST_INSERT_ID();
+SELECT @t6, (SELECT `id` FROM `task_offers` WHERE `task_id` = @t6 LIMIT 1), @marcus, 1, 'initial', 'sent', 'Replace front brake pads and rotors, inspect calipers and brake fluid.', 'Parts, labour, brake clean, test drive', 'Caliper replacement, brake fluid flush', 'Tomorrow 9am to 11am|Tomorrow 1pm to 3pm|Saturday 10am to 12pm', 372.00, 18.60, 0.00, 390.60, DATE_ADD(NOW(), INTERVAL 22 HOUR) FROM DUAL WHERE @t6 > 0 AND @marcus IS NOT NULL;
+SET @q6 := IF(@t6 > 0 AND @marcus IS NOT NULL, LAST_INSERT_ID(), 0);
 INSERT INTO `quote_items` (`quote_id`, `type`, `description`, `qty`, `unit_price`, `sort`)
-SELECT @q6, 'Parts', 'Front brake pads (ceramic)', 1, 74.00, 0 FROM DUAL WHERE @seeded = 0 AND @marcus IS NOT NULL
-UNION ALL SELECT @q6, 'Parts', 'Front rotors', 2, 63.00, 1 FROM DUAL WHERE @seeded = 0 AND @marcus IS NOT NULL
-UNION ALL SELECT @q6, 'Labour', 'Brake service, 1.5 h', 1.5, 90.00, 2 FROM DUAL WHERE @seeded = 0 AND @marcus IS NOT NULL
-UNION ALL SELECT @q6, 'Fee', 'Mobile call-out fee', 1, 37.00, 3 FROM DUAL WHERE @seeded = 0 AND @marcus IS NOT NULL;
+SELECT @q6, 'Parts', 'Front brake pads (ceramic)', 1, 74.00, 0 FROM DUAL WHERE @q6 > 0
+UNION ALL SELECT @q6, 'Parts', 'Front rotors', 2, 63.00, 1 FROM DUAL WHERE @q6 > 0
+UNION ALL SELECT @q6, 'Labour', 'Brake service, 1.5 h', 1.5, 90.00, 2 FROM DUAL WHERE @q6 > 0
+UNION ALL SELECT @q6, 'Fee', 'Mobile call-out fee', 1, 37.00, 3 FROM DUAL WHERE @q6 > 0;
 
 -- 7) Kweku, snow job in dispute (funds held, case open in the disputes queue).
 INSERT INTO `tasks` (`service`, `mode`, `category`, `title`, `client_id`, `contractor_id`, `address`, `lat`, `lng`, `details`, `target_budget`, `agreed_amount`, `tax_amount`, `status`, `payment_status`, `window_label`, `accepted_at`, `submitted_at`, `completion_note`, `is_demo`, `created_at`)
 SELECT 'snow-removal', 'on_demand', 'snow', 'Snow clearing · Standard driveway + walkway', @kweku, @priya, '7 Willow Court, St. Albert AB', 53.6300, -113.6300,
   '{"size":"standard","sqft":null,"walk":"front","steps":false,"ice":false,"plan":"demand","estimate":[75,105]}', 95.00, 95.00, 4.75, 'disputed', 'disputed', 'Yesterday', DATE_SUB(NOW(), INTERVAL 30 HOUR), DATE_SUB(NOW(), INTERVAL 26 HOUR), 'Driveway done, walkway left for the second pass.', 1, DATE_SUB(NOW(), INTERVAL 32 HOUR) FROM DUAL WHERE @seeded = 0 AND @priya IS NOT NULL AND @kweku IS NOT NULL;
-SET @t7 := LAST_INSERT_ID();
-INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t7, @priya, 'accept', 95.00, '', 'accepted' FROM DUAL WHERE @seeded = 0 AND @priya IS NOT NULL;
-UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t7 LIMIT 1) WHERE `id` = @t7 AND @seeded = 0;
+SET @t7 := IF(@seeded = 0 AND @priya IS NOT NULL AND @kweku IS NOT NULL, LAST_INSERT_ID(), 0);
+INSERT INTO `task_offers` (`task_id`, `contractor_id`, `kind`, `amount`, `message`, `status`) SELECT @t7, @priya, 'accept', 95.00, '', 'accepted' FROM DUAL WHERE @t7 > 0;
+UPDATE `tasks` SET `accepted_offer_id` = (SELECT `id` FROM `task_offers` WHERE `task_id` = @t7 LIMIT 1) WHERE `id` = @t7 AND @t7 > 0;
 INSERT INTO `payments` (`task_id`, `client_id`, `contractor_id`, `provider`, `state`, `subtotal`, `tax`, `total`, `processor_ref`, `authorized_at`)
-SELECT @t7, @kweku, @priya, 'sandbox', 'disputed', 95.00, 4.75, 99.75, 'sbx_auth_demo0007', DATE_SUB(NOW(), INTERVAL 30 HOUR) FROM DUAL WHERE @seeded = 0 AND @priya IS NOT NULL;
+SELECT @t7, @kweku, @priya, 'sandbox', 'disputed', 95.00, 4.75, 99.75, 'sbx_auth_demo0007', DATE_SUB(NOW(), INTERVAL 30 HOUR) FROM DUAL WHERE @t7 > 0;
 INSERT INTO `job_photos` (`task_id`, `user_id`, `kind`, `storage`, `path`, `mime`, `bytes`, `width`, `height`)
-SELECT @t7, @priya, 'before', 'asset', 'work-before-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @seeded = 0 AND @priya IS NOT NULL
-UNION ALL SELECT @t7, @priya, 'after', 'asset', 'work-after-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @seeded = 0 AND @priya IS NOT NULL;
+SELECT @t7, @priya, 'before', 'asset', 'work-before-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @t7 > 0
+UNION ALL SELECT @t7, @priya, 'after', 'asset', 'work-after-800.jpg', 'image/jpeg', 0, 800, 600 FROM DUAL WHERE @t7 > 0;
 INSERT INTO `disputes` (`task_id`, `opened_by`, `reason`, `details`, `wanted`, `status`)
-SELECT @t7, @kweku, 'Area missed (steps, walkway)', 'The front walkway to the door was not cleared.', 'redo', 'open' FROM DUAL WHERE @seeded = 0 AND @kweku IS NOT NULL;
+SELECT @t7, @kweku, 'Area missed (steps, walkway)', 'The front walkway to the door was not cleared.', 'redo', 'open' FROM DUAL WHERE @t7 > 0;
 
 INSERT INTO `mk_audit_log` (`actor_id`, `actor_role`, `action`, `entity`, `entity_id`, `detail`, `ip`)
 SELECT @carol, 'superadmin', 'seed.demo', 'system', NULL, 'Demo marketplace data loaded', '' FROM DUAL WHERE @seeded = 0;
