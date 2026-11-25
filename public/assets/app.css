@@ -2184,11 +2184,20 @@ textarea.input { min-height: 64px; resize: vertical; }
 .mr-addr > .ic:first-child { left: 12px; } .mr-addr > .ic:last-of-type { right: 12px; }
 .mr-addr .input { padding-left: 38px; padding-right: 36px; }
 .mr-addr .input[aria-invalid] { border-color: var(--danger); }
-.mr-err { display: flex; gap: 6px; align-items: center; margin: -4px 0 10px; font-size: .8rem; color: var(--danger); font-weight: 650; }
+.mr-err { display: flex; gap: 6px; align-items: center; margin: 8px 0 0; font-size: .8rem; color: var(--danger); font-weight: 650; }
 .mr-box--note { display: flex; gap: 12px; align-items: flex-start; }
 .mr-box--note > .ic { width: 28px; height: 28px; color: var(--pine); flex: none; }
 .mr-box--note b { display: block; } .mr-box--note p { margin: 2px 0 0; font-size: .84rem; color: var(--ink-2); }
-.mr-form .btn-block { background: var(--pine); justify-content: center; }
+.mr-pane { display: grid; gap: 10px; }
+.mr-veh-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); font-size: .88rem; }
+.mr-veh-bar > span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.mr-veh-bar > span > .ic { color: var(--pine); flex: none; }
+.mr-veh-bar b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mr-nav { display: grid; gap: 10px; margin-top: 2px; }
+.mr-nav--split { grid-template-columns: auto 1fr; align-items: stretch; }
+.mr-form .btn-primary.btn-block { background: var(--pine); justify-content: center; }
+.mr-steps li.is-clickable { cursor: pointer; }
+.mr-steps li.is-clickable:hover .hsteps__l { color: var(--teal); }
 .mr-foot { margin: 0; text-align: center; font-size: .78rem; color: var(--muted); }
 .mr-state { display: grid; justify-items: center; gap: 8px; padding: 32px 22px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); text-align: center; }
 .mr-state h1 { font-family: var(--font); font-weight: 800; font-size: 1.6rem; margin: 6px 0 0; }

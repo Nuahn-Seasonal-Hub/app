@@ -27,11 +27,6 @@
         b.addEventListener('click', function () { li.remove(); inp.value = ''; }); li.appendChild(b); list.appendChild(li);
       });
     });
-    f.addEventListener('submit', function (e) {
-      var a = f.querySelector('input[name$="_address"]'), err = f.querySelector('[data-addr-err]');
-      if (a && !a.value.trim()) { e.preventDefault(); err.hidden = false; a.setAttribute('aria-invalid', 'true'); a.focus(); }
-    });
-    var ai = f.querySelector('input[name$="_address"]'); if (ai) ai.addEventListener('input', function () { f.querySelector('[data-addr-err]').hidden = true; ai.removeAttribute('aria-invalid'); });
   }
   var c = document.querySelector('[data-cancel]');
   if (c) c.addEventListener('click', function () { document.querySelector('[data-cancel-msg]').hidden = false; c.disabled = true; });

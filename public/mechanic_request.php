@@ -11,6 +11,7 @@
 require_once("../config/init.php");
 
 require_once("../includes/marketplace/view.php");
+require_once("../includes/onboarding.php");
 $mech = nu_fixture('mechanic');
 $taskId = (int) ($_GET['task'] ?? 0);
 $task = null;
@@ -37,11 +38,24 @@ if ($task) {
 }
 $steps = $road ? ['Details', 'Location', 'Broadcast', 'On the way'] : ['Vehicle', 'Location', 'Quote', 'Schedule'];
 $at = $state === '' ? 0 : 2;
-$role = nu_role();
-$loggedIn = $role !== '';
-$isClient = $role === 'client';
+$role = (string) (nu_role() ?? '');
+$loggedIn = isset($_SESSION['user_id']) && $role !== '';
+$isClient = $loggedIn && $role === 'client';
 $near = $task ? count(mk_nearby_contractors($task, 50)) : 0;
 $nextUrl = rawurlencode('public/mechanic_request.php?svc=' . $svc . '&draft=1');
+
+// Pre-fill service location from ?address= or signed-in client's saved area
+$prefillAddr = trim((string) ($_GET['address'] ?? ''));
+if ($prefillAddr === '' && $isClient) {
+    $u = ob_user_get(mk_uid());
+    $pd = ob_prof_data($u);
+    $savedParts = array_filter([trim((string) ($pd['city'] ?? '')), trim((string) ($pd['postal_code'] ?? ''))]);
+    if ($savedParts) {
+        $prefillAddr = implode(', ', $savedParts);
+    } elseif (!empty($u['location'])) {
+        $prefillAddr = trim(str_replace('·', ',', (string) $u['location']));
+    }
+}
 include_once("../includes/header.php");
 ?>
 <main class="mr" id="request">
@@ -52,51 +66,79 @@ include_once("../includes/header.php");
     <h1 class="mr-title"><?= nu_e($name) ?></h1>
     <p class="mr-sub"><?= $road ? '<span class="mx-pill mx-pill--a">A</span> Roadside help. Tell us what’s happening and where you are; nearby technicians are alerted at once.' : '<span class="mx-pill">B</span> Scheduled repair. Describe the vehicle and symptoms; mechanics send itemised quotes.' ?></p>
     <?= mk_form('mech_request', ['svc' => $svc, 'path' => $road ? 'roadside' : 'repair'], 'class="mr-form" enctype="multipart/form-data" data-mr data-guest="' . ($isClient ? '0' : '1') . '" data-draft="mr-' . nu_e($svc) . '" novalidate', 'mechanic_request.php?svc=' . $svc) ?>
-      <section class="mr-box"><h2><?= nu_icon('car-front-fill') ?> Vehicle details</h2><?= nu_vehicle_select('vehicle') ?></section>
+
+      <!-- STEP 1: Vehicle & Symptoms / Roadside Details -->
+      <div class="mr-pane" data-mr-pane="0">
+        <section class="mr-box">
+          <h2><?= nu_icon('car-front-fill') ?> Vehicle details</h2>
+          <?= nu_vehicle_select('vehicle') ?>
+          <p class="mr-err" data-veh-err hidden><?= nu_icon('exclamation-circle') ?> Choose your vehicle’s make and model to continue.</p>
+        </section>
 <?php if ($road): ?>
 <?php foreach (array_slice($road['fields'], 1) as $f): ?>
-      <section class="mr-box"><?= nu_form_field($f + ['pills' => true], 'mr') ?></section>
+        <section class="mr-box"><?= nu_form_field($f + ['pills' => true], 'mr') ?></section>
 <?php endforeach; ?>
-      <section class="mr-box"><h2><?= nu_icon('shield-exclamation') ?> Your safety</h2>
-        <div class="checks"><?php foreach ($mech['road_sit'] as $i => $s): ?><label class="check"><input type="checkbox" name="safety[]" value="<?= nu_e($s) ?>"<?= $i === 0 ? ' checked' : '' ?>><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($s) ?></span></label><?php endforeach; ?></div>
-        <p class="mr-hint"><?= nu_icon('telephone') ?> In an emergency or on a live highway lane, call 911 first.</p></section>
+        <section class="mr-box"><h2><?= nu_icon('shield-exclamation') ?> Your safety</h2>
+          <div class="checks"><?php foreach ($mech['road_sit'] as $i => $s): ?><label class="check"><input type="checkbox" name="safety[]" value="<?= nu_e($s) ?>"<?= $i === 0 ? ' checked' : '' ?>><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($s) ?></span></label><?php endforeach; ?></div>
+          <p class="mr-hint"><?= nu_icon('telephone') ?> In an emergency or on a live highway lane, call 911 first.</p></section>
 <?php else: ?>
 <?php if ($svc === 'brake-pads'): ?>
-      <section class="mr-box"><h2><?= nu_icon('disc') ?> Which brakes?</h2>
-        <div class="mr-seg" role="radiogroup" aria-label="Which brakes"><?php foreach (['Front', 'Rear', 'Not sure'] as $i => $b): ?><label><input type="radio" name="brakes" value="<?= $b ?>"<?= $i === 0 ? ' checked' : '' ?>><span><?= $b ?></span></label><?php endforeach; ?></div></section>
+        <section class="mr-box"><h2><?= nu_icon('disc') ?> Which brakes?</h2>
+          <div class="mr-seg" role="radiogroup" aria-label="Which brakes"><?php foreach (['Front', 'Rear', 'Not sure'] as $i => $b): ?><label><input type="radio" name="brakes" value="<?= $b ?>"<?= $i === 0 ? ' checked' : '' ?>><span><?= $b ?></span></label><?php endforeach; ?></div></section>
 <?php endif; ?>
-      <section class="mr-box"><h2><?= nu_icon('clipboard2-pulse') ?> Symptom checklist</h2>
-        <div class="checks checks--2"><?php foreach ($maint['symptoms'] as $i => $s): ?><label class="check"><input type="checkbox" name="symptoms[]" value="<?= nu_e($s) ?>"<?= $i === 0 ? ' checked' : '' ?>><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($s) ?></span></label><?php endforeach; ?></div>
-        <label class="label" for="mr-desc">Anything else the mechanic should know? <small>(optional)</small></label><textarea class="input" id="mr-desc" name="details" rows="2" maxlength="400" placeholder="When it started, warning lights, last service date"></textarea></section>
+        <section class="mr-box"><h2><?= nu_icon('clipboard2-pulse') ?> Symptom checklist</h2>
+          <div class="checks checks--2"><?php foreach ($maint['symptoms'] as $i => $s): ?><label class="check"><input type="checkbox" name="symptoms[]" value="<?= nu_e($s) ?>"<?= $i === 0 ? ' checked' : '' ?>><span class="check__box"><?= nu_icon('check-lg') ?></span><span class="check__t"><?= nu_e($s) ?></span></label><?php endforeach; ?></div>
+          <label class="label" for="mr-desc">Anything else the mechanic should know? <small>(optional)</small></label><textarea class="input" id="mr-desc" name="details" rows="2" maxlength="400" placeholder="When it started, warning lights, last service date"></textarea></section>
 <?php endif; ?>
-      <section class="mr-box"><h2><?= nu_icon('camera-fill') ?> Add photos <small>Optional. Helps with a more accurate <?= $road ? 'response' : 'quote' ?>.</small></h2>
-        <div class="mr-media">
-          <label class="mr-drop mr-drop--sm"><?= nu_icon('camera') ?><span>Photo</span><input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple class="sr-only" data-media="photo"></label>
+        <section class="mr-box"><h2><?= nu_icon('camera-fill') ?> Add photos <small>Optional. Helps with a more accurate <?= $road ? 'response' : 'quote' ?>.</small></h2>
+          <div class="mr-media">
+            <label class="mr-drop mr-drop--sm"><?= nu_icon('camera') ?><span>Photo</span><input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple class="sr-only" data-media="photo"></label>
+          </div>
+          <ul class="mr-files" data-files aria-live="polite"></ul>
+          <p class="mr-hint"><?= nu_icon('info-circle') ?> Audio and video uploads are coming soon. Photos only for now.</p></section>
+
+        <div class="mr-nav">
+          <button class="btn btn-primary btn-lg btn-block" type="button" data-mr-next>Continue to Location <?= nu_icon('arrow-right') ?></button>
         </div>
-        <ul class="mr-files" data-files aria-live="polite"></ul>
-        <p class="mr-hint"><?= nu_icon('info-circle') ?> Audio and video uploads are coming soon. Photos only for now.</p></section>
-      <section class="mr-box"><h2><?= nu_icon('geo-alt-fill') ?> <?= $road ? 'Where are you?' : 'Service location' ?></h2>
-        <?= nu_map_picker(['name' => 'mr_loc', 'label' => 'Address or map pin', 'placeholder' => 'Enter address or drop a pin']) ?>
-        <p class="mr-err" data-addr-err hidden><?= nu_icon('exclamation-circle') ?> Add the address where the vehicle is parked.</p>
-        <fieldset class="fld"><legend class="label">Parking surface</legend>
-          <div class="radios radios--pills" role="radiogroup"><?php foreach ($mech['parking'] as $i => $pk): ?><label class="radio"><input type="radio" name="parking" value="<?= nu_e($pk) ?>"<?= $i === ($road ? 5 : 0) ? ' checked' : '' ?>><span><?= nu_e($pk) ?></span></label><?php endforeach; ?></div></fieldset>
-        <label class="label" for="mr-park">Access notes <small>(optional)</small></label>
-        <textarea class="input" id="mr-park" name="notes" rows="2" maxlength="500" placeholder="Level, stall number, gate code, landmarks"></textarea></section>
+        <p class="mr-foot">Step 1 of 2 · Next: confirm your service location and submit.</p>
+      </div>
+
+      <!-- STEP 2: Service Location, Timing & Submit -->
+      <div class="mr-pane" data-mr-pane="1" hidden>
+        <div class="mr-veh-bar">
+          <span><?= nu_icon('car-front-fill') ?> <b data-veh-summary>Your vehicle</b></span>
+          <button type="button" class="btn btn-ghost btn-sm" data-mr-back><?= nu_icon('pencil-square') ?> Edit</button>
+        </div>
+
+        <section class="mr-box"><h2><?= nu_icon('geo-alt-fill') ?> <?= $road ? 'Where are you?' : 'Service location' ?></h2>
+          <?= nu_map_picker(['name' => 'mr_loc', 'address' => $prefillAddr, 'label' => 'Address or map pin', 'placeholder' => 'Enter address or drop a pin']) ?>
+          <p class="mr-err" data-addr-err hidden><?= nu_icon('exclamation-circle') ?> Add the address where the vehicle is parked.</p>
+          <fieldset class="fld"><legend class="label">Parking surface</legend>
+            <div class="radios radios--pills" role="radiogroup"><?php foreach ($mech['parking'] as $i => $pk): ?><label class="radio"><input type="radio" name="parking" value="<?= nu_e($pk) ?>"<?= $i === ($road ? 5 : 0) ? ' checked' : '' ?>><span><?= nu_e($pk) ?></span></label><?php endforeach; ?></div></fieldset>
+          <label class="label" for="mr-park">Access notes <small>(optional)</small></label>
+          <textarea class="input" id="mr-park" name="notes" rows="2" maxlength="500" placeholder="Level, stall number, gate code, landmarks"></textarea></section>
 <?php if (!$road): ?>
-      <section class="mr-box"><h2><?= nu_icon('calendar2-week') ?> When suits you?</h2>
-        <div class="radios radios--pills" role="radiogroup"><?php foreach (['This week · mornings', 'This week · afternoons', 'Weekend', 'Flexible'] as $i => $w): ?><label class="radio"><input type="radio" name="window" value="<?= nu_e($w) ?>"<?= $i === 3 ? ' checked' : '' ?>><span><?= nu_e($w) ?></span></label><?php endforeach; ?></div>
-        <p class="mr-hint"><?= nu_icon('info-circle') ?> Mechanics propose exact windows in their quotes.</p></section>
+        <section class="mr-box"><h2><?= nu_icon('calendar2-week') ?> When suits you?</h2>
+          <div class="radios radios--pills" role="radiogroup"><?php foreach (['This week · mornings', 'This week · afternoons', 'Weekend', 'Flexible'] as $i => $w): ?><label class="radio"><input type="radio" name="window" value="<?= nu_e($w) ?>"<?= $i === 3 ? ' checked' : '' ?>><span><?= nu_e($w) ?></span></label><?php endforeach; ?></div>
+          <p class="mr-hint"><?= nu_icon('info-circle') ?> Mechanics propose exact windows in their quotes.</p></section>
 <?php endif; ?>
-      <section class="mr-box mr-box--note"><?= nu_icon('shield-check') ?><div><b><?= $road ? 'Estimated ' . nu_e($mech['roadside_est'][$svc]) . ' · confirmed when a technician accepts' : 'Quote before repair' ?></b><p><?= $road ? 'The first approved technician to accept shows a price and ETA. Funds are held securely and only released when you approve the work. Cancel any time before someone accepts.' : 'Parts, labour, call-out fee and tax are itemised for your approval. Nothing is booked or held until you approve a quote.' ?></p></div></section>
+        <section class="mr-box mr-box--note"><?= nu_icon('shield-check') ?><div><b><?= $road ? 'Estimated ' . nu_e($mech['roadside_est'][$svc]) . ' · confirmed when a technician accepts' : 'Quote before repair' ?></b><p><?= $road ? 'The first approved technician to accept shows a price and ETA. Funds are held securely and only released when you approve the work. Cancel any time before someone accepts.' : 'Parts, labour, call-out fee and tax are itemised for your approval. Nothing is booked or held until you approve a quote.' ?></p></div></section>
 <?php if ($road): ?>
-      <section class="mr-box"><h2><?= nu_icon('lock-fill') ?> Payment hold</h2><?= nu_trust_note('held') ?><?= mk_test_card_field() ?></section>
+        <section class="mr-box"><h2><?= nu_icon('lock-fill') ?> Payment hold</h2><?= nu_trust_note('held') ?><?= mk_test_card_field() ?></section>
 <?php endif; ?>
-<?php if ($role !== '' && !$isClient): ?>
-      <p class="mk-note mk-note--warn"><?= nu_icon('exclamation-circle') ?> <span>You are signed in as <?= nu_e($role) ?>. Requests are made from a client account.</span></p>
+<?php if ($loggedIn && !$isClient): ?>
+        <p class="mk-note mk-note--warn"><?= nu_icon('exclamation-circle') ?> <span>You are signed in as <?= nu_e($role) ?>. Requests are made from a client account.</span></p>
+        <div class="mr-nav">
+          <button class="btn btn-outline btn-lg" type="button" data-mr-back><?= nu_icon('arrow-left') ?> Back</button>
+        </div>
 <?php else: ?>
-      <button class="btn btn-primary btn-lg btn-block" type="submit"><?= $road ? nu_icon('broadcast') . ' ' . ($isClient ? 'Alert nearby technicians' : 'Sign in to send the alert') : ($isClient ? 'Request quotes ' : 'Sign in to request quotes ') . nu_icon('arrow-right') ?></button>
+        <div class="mr-nav mr-nav--split">
+          <button class="btn btn-outline btn-lg" type="button" data-mr-back><?= nu_icon('arrow-left') ?> Back</button>
+          <button class="btn btn-primary btn-lg btn-block" type="submit"><?= $road ? nu_icon('broadcast') . ' ' . ($isClient ? 'Alert nearby technicians' : 'Sign in to send the alert') : ($isClient ? 'Request quotes ' : 'Sign in to request quotes ') . nu_icon('arrow-right') ?></button>
+        </div>
 <?php endif; ?>
-      <p class="mr-foot"><?= $road ? 'No appointment is needed. A technician has not accepted until you see their name and ETA.' : 'This submits a request, not a confirmed appointment.' ?><?= $isClient ? '' : ' You will be asked to sign in only when you send.' ?></p>
+        <p class="mr-foot"><?= $road ? 'No appointment is needed. A technician has not accepted until you see their name and ETA.' : 'This submits a request, not a confirmed appointment.' ?><?= $isClient ? '' : ' You will be asked to sign in only when you send.' ?></p>
+      </div>
     </form>
 <?php elseif ($state === 'quote_pending'): ?>
     <section class="mr-state" role="status">
@@ -170,36 +212,149 @@ include_once("../includes/header.php");
   var f = document.querySelector('[data-mr]'); if (!f) return;
   var key = f.dataset.draft, isGuest = f.dataset.guest === '1';
   var sheet = document.getElementById('mrSignSheet');
-  function fields() { return Array.prototype.filter.call(f.elements, function (e) { return e.name && e.type !== 'file' && e.type !== 'hidden' && e.type !== 'submit'; }); }
+  var panes = f.querySelectorAll('[data-mr-pane]');
+  var stepEls = document.querySelectorAll('.mr-steps li');
+  var makeEl = f.querySelector('[data-v="make"]'), modelEl = f.querySelector('[data-v="model"]');
+  var yearEl = f.querySelector('[data-v="year"]'), trimEl = f.querySelector('[data-v="trim"]'), engEl = f.querySelector('[data-v="engine"]');
+  var vehErr = f.querySelector('[data-veh-err]'), addrEl = f.querySelector('input[name$="_address"]'), addrErr = f.querySelector('[data-addr-err]');
+  var vehSummary = f.querySelector('[data-veh-summary]');
+  var curStep = 0;
+
+  function fields() { return Array.prototype.filter.call(f.elements, function (e) { return e.name && e.type !== 'file' && e.type !== 'hidden' && e.type !== 'submit' && e.type !== 'button'; }); }
+
+  function updateSummary() {
+    if (!vehSummary) return;
+    var parts = [yearEl && yearEl.value, makeEl && makeEl.value, modelEl && modelEl.value, trimEl && trimEl.value, engEl && engEl.value].filter(Boolean);
+    vehSummary.textContent = parts.length ? parts.join(' ') : 'Your vehicle';
+  }
+
+  function validateVehicle() {
+    var okMake = makeEl && makeEl.value.trim() !== '';
+    var okModel = modelEl && modelEl.value.trim() !== '';
+    if (okMake && okModel) {
+      if (vehErr) vehErr.hidden = true;
+      if (makeEl) makeEl.removeAttribute('aria-invalid');
+      if (modelEl) modelEl.removeAttribute('aria-invalid');
+      return true;
+    }
+    if (vehErr) vehErr.hidden = false;
+    var bad = !okMake ? makeEl : modelEl;
+    if (bad) { bad.setAttribute('aria-invalid', 'true'); bad.focus(); }
+    return false;
+  }
+
+  function validateAddress() {
+    var ok = addrEl && addrEl.value.trim().length >= 5;
+    if (ok) {
+      if (addrErr) addrErr.hidden = true;
+      addrEl.removeAttribute('aria-invalid');
+      return true;
+    }
+    if (addrErr) addrErr.hidden = false;
+    if (addrEl) { addrEl.setAttribute('aria-invalid', 'true'); addrEl.focus(); }
+    return false;
+  }
+
+  function goStep(idx, scroll) {
+    curStep = idx;
+    panes.forEach(function (p) { p.hidden = Number(p.dataset.mrPane) !== idx; });
+    stepEls.forEach(function (li, i) {
+      li.classList.toggle('is-done', i < idx);
+      li.classList.toggle('is-current', i === idx);
+      if (i === idx) li.setAttribute('aria-current', 'step');
+      else li.removeAttribute('aria-current');
+      li.classList.toggle('is-clickable', i <= 1);
+    });
+    updateSummary();
+    if (scroll) {
+      var topEl = document.getElementById('request');
+      if (topEl && topEl.scrollIntoView) topEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      else window.scrollTo(0, 0);
+    }
+  }
+
+  // Wire Step 1 -> Step 2, Step 2 -> Step 1, and clickable top stepper dots (Vehicle / Location)
+  f.querySelectorAll('[data-mr-next]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!validateVehicle()) return;
+      goStep(1, true);
+    });
+  });
+  f.querySelectorAll('[data-mr-back]').forEach(function (btn) {
+    btn.addEventListener('click', function () { goStep(0, true); });
+  });
+  stepEls.forEach(function (li, i) {
+    if (i > 1) return;
+    li.classList.add('is-clickable');
+    li.setAttribute('role', 'button');
+    li.setAttribute('tabindex', '0');
+    function jump() {
+      if (i === curStep) return;
+      if (i === 1 && !validateVehicle()) return;
+      goStep(i, true);
+    }
+    li.addEventListener('click', jump);
+    li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jump(); } });
+  });
+
+  if (makeEl) makeEl.addEventListener('change', function () { if (vehErr) vehErr.hidden = true; makeEl.removeAttribute('aria-invalid'); });
+  if (modelEl) modelEl.addEventListener('change', function () { if (vehErr) vehErr.hidden = true; modelEl.removeAttribute('aria-invalid'); });
+  if (addrEl) addrEl.addEventListener('input', function () { if (addrErr) addrErr.hidden = true; addrEl.removeAttribute('aria-invalid'); });
 
   // Restore saved draft when returning from signup or sign-in (?draft=1)
   window.addEventListener('load', function () {
     try {
       var qs = new URLSearchParams(location.search);
       var preAddr = qs.get('address');
-      if (preAddr && f.mr_loc_address && !f.mr_loc_address.value) f.mr_loc_address.value = preAddr;
+      if (preAddr && addrEl && !addrEl.value) addrEl.value = preAddr;
       var d = JSON.parse(sessionStorage.getItem(key) || 'null');
       if (!d || qs.get('draft') !== '1') return;
+      // Restore make first so mech.js populates model options before model value is restored
+      d.forEach(function (r) {
+        if (r[0] === 'vehicle[make]' && makeEl && r[2]) {
+          makeEl.value = r[2];
+          makeEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
       fields().forEach(function (el) {
+        if (el.name === 'vehicle[make]') return;
         d.forEach(function (r) {
           if (r[0] !== el.name) return;
           if (el.type === 'checkbox' || el.type === 'radio') { if (el.value === r[1]) el.checked = r[2]; }
           else el.value = r[2];
         });
       });
+      if (makeEl && makeEl.value && modelEl && modelEl.value) {
+        goStep(1, false);
+      }
       if (!isGuest) {
         var note = document.createElement('div');
         note.className = 'alert alert-success';
         note.setAttribute('role', 'status');
-        note.textContent = 'Welcome back! Your mechanic request draft is restored — review and tap the button below to send.';
+        note.textContent = 'Welcome back! Your mechanic request draft is restored — review your location and tap the button below to send.';
         f.parentNode.insertBefore(note, f);
         sessionStorage.removeItem(key);
       }
     } catch (x) {}
   });
 
-  if (isGuest) {
-    f.addEventListener('submit', function (e) {
+  // Unified submit validation (Step 1 vehicle + Step 2 address) before guest modal or real POST
+  f.addEventListener('submit', function (e) {
+    if (!validateVehicle()) {
+      e.preventDefault();
+      goStep(0, true);
+      return;
+    }
+    if (curStep === 0) {
+      e.preventDefault();
+      goStep(1, true);
+      return;
+    }
+    if (!validateAddress()) {
+      e.preventDefault();
+      return;
+    }
+    if (isGuest) {
       e.preventDefault();
       var d = [];
       fields().forEach(function (el) {
@@ -209,11 +364,11 @@ include_once("../includes/header.php");
       try { sessionStorage.setItem(key, JSON.stringify(d)); } catch (x) {}
       if (sheet && sheet.showModal) sheet.showModal();
       else if (sheet) sheet.setAttribute('open', '');
-    });
-    if (sheet) {
-      sheet.querySelector('[data-close]').addEventListener('click', function () { sheet.close ? sheet.close() : sheet.removeAttribute('open'); });
-      sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.close(); });
     }
+  });
+  if (sheet) {
+    sheet.querySelector('[data-close]').addEventListener('click', function () { sheet.close ? sheet.close() : sheet.removeAttribute('open'); });
+    sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.close(); });
   }
 })();
 </script>
